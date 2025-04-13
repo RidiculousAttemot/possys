@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>POS System - MotorTech</title>
+  
+  <!-- Preload critical assets -->
+  <link rel="preload" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" as="style">
+  <link rel="preload" href="css/pos.css" as="style">
+  
+  <!-- Styles --> 
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+  <link rel="stylesheet" href="css/pos.css">
+
+  <!-- Defer scripts to improve initial load performance -->
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11" defer></script>
+  <script src="js/posdesign.js" defer></script>
+  <script src="js/pos.js" defer></script>
+</head>
+<body>
+  <!-- Animated background - fewer cubes for better performance -->
+  <div class="background">
+    <div class="cube"></div>
+    <div class="cube"></div>
+    <div class="cube"></div>
+    <div class="cube"></div>
+    <div class="cube"></div>
+  </div>
+
+  <!-- Header -->
+  <header>
+    <a href="landing.html" class="logo">
+      <i class="fas fa-motorcycle rotating-icon"></i>
+      Motor<span class="tech">Tech</span>
+    </a>
+    <div class="user-profile">
+      <span id="currentDateTime">Loading date and time...</span>
+      <div class="user-info">
+        <i class="fas fa-user-circle"></i>
+        <span id="userName">Cashier</span>
+        <a href="#" class="btn-logout">Logout</a>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Content -->
+  <main>
+    <!-- Categories Section -->
+    <div class="categories">
+      <h2>Categories</h2>
+      <div class="category-list">
+        <!-- Categories will be dynamically populated by JavaScript -->
+      </div>
+    </div>
+
+    <!-- Items Section -->
+    <div class="items">
+      <h2>
+        <!-- Search box will be added by JavaScript -->
+      </h2>
+      <div class="item-grid" id="productGrid">
+        <div class="loading-items">
+          <i class="fas fa-spinner fa-spin"></i>
+          <p>Loading items...</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Checkout Section will be populated by JavaScript -->
+    <div class="checkout">
+      <!-- Will be populated dynamically -->
+    </div>
+  </main>
+
+  <!-- Checkout Modal - Content will be dynamically inserted -->
+  <div id="checkoutModal" class="modal">
+    <div class="modal-content">
+      <!-- Will be populated dynamically -->
+    </div>
+  </div>
+
+  <!-- History Modal - Content will be dynamically inserted -->
+  <div id="historyModal" class="modal">
+    <div class="modal-content">
+      <!-- Will be populated dynamically -->
+    </div>
+  </div>
+
+  <!-- Item Details Modal - Content will be dynamically inserted -->
+  <div class="modal" id="itemDetailsModal">
+    <div class="modal-content item-details">
+      <!-- Will be populated dynamically -->
+    </div>
+  </div>
+
+  <!-- Connection Status Indicator -->
+  <div class="connection-status online">
+    <i class="fas fa-wifi"></i>
+    <span>Connected</span>
+  </div>
+</body>
+</html>
