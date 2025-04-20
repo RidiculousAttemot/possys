@@ -1,89 +1,132 @@
 document.addEventListener('DOMContentLoaded', () => {
-    // Listen for form submission
-    document.getElementById('loginForm').addEventListener('submit', async (e) => {
-        e.preventDefault();
-
-        const username = document.getElementById('username').value;
-        const password = document.getElementById('password').value;
-        const loginButton = document.querySelector('.btn-login');
-
-        // Show the loading spinner and reset feedback/error messages
-        const feedback = document.getElementById('errorText');
-        const loading = document.getElementById('loadingSpinner');
-        const success = document.getElementById('successMessage');
-        
-        // Hide all feedback elements first
-        feedback.style.display = 'none';
-        loading.style.display = 'flex'; // Use flex to center the content
-        success.style.display = 'none';
-
-        // Validate that username and password are not empty
-        if (!username || !password) {
-            loading.style.display = 'none';
-            feedback.style.display = 'flex';
-            feedback.textContent = 'Username and password are required!';
-            // Make sure the button is re-enabled
-            loginButton.disabled = false;
-            loginButton.classList.remove('processing');
-            return;
-        }
-
-        try {
-            // Send login request to backend
-            const res = await fetch('http://localhost:5000/api/login', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ username, password })
-            });
-
-            const data = await res.json();
-
-            // Hide loading spinner regardless of result
-            loading.style.display = 'none';
-
-            // If login is successful, show success message and then redirect
-            if (res.ok) {
-                // Store auth token in localStorage for future requests
-                if (data.token) {
-                    localStorage.setItem('authToken', data.token);
-                }
-                
-                // Show success message
-                success.style.display = 'flex';
-                
-                // Set a timeout to allow the user to see the success message
-                setTimeout(() => {
-                    // Redirect user based on role
-                    if (data.role === 'admin') {
-                        window.location.href = 'admin.html'; // Admin dashboard
-                    } else {
-                        window.location.href = 'pos.html'; // Regular user POS page
-                    }
-                }, 1500); // 1.5 seconds delay for the success message to be visible
-            } else {
-                // Display error message on failed login
-                feedback.style.display = 'flex';
-                feedback.textContent = data.error || 'Login failed! Please check your credentials.';
-                
-                // Re-enable the login button so user can try again
-                loginButton.disabled = false;
-                loginButton.classList.remove('processing');
+    console.log('Login page loaded. Checking authentication...');
+    
+    // Check if user is already logged in
+    const token = localStorage.getItem('authToken');
+    
+    if (token) {
+        console.log('Authentication token found. Validating...');
+        // Validate token by making a request to the server
+        fetch('http://localhost:5000/api/validate-token', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
             }
-        } catch (err) {
-            // Handle network or server error
-            console.error('Login error:', err);
-            loading.style.display = 'none';
-            feedback.style.display = 'flex';
-            feedback.textContent = 'An error occurred during login. Please try again later.';
-            
-            // Re-enable the login button so user can try again
-            loginButton.disabled = false;
-            loginButton.classList.remove('processing');
-        }
-    });
+        })
+        .then(response => {
+            if (!response.ok) {
+                console.log('Token validation failed. Clearing auth data...');
+                // If token is invalid, clear localStorage
+                localStorage.clear();
+                return null;
+            }
+            return response.json();
+        })
+        .then(data => {
+            if (data && data.valid) {
+                console.log('Token valid. Redirecting based on role...');
+                // Redirect to appropriate page based on role
+                const userRole = localStorage.getItem('userRole');
+                if (userRole === 'admin') {
+                    window.location.href = 'admin.html';
+                } else {
+                    window.location.href = 'pos.html';
+                }
+            }
+        })
+        .catch(error => {
+            console.error('Error validating token:', error);
+            localStorage.clear();
+        });
+    } else {
+        console.log('No authentication token found. User needs to log in.');
+    }
 
-    // Add a click event listener to error message to dismiss it
-    document.getElementById('errorText').addEventListener('click', function() {
-        this.style.display = 'none';
-    });
+    // Listen for form submission
+    const loginForm = document.getElementById('loginForm');
+    if (loginForm) {
+        loginForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            console.log('Login form submitted');
+
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            const loginButton = document.querySelector('.btn-login');
+
+            // Show loading state
+            if (loginButton) {
+                const originalButtonText = loginButton.innerHTML;
+                loginButton.disabled = true;
+                loginButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Logging in...';
+            }
+
+            // Hide error messages
+            const errorText = document.getElementById('errorText');
+            if (errorText) errorText.style.display = 'none';
+
+            try {
+                // Send login request
+                console.log(`Attempting login for user: ${username}`);
+                const response = await fetch('http://localhost:5000/api/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, password })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    // Store authentication data
+                    console.log('Login successful. Setting auth data...');
+                    localStorage.setItem('authToken', data.token || 'token-' + Date.now());
+                    localStorage.setItem('userName', data.user.full_name || username);
+                    localStorage.setItem('userRole', data.user.role);
+                    localStorage.setItem('userId', data.user.user_id);
+
+                    // Show success message
+                    Swal.fire({
+                        title: 'Login Successful!',
+                        text: `Welcome back, ${data.user.full_name || username}!`,
+                        icon: 'success',
+                        timer: 1500,
+                        showConfirmButton: false
+                    }).then(() => {
+                        // Redirect based on role
+                        console.log(`Redirecting user with role: ${data.user.role}`);
+                        if (data.user.role === 'admin') {
+                            window.location.href = 'admin.html';
+                        } else {
+                            window.location.href = 'pos.html';
+                        }
+                    });
+                } else {
+                    // Show error message
+                    console.log('Login failed:', data.error);
+                    Swal.fire({
+                        title: 'Login Failed',
+                        text: data.error || 'Invalid username or password',
+                        icon: 'error'
+                    });
+                    
+                    // Reset form
+                    loginForm.reset();
+                    document.getElementById('username').focus();
+                }
+            } catch (error) {
+                console.error('Login error:', error);
+                Swal.fire({
+                    title: 'Error',
+                    text: 'An error occurred during login. Please try again.',
+                    icon: 'error'
+                });
+            } finally {
+                // Restore button state
+                if (loginButton) {
+                    loginButton.disabled = false;
+                    loginButton.innerHTML = 'Login';
+                }
+            }
+        });
+    }
 });

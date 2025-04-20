@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MotorTech - POS System</title>
+    <link rel="stylesheet" href="css/redirect.css">
+    <script>
+        // Authentication checks on page load
+        window.onload = function() {
+            const authToken = localStorage.getItem('authToken');
+            
+            if (!authToken) {
+                // No authentication token, redirect to login page
+                console.log('No authentication token found. Redirecting to login page...');
+                window.location.href = 'login.html';
+                return;
+            }
+            
+            // If authenticated, check user role and redirect accordingly
+            const userRole = localStorage.getItem('userRole');
+            if (userRole === 'admin') {
+                console.log('Admin user detected. Redirecting to admin dashboard...');
+                window.location.href = 'admin.html';
+            } else if (userRole) {
+                console.log('Cashier/staff user detected. Redirecting to POS...');
+                window.location.href = 'pos.html';
+            } else {
+                // Role missing but token present - possible corrupted state
+                console.log('Authentication token found but role missing. Redirecting to login...');
+                localStorage.clear(); // Clear potentially corrupted auth data
+                window.location.href = 'login.html';
+            }
+        }
+    </script>
+</head>
+<body>
+    <div class="redirect-container">
+        <div class="redirect-content">
+            <div class="spinner"></div>
+            <h2>Checking Authentication...</h2>
+            <p>Please wait while we verify your credentials.</p>
+        </div>
+    </div>
+</body>
+</html>

@@ -54,11 +54,9 @@ exports.login = async (username, password) => {
 // Get all users
 exports.getAllUsers = async (req, res) => {
   try {
-    // Fetch users with correct column names
-    const [rows] = await db.query('SELECT user_id, username, full_name, email, role FROM users');
+    const [rows] = await db.query('SELECT user_id, username, full_name, email, role, created_at FROM users ORDER BY user_id DESC');
     res.json(rows);
   } catch (error) {
-    console.error('Error fetching users:', error);
     res.status(500).json({ error: 'Failed to fetch users' });
   }
 };

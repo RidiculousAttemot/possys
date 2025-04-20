@@ -2,16 +2,24 @@ document.addEventListener('DOMContentLoaded', function() {
     // Authentication check
     const checkAuth = () => {
         const token = localStorage.getItem('authToken');
+        const userRole = localStorage.getItem('userRole');
+        
         if (!token) {
             // Redirect to login page if no token
             window.location.href = 'login.html';
             return false;
         }
         
-        // Set user display name (this would be dynamic in a real app)
+        // Check if user is admin - they should be on admin page
+        if (userRole === 'admin') {
+            window.location.href = 'admin.html';
+            return false;
+        }
+        
+        // Set user display name from localStorage
         const userNameElement = document.getElementById('userName');
         if (userNameElement) {
-            userNameElement.textContent = 'Cashier'; // This should be dynamically populated
+            userNameElement.textContent = localStorage.getItem('userName') || 'Cashier';
         }
         
         return true;

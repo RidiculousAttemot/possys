@@ -298,11 +298,14 @@ document.addEventListener('DOMContentLoaded', function() {
                 color: '#f5f5f5'
             }).then((result) => {
                 if (result.isConfirmed) {
-                    // Clear auth token
+                    // Clear all auth tokens and user info
                     localStorage.removeItem('authToken');
+                    localStorage.removeItem('userName');
+                    localStorage.removeItem('userRole');
+                    localStorage.removeItem('userId');
                     
-                    // Redirect to login page
-                    window.location.href = 'login.html';
+                    // Force redirect to login page
+                    window.location.replace('login.html');
                 }
             });
         });

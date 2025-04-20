@@ -151,8 +151,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const openModal = (modalId) => {
         const modal = document.getElementById(modalId);
         if (modal) {
-            modal.classList.add('show');
-            // Prevent scrolling on the background
+            modal.style.display = 'flex'; // Use flex for better centering
             document.body.style.overflow = 'hidden';
         }
     };
@@ -160,11 +159,40 @@ document.addEventListener('DOMContentLoaded', function() {
     const closeModal = (modalId) => {
         const modal = document.getElementById(modalId);
         if (modal) {
-            modal.classList.remove('show');
-            // Re-enable scrolling
+            modal.style.display = 'none';
             document.body.style.overflow = 'auto';
         }
     };
+    
+    // Add event listeners to open modals
+    document.getElementById('addItemBtn').addEventListener('click', function() {
+        openModal('addItemModal');
+    });
+    
+    document.getElementById('addUserBtn').addEventListener('click', function() {
+        openModal('addUserModal');
+    });
+    
+    // Close modals when clicking the X or cancel button
+    document.querySelectorAll('.modal .close, .modal .cancel-btn').forEach(button => {
+        button.addEventListener('click', function() {
+            const modal = this.closest('.modal');
+            if (modal) {
+                modal.style.display = 'none';
+                document.body.style.overflow = 'auto';
+            }
+        });
+    });
+    
+    // Close modal if clicking outside the content
+    document.querySelectorAll('.modal').forEach(modal => {
+        modal.addEventListener('click', function(e) {
+            if (e.target === this) {
+                this.style.display = 'none';
+                document.body.style.overflow = 'auto';
+            }
+        });
+    });
     
     // Close modal when clicking on the backdrop
     document.querySelectorAll('.modal').forEach(modal => {
@@ -227,12 +255,29 @@ document.addEventListener('DOMContentLoaded', function() {
         logoutBtn.addEventListener('click', function(e) {
             e.preventDefault();
             
-            // Add a confirmation before logout
-            const confirmLogout = confirm('Are you sure you want to logout?');
-            if (confirmLogout) {
-                // Perform logout (redirect to login page)
-                window.location.href = 'login.html';
-            }
+            Swal.fire({
+                title: 'Logout Confirmation',
+                text: 'Are you sure you want to logout?',
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonColor: '#3498db',
+                cancelButtonColor: '#e74c3c',
+                confirmButtonText: 'Yes, Logout',
+                cancelButtonText: 'Cancel',
+                background: '#141414',
+                color: '#f5f5f5'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    // Clear all auth tokens and user info
+                    localStorage.removeItem('authToken');
+                    localStorage.removeItem('userName');
+                    localStorage.removeItem('userRole');
+                    localStorage.removeItem('userId');
+                    
+                    // Force redirect to login page
+                    window.location.replace('login.html');
+                }
+            });
         });
     }
 });

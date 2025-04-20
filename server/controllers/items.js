@@ -5,37 +5,74 @@ const db = require('../database'); // Database connection
 // GET all inventory items
 exports.getInventory = async (req, res) => {
     try {
-        const [rows] = await db.query('SELECT * FROM items');
+        const [rows] = await db.query('SELECT * FROM items ORDER BY item_id DESC');
         res.json(rows);
     } catch (error) {
-        console.error('Error fetching inventory:', error);
         res.status(500).json({ error: 'Failed to fetch inventory' });
     }
 };
 
-// POST a new item
-exports.addItem = async (req, res) => {
+// GET a single item by ID
+exports.getItemById = async (req, res) => {
     try {
-        const { item_name, description, price, category, stock_quantity, image } = req.body;
+        const { id } = req.params;
+        const [rows] = await db.query('SELECT * FROM items WHERE item_id = ?', [id]);
         
-        // Validate required fields
-        if (!item_name || !price || !category) {
-            return res.status(400).json({ error: 'Item name, price, and category are required' });
+        if (rows.length === 0) {
+            return res.status(404).json({ error: 'Item not found' });
         }
         
-        // Insert new item with correct column names
+        res.json(rows[0]);
+    } catch (error) {
+        console.error('Error fetching item:', error);
+        res.status(500).json({ error: 'Failed to fetch item' });
+    }
+};
+
+// Create new item - improved error handling
+exports.addItem = async (req, res) => {
+    try {
+        console.log('Adding new item with data:', req.body);
+        
+        const { item_name, description, category, price, stock_quantity, image } = req.body;
+        
+        // Validate required fields
+        if (!item_name) {
+            return res.status(400).json({ error: 'Item name is required' });
+        }
+        
+        // Use default values for missing fields
+        const safeCategory = category || 'Uncategorized';
+        const safePrice = isNaN(price) ? 0 : price;
+        const safeStock = isNaN(stock_quantity) ? 0 : stock_quantity;
+        const safeDescription = description || '';
+        
+        // Insert the item into the database
         const [result] = await db.query(
-            'INSERT INTO items (item_name, description, price, category, stock_quantity, image) VALUES (?, ?, ?, ?, ?, ?)',
-            [item_name, description || null, price, category, stock_quantity || 0, image || null]
+            'INSERT INTO items (item_name, description, category, price, stock_quantity, image) VALUES (?, ?, ?, ?, ?, ?)',
+            [item_name, safeDescription, safeCategory, safePrice, safeStock, image]
         );
         
-        res.status(201).json({ 
-            id: result.insertId,
-            message: 'Item added successfully' 
+        // Log successful creation
+        console.log(`Item created with ID: ${result.insertId}`);
+        
+        // Return success response
+        res.status(201).json({
+            message: 'Item created successfully',
+            item_id: result.insertId,
+            item: {
+                item_id: result.insertId,
+                item_name,
+                description: safeDescription,
+                category: safeCategory,
+                price: safePrice,
+                stock_quantity: safeStock,
+                image
+            }
         });
     } catch (error) {
-        console.error('Error adding item:', error);
-        res.status(500).json({ error: 'Failed to add item' });
+        console.error('Error creating item:', error);
+        res.status(500).json({ error: 'Failed to create item: ' + error.message });
     }
 };
 
@@ -81,7 +118,7 @@ exports.updateItem = async (req, res) => {
             return res.status(400).json({ error: 'No fields to update' });
         }
         
-        // Complete the SQL query with correct primary key column
+        // Complete the SQL query
         sql += updates.join(', ') + ' WHERE item_id = ?';
         params.push(id);
         
@@ -104,7 +141,6 @@ exports.deleteItem = async (req, res) => {
     try {
         const { id } = req.params;
         
-        // Use correct primary key column name
         const [result] = await db.query('DELETE FROM items WHERE item_id = ?', [id]);
         
         if (result.affectedRows === 0) {

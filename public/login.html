@@ -89,5 +89,22 @@
       </div>
     </div>
   </div>
+
+  <script>
+  // Check if user is already logged in when login page loads
+  document.addEventListener('DOMContentLoaded', () => {
+      const token = localStorage.getItem('authToken');
+      const userRole = localStorage.getItem('userRole');
+      
+      // If user is already logged in, redirect them appropriately
+      if (token) {
+          if (userRole === 'admin') {
+              window.location.replace('admin.html');
+          } else {
+              window.location.replace('pos.html');
+          }
+      }
+  });
+  </script>
 </body>
 </html>

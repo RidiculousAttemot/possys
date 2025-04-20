@@ -34,73 +34,76 @@ exports.getAdminInfo = async (req, res) => {
     }
 };
 
-// Get dashboard statistics
+// Get dashboard statistics from database
 exports.getDashboardStats = async (req, res) => {
     try {
-        // Initialize default values
-        let totalUsers = 0;
-        let totalSales = 0;
-        let itemCount = 0;
-        let transactionCount = 0;
-        let lowStockCount = 0;
+        console.log('Fetching dashboard statistics from database');
         
-        // Try to get user count - using correct table structure
-        try {
-            const [userRows] = await db.query('SELECT COUNT(*) as total FROM users');
-            totalUsers = userRows[0].total || 0;
-        } catch (err) {
-            console.error('Error counting users:', err);
-        }
-        
-        // Try to get total sales - using transactions table instead of orders
-        try {
-            const [salesRows] = await db.query('SELECT SUM(total_amount) as total FROM transactions');
-            totalSales = salesRows[0].total || 0;
-        } catch (err) {
-            console.error('Error calculating sales:', err);
-        }
-        
-        // Try to get inventory count - using items table instead of products
-        try {
-            const [productRows] = await db.query('SELECT COUNT(*) as total FROM items');
-            itemCount = productRows[0].total || 0;
-        } catch (err) {
-            console.error('Error counting products:', err);
-        }
-        
-        // Try to get transaction count - using transactions table
-        try {
-            const [transactionRows] = await db.query('SELECT COUNT(*) as total FROM transactions');
-            transactionCount = transactionRows[0].total || 0;
-        } catch (err) {
-            console.error('Error counting transactions:', err);
-        }
-        
-        // Try to get low stock items count - using items table and stock_quantity
-        try {
-            const [lowStockRows] = await db.query('SELECT COUNT(*) as total FROM items WHERE stock_quantity <= 5');
-            lowStockCount = lowStockRows[0].total || 0;
-        } catch (err) {
-            console.error('Error counting low stock items:', err);
-        }
-        
-        // Return dashboard statistics
-        res.json({
-            totalUsers,
-            totalSales,
-            itemCount,
-            transactionCount,
-            lowStockCount
-        });
-    } catch (error) {
-        console.error('Error fetching dashboard stats:', error);
-        res.json({
+        // Initialize stats object
+        const stats = {
             totalUsers: 0,
             totalSales: 0,
             itemCount: 0,
             transactionCount: 0,
-            lowStockCount: 0
-        });
+            recentTransactions: []
+        };
+        
+        // Get total users count
+        try {
+            const [userRows] = await db.query('SELECT COUNT(*) as total FROM users');
+            stats.totalUsers = userRows[0].total || 0;
+            console.log('Total users:', stats.totalUsers);
+        } catch (err) {
+            console.error('Error counting users:', err);
+        }
+        
+        // Get total sales
+        try {
+            const [salesRows] = await db.query('SELECT COALESCE(SUM(total_amount), 0) as total FROM transactions');
+            stats.totalSales = salesRows[0].total || 0;
+            console.log('Total sales:', stats.totalSales);
+        } catch (err) {
+            console.error('Error calculating total sales:', err);
+        }
+        
+        // Get item count
+        try {
+            const [itemRows] = await db.query('SELECT COUNT(*) as total FROM items');
+            stats.itemCount = itemRows[0].total || 0;
+            console.log('Item count:', stats.itemCount);
+        } catch (err) {
+            console.error('Error counting items:', err);
+        }
+        
+        // Get transaction count
+        try {
+            const [transactionRows] = await db.query('SELECT COUNT(*) as total FROM transactions');
+            stats.transactionCount = transactionRows[0].total || 0;
+            console.log('Transaction count:', stats.transactionCount);
+        } catch (err) {
+            console.error('Error counting transactions:', err);
+        }
+        
+        // Get recent transactions
+        try {
+            const [recentRows] = await db.query(`
+                SELECT t.*, u.full_name as cashier_name 
+                FROM transactions t
+                LEFT JOIN users u ON t.user_id = u.user_id
+                ORDER BY t.transaction_date DESC
+                LIMIT 5
+            `);
+            stats.recentTransactions = recentRows;
+            console.log('Recent transactions:', stats.recentTransactions.length);
+        } catch (err) {
+            console.error('Error fetching recent transactions:', err);
+        }
+        
+        // Return all stats
+        res.json(stats);
+    } catch (error) {
+        console.error('Error getting dashboard stats:', error);
+        res.status(500).json({ error: 'Failed to fetch dashboard statistics' });
     }
 };
 
