@@ -723,3 +723,151 @@ body {
     transform: translateY(-10px) translateZ(0);
   }
 }
+
+/* SweetAlert2 Customization for Login Page */
+.swal2-popup {
+  background-color: var(--dark-secondary) !important;
+  border-radius: 15px !important;
+  padding: 2em !important;
+  border: 1px solid rgba(52, 152, 219, 0.2) !important;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5) !important;
+  color: var(--text-color) !important;
+}
+
+.swal2-title {
+  color: var(--text-color) !important;
+  font-size: 1.8em !important;
+  font-weight: 600 !important;
+  padding-bottom: 10px !important;
+  border-bottom: 1px solid rgba(52, 152, 219, 0.1) !important;
+}
+
+.swal2-html-container {
+  color: var(--text-dark) !important;
+  margin: 1.5em 0 !important;
+  font-size: 1.1em !important;
+}
+
+.swal2-icon {
+  border-color: var(--primary-color) !important;
+}
+
+.swal2-icon.swal2-success {
+  border-color: var(--success) !important;
+}
+
+.swal2-icon.swal2-success [class^='swal2-success-line'] {
+  background-color: var(--success) !important;
+}
+
+.swal2-icon.swal2-success .swal2-success-ring {
+  border-color: rgba(46, 204, 113, 0.3) !important;
+}
+
+.swal2-icon.swal2-error {
+  border-color: var(--danger) !important;
+}
+
+.swal2-icon.swal2-error [class^='swal2-x-mark-line'] {
+  background-color: var(--danger) !important;
+}
+
+.swal2-confirm {
+  background: linear-gradient(45deg, var(--primary-color), var(--primary-dark)) !important;
+  border-radius: 10px !important;
+  box-shadow: 0 3px 10px rgba(52, 152, 219, 0.3) !important;
+  padding: 12px 24px !important;
+  font-weight: 500 !important;
+  position: relative !important;
+  overflow: hidden !important;
+}
+
+.swal2-confirm:hover {
+  box-shadow: 0 5px 15px rgba(52, 152, 219, 0.5) !important;
+  transform: translateY(-2px) !important;
+}
+
+.swal2-cancel {
+  background-color: rgba(255, 255, 255, 0.1) !important;
+  color: var(--text-color) !important;
+  border: 1px solid rgba(255, 255, 255, 0.05) !important;
+  border-radius: 10px !important;
+  padding: 12px 24px !important;
+  font-weight: 500 !important;
+}
+
+.swal2-cancel:hover {
+  background-color: rgba(255, 255, 255, 0.15) !important;
+  transform: translateY(-2px) !important;
+}
+
+.swal2-timer-progress-bar {
+  background: rgba(52, 152, 219, 0.5) !important;
+  height: 0.25em !important;
+}
+
+/* Animation for SweetAlert2 modals */
+.swal2-show {
+  animation: sweetAlert2Show 0.3s !important;
+}
+
+.swal2-hide {
+  animation: sweetAlert2Hide 0.15s !important;
+}
+
+@keyframes sweetAlert2Show {
+  0% {
+    transform: scale(0.9);
+    opacity: 0;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes sweetAlert2Hide {
+  0% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(0.9);
+    opacity: 0;
+  }
+}
+
+/* SweetAlert2 success checkmark animation */
+.swal2-success-circular-line-left,
+.swal2-success-circular-line-right,
+.swal2-success-fix {
+  background-color: transparent !important;
+}
+
+/* Customize backdrop */
+.swal2-backdrop-show {
+  background: rgba(0, 0, 0, 0.8) !important;
+  backdrop-filter: blur(5px) !important;
+}
+
+/* Make modals look better on mobile */
+@media (max-width: 500px) {
+  .swal2-popup {
+    padding: 1.5em !important;
+    width: 85% !important;
+    font-size: 0.8rem !important;
+  }
+  
+  .swal2-title {
+    font-size: 1.5em !important;
+  }
+  
+  .swal2-html-container {
+    font-size: 1em !important;
+  }
+  
+  .swal2-confirm, .swal2-cancel {
+    padding: 10px 18px !important;
+    font-size: 0.9em !important;
+  }
+}
