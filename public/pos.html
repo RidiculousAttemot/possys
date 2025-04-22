@@ -13,6 +13,20 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
   <link rel="stylesheet" href="css/pos.css">
 
+  <!-- Add this authentication check script in the head section (similar to admin.html) -->
+  <script>
+    // Authentication check - must run before any other scripts
+    (function() {
+      // Check if user is logged in
+      const authToken = localStorage.getItem('authToken');
+      if (!authToken) {
+        // Redirect to login if no auth token is found
+        window.location.href = 'login.html';
+        return;
+      }
+    })();
+  </script>
+
   <!-- Defer scripts to improve initial load performance -->
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11" defer></script>
   <script src="js/posdesign.js" defer></script>
@@ -28,19 +42,16 @@
     <div class="cube"></div>
   </div>
 
-  <!-- Header -->
+  <!-- Header - aligned with admin.html header style -->
   <header>
-    <a href="landing.html" class="logo">
+    <div class="logo">
       <i class="fas fa-motorcycle rotating-icon"></i>
       Motor<span class="tech">Tech</span>
-    </a>
-    <div class="user-profile">
-      <span id="currentDateTime">Loading date and time...</span>
-      <div class="user-info">
-        <i class="fas fa-user-circle"></i>
-        <span id="userName">Cashier</span>
-        <a href="#" class="btn-logout">Logout</a>
-      </div>
+    </div>
+    <div class="user-info">
+      <span id="currentDateTime"></span>
+      <span>Welcome, <span class="user-display" id="userName">Cashier</span></span>
+      <a href="#" class="btn-logout"><i class="fas fa-sign-out-alt"></i> Logout</a>
     </div>
   </header>
 
@@ -48,7 +59,7 @@
   <main>
     <!-- Categories Section -->
     <div class="categories">
-      <h2>Categories</h2>
+      <h2><i class="fas fa-tags"></i> Categories</h2>
       <div class="category-list">
         <!-- Categories will be dynamically populated by JavaScript -->
       </div>
@@ -57,7 +68,11 @@
     <!-- Items Section -->
     <div class="items">
       <h2>
-        <!-- Search box will be added by JavaScript -->
+        <span><i class="fas fa-boxes"></i> Products</span>
+        <div class="search-container">
+          <input type="text" id="searchItems" placeholder="Search items...">
+          <i class="fas fa-search search-icon"></i>
+        </div>
       </h2>
       <div class="item-grid" id="productGrid">
         <div class="loading-items">
@@ -67,32 +82,239 @@
       </div>
     </div>
 
-    <!-- Checkout Section will be populated by JavaScript -->
+    <!-- Modernized Checkout Section -->
     <div class="checkout">
-      <!-- Will be populated dynamically -->
+        <h2>Shopping Cart <span class="cart-count" id="cartCount">0</span></h2>
+        
+        <div class="cart-items" id="cartItems">
+            <div class="empty-cart" id="emptyCart">
+                <i class="fas fa-shopping-cart"></i>
+                <p>Your cart is empty</p>
+                <p>Add items to proceed</p>
+            </div>
+            <!-- Cart items will be added here dynamically with the new horizontal layout -->
+        </div>
+        
+        <div class="cart-summary">
+            <div class="summary-row">
+                <div class="summary-label">Subtotal:</div>
+                <div class="summary-value" id="subtotalAmount">₱0.00</div>
+            </div>
+            <div class="summary-row">
+                <div class="summary-label">Tax (12%):</div>
+                <div class="summary-value" id="taxAmount">₱0.00</div>
+            </div>
+            <div class="summary-row total">
+                <div class="summary-label">Total:</div>
+                <div class="summary-value" id="totalAmount">₱0.00</div>
+            </div>
+            
+            <button id="checkoutBtn" class="btn-checkout" disabled>
+                <i class="fas fa-shopping-cart"></i> Checkout
+            </button>
+            
+            <button id="historyBtn" class="btn-history">
+                <i class="fas fa-history"></i> Transaction History
+            </button>
+        </div>
+    </div>
+
+    <!-- Modernized Checkout Modal -->
+    <div class="modal" id="checkoutModal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h2>Complete Your Purchase</h2>
+            
+            <div class="checkout-items">
+                <table class="checkout-table">
+                    <thead>
+                        <tr>
+                            <th>Item</th>
+                            <th>Qty</th>
+                            <th>Price</th>
+                            <th>Subtotal</th>
+                        </tr>
+                    </thead>
+                    <tbody id="checkoutItemsList">
+                        <!-- Checkout items will be added here dynamically -->
+                    </tbody>
+                </table>
+            </div>
+            
+            <div class="payment-methods">
+                <h3>Select Payment Method</h3>
+                <div class="payment-options">
+                    <div class="payment-option">
+                        <input type="radio" id="cashPayment" name="paymentMethod" value="cash" checked>
+                        <label for="cashPayment">
+                            <i class="fas fa-money-bill-wave"></i>
+                            <span>Cash</span>
+                        </label>
+                    </div>
+                    <div class="payment-option">
+                        <input type="radio" id="cardPayment" name="paymentMethod" value="card">
+                        <label for="cardPayment">
+                            <i class="fas fa-credit-card"></i>
+                            <span>Card</span>
+                        </label>
+                    </div>
+                    <div class="payment-option">
+                        <input type="radio" id="gcashPayment" name="paymentMethod" value="gcash">
+                        <label for="gcashPayment">
+                            <i class="fas fa-mobile-alt"></i>
+                            <span>GCash</span>
+                        </label>
+                    </div>
+                </div>
+                
+                <!-- Payment method specific details -->
+                <div class="payment-details">
+                    <!-- Cash payment details -->
+                    <div id="cashDetails" class="active">
+                        <div class="payment-input-group">
+                            <div class="form-group">
+                                <label for="cashAmount">Amount Received</label>
+                                <input type="number" id="cashAmount" min="0" step="0.01" placeholder="Enter amount">
+                            </div>
+                            <div class="form-group">
+                                <label for="changeAmount">Change</label>
+                                <input type="text" id="changeAmount" disabled value="₱0.00">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Card payment details -->
+                    <div id="cardDetails">
+                        <div class="payment-input-group">
+                            <div class="form-group">
+                                <label for="cardNumber">Card Number</label>
+                                <input type="text" id="cardNumber" placeholder="XXXX-XXXX-XXXX-XXXX">
+                            </div>
+                        </div>
+                        <div class="payment-input-group">
+                            <div class="form-group">
+                                <label for="cardName">Cardholder Name</label>
+                                <input type="text" id="cardName" placeholder="Name on card">
+                            </div>
+                        </div>
+                        <div class="payment-input-group">
+                            <div class="form-group">
+                                <label for="cardExpiry">Expiry Date</label>
+                                <input type="text" id="cardExpiry" placeholder="MM/YY">
+                            </div>
+                            <div class="form-group">
+                                <label for="cardCVV">CVV</label>
+                                <input type="text" id="cardCVV" placeholder="123">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- GCash payment details -->
+                    <div id="gcashDetails">
+                        <div class="payment-input-group">
+                            <div class="form-group">
+                                <label for="gcashNumber">GCash Number</label>
+                                <input type="text" id="gcashNumber" placeholder="09XX-XXX-XXXX">
+                            </div>
+                        </div>
+                        <div class="payment-input-group">
+                            <div class="form-group">
+                                <label for="gcashReference">Reference Number</label>
+                                <input type="text" id="gcashReference" placeholder="Enter reference number">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="receipt-options">
+                <h3>Receipt Options</h3>
+                <div class="receipt-option">
+                    <input type="checkbox" id="printReceipt" checked>
+                    <label for="printReceipt">Print receipt after payment</label>
+                </div>
+                <div class="receipt-option">
+                    <input type="checkbox" id="emailReceipt">
+                    <label for="emailReceipt">Email receipt to customer</label>
+                </div>
+            </div>
+            
+            <div class="cart-summary">
+                <div class="summary-row">
+                    <div class="summary-label">Subtotal:</div>
+                    <div class="summary-value" id="modalSubtotal">₱0.00</div>
+                </div>
+                <div class="summary-row">
+                    <div class="summary-label">Tax (12%):</div>
+                    <div class="summary-value" id="modalTax">₱0.00</div>
+                </div>
+                <div class="summary-row total">
+                    <div class="summary-label">Total:</div>
+                    <div class="summary-value" id="modalTotal">₱0.00</div>
+                </div>
+            </div>
+            
+            <button id="completePaymentBtn" class="btn-confirm-payment">
+                <i class="fas fa-check-circle"></i> Complete Payment
+            </button>
+        </div>
+    </div>
+
+    <!-- Modernized Item Details Modal -->
+    <div class="modal" id="itemDetailsModal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            
+            <div class="item-details-header">
+                <div class="item-details-image">
+                    <!-- Image placeholder shown when no image is available -->
+                    <div class="item-placeholder-large" id="itemPlaceholderLarge">
+                        <i class="fas fa-image"></i>
+                        <p>No image available</p>
+                    </div>
+                    <!-- Item image will be loaded here -->
+                    <img id="modalItemImage" alt="Item Image">
+                </div>
+                
+                <!-- Out of stock overlay for unavailable items -->
+                <div class="not-available-overlay" id="notAvailableOverlay" style="display: none;">
+                    <span>OUT OF STOCK</span>
+                </div>
+            </div>
+            
+            <div class="item-details-content">
+                <div class="item-details-title">
+                    <div class="item-name-category">
+                        <h3 class="item-details-name" id="modalItemName">Loading...</h3>
+                        <span class="item-details-category" id="modalItemCategory"></span>
+                    </div>
+                    <div class="item-details-price" id="modalItemPrice"></div>
+                </div>
+                
+                <div class="item-details-description" id="modalItemDescription">
+                    Loading item details...
+                </div>
+                
+                <div class="item-details-meta">
+                    <div class="item-details-meta-item">
+                        <div class="meta-label">Stock Status</div>
+                        <div class="meta-value" id="modalItemStock">Checking...</div>
+                    </div>
+                    <div class="item-details-meta-item">
+                        <div class="meta-label">Item Code</div>
+                        <div class="meta-value" id="modalItemId">-</div>
+                    </div>
+                </div>
+                
+                <div class="item-details-actions">
+                    <button id="modalAddToCartBtn" class="btn-add-to-cart-large">
+                        <i class="fas fa-cart-plus"></i> Add to Cart
+                    </button>
+                </div>
+            </div>
+        </div>
     </div>
   </main>
-
-  <!-- Checkout Modal - Content will be dynamically inserted -->
-  <div id="checkoutModal" class="modal">
-    <div class="modal-content">
-      <!-- Will be populated dynamically -->
-    </div>
-  </div>
-
-  <!-- History Modal - Content will be dynamically inserted -->
-  <div id="historyModal" class="modal">
-    <div class="modal-content">
-      <!-- Will be populated dynamically -->
-    </div>
-  </div>
-
-  <!-- Item Details Modal - Content will be dynamically inserted -->
-  <div class="modal" id="itemDetailsModal">
-    <div class="modal-content item-details">
-      <!-- Will be populated dynamically -->
-    </div>
-  </div>
 
   <!-- Connection Status Indicator -->
   <div class="connection-status online">

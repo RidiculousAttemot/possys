@@ -31,6 +31,12 @@ document.addEventListener('DOMContentLoaded', function() {
     // Global variables
     let allProducts = []; // Will store all products fetched from the database
     let cartItems = []; // Will store items added to cart
+    let categories = []; // Will store unique categories
+    let currentCategory = 'all'; // Track current category filter
+    let searchTerm = ''; // Track current search term
+    
+    // API base URL - define once at the top
+    const API_URL = 'http://localhost:5000/api';
     
     // Function to fetch products from API
     const fetchProducts = async () => {
@@ -44,19 +50,32 @@ document.addEventListener('DOMContentLoaded', function() {
                 </div>
             `;
             
-            // In a real implementation, fetch from API endpoint
-            // const response = await fetch('http://localhost:5000/api/products');
-            // const data = await response.json();
-            // allProducts = data;
+            // Actual API call to fetch products
+            const response = await fetch(`${API_URL}/inventory?timestamp=${Date.now()}`);
             
-            // Simulate API delay
-            await new Promise(resolve => setTimeout(resolve, 800));
+            if (!response.ok) {
+                throw new Error('Failed to fetch products');
+            }
             
-            // Simulate empty state for testing
-            allProducts = [];
+            const data = await response.json();
             
-            // Display products or empty state
-            displayProducts(allProducts);
+            // Transform data to match our expected format
+            allProducts = data.map(item => ({
+                id: item.item_id,
+                name: item.item_name,
+                price: parseFloat(item.price),
+                stock: parseInt(item.stock_quantity),
+                category: item.category,
+                description: item.description || 'No description available',
+                image: item.image
+            }));
+            
+            // Extract unique categories for the category filter
+            extractCategories();
+            
+            // Display the products (filtered by current category and search term)
+            filterAndDisplayProducts();
+            
         } catch (error) {
             console.error('Error fetching products:', error);
             
@@ -72,15 +91,109 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     };
     
-    // Function to display products
-    const displayProducts = (products) => {
+    // Function to extract unique categories
+    const extractCategories = () => {
+        // Get all unique categories from products
+        categories = ['all', ...new Set(allProducts.map(product => product.category))];
+        
+        // Filter out null, undefined or empty categories
+        categories = categories.filter(category => category && category !== '');
+        
+        // Update category UI
+        const categoryList = document.querySelector('.category-list');
+        if (categoryList) {
+            let categoryHtml = '';
+            
+            categories.forEach(category => {
+                const activeClass = category === currentCategory ? 'active' : '';
+                categoryHtml += `
+                    <div class="category-item ${activeClass}" data-category="${category}">
+                        <span>${category === 'all' ? 'All Items' : category}</span>
+                    </div>
+                `;
+            });
+            
+            categoryList.innerHTML = categoryHtml;
+            
+            // Add event listeners to category items
+            document.querySelectorAll('.category-item').forEach(item => {
+                item.addEventListener('click', function() {
+                    const category = this.getAttribute('data-category');
+                    currentCategory = category;
+                    
+                    // Remove active class from all categories
+                    document.querySelectorAll('.category-item').forEach(cat => {
+                        cat.classList.remove('active');
+                    });
+                    
+                    // Add active class to clicked category
+                    this.classList.add('active');
+                    
+                    // Update display
+                    filterAndDisplayProducts();
+                });
+            });
+        }
+    };
+    
+    // Function to filter products by category and search term
+    const filterAndDisplayProducts = () => {
+        // Filter products by category
+        let filteredProducts = allProducts;
+        
+        if (currentCategory !== 'all') {
+            filteredProducts = filteredProducts.filter(product => 
+                product.category === currentCategory
+            );
+        }
+        
+        // Filter by search term if it exists
+        if (searchTerm) {
+            const term = searchTerm.toLowerCase();
+            filteredProducts = filteredProducts.filter(product => 
+                product.name.toLowerCase().includes(term) || 
+                (product.description && product.description.toLowerCase().includes(term)) ||
+                (product.category && product.category.toLowerCase().includes(term))
+            );
+        }
+        
+        // Display filtered products
+        displayProducts(filteredProducts);
+    };
+    
+    // Function to search products
+    const searchProducts = (term) => {
+        searchTerm = term;
+        filterAndDisplayProducts();
+    };
+    
+    // Function to display products with proper image paths
+    function displayProducts(products, category = 'all') {
         const productGrid = document.getElementById('productGrid');
         
-        if (products.length === 0) {
+        // Apply category and search filters
+        let filteredProducts = products;
+        if (category !== 'all') {
+            filteredProducts = filteredProducts.filter(product => product.category === category);
+        }
+        
+        if (searchTerm) {
+            const term = searchTerm.toLowerCase();
+            filteredProducts = filteredProducts.filter(product => 
+                product.name.toLowerCase().includes(term) || 
+                (product.description && product.description.toLowerCase().includes(term)) ||
+                (product.category && product.category.toLowerCase().includes(term))
+            );
+        }
+        
+        // Clear the grid
+        productGrid.innerHTML = '';
+        
+        if (filteredProducts.length === 0) {
             productGrid.innerHTML = `
                 <div class="no-items">
                     <i class="fas fa-search"></i>
-                    <p>No items found. Items added by admin will appear here.</p>
+                    <p>No items found. ${category === 'all' && !searchTerm ? 'Items added by admin will appear here.' : 'Try a different category or search term.'}</p>
                 </div>
             `;
             return;
@@ -88,35 +201,65 @@ document.addEventListener('DOMContentLoaded', function() {
         
         let productsHTML = '';
         
-        products.forEach(product => {
+        filteredProducts.forEach(product => {
             const stockStatus = product.stock > 10 ? 'normal' : (product.stock > 0 ? 'low' : 'out-of-stock');
             const stockText = product.stock > 0 ? `${product.stock} in stock` : 'Out of stock';
             const disabledStatus = product.stock <= 0 ? 'disabled' : '';
             
-            productsHTML += `
-                <div class="item-card">
+            // Debug the image path
+            console.log(`Product ${product.name} image path:`, product.image);
+            
+            // Fix image handling with consistent URL construction
+            let imageHtml = '';
+            if (product.image && product.image !== 'null' && product.image !== 'undefined') {
+                console.log(`Product ${product.name} image path:`, product.image);
+                
+                // Build correct image URL based on environment
+                let imagePath = '';
+                
+                // For working with Live Server which serves from /public
+                if (window.location.href.includes(':5500') || window.location.href.includes('localhost')) {
+                    imagePath = window.location.origin + '/public' + product.image;
+                } else {
+                    // For production deployment
+                    imagePath = product.image;
+                }
+                
+                imageHtml = `
                     <div class="item-image">
-                        <span class="item-category">${product.category}</span>
-                        ${product.image ? 
-                            `<img src="${product.image}" alt="${product.name}" class="item-image-content">` : 
-                            `<div class="item-image-placeholder">
-                                <i class="fas fa-motorcycle"></i>
-                                <span>${product.category}</span>
-                            </div>`
-                        }
+                        <img src="${imagePath}" alt="${product.name}" class="item-image-content" 
+                             onerror="this.onerror=null; this.src='${window.location.origin}/public/assets/images/no-image.png'; console.log('Using fallback image for ${product.name}');" />
                     </div>
+                `;
+            } else {
+                // Default placeholder for items without images
+                imageHtml = `
+                    <div class="item-image">
+                        <div class="item-image-placeholder">
+                            <i class="fas fa-motorcycle"></i>
+                            <span>No image</span>
+                        </div>
+                    </div>
+                `;
+            }
+            
+            // Create product card HTML
+            productsHTML += `
+                <div class="item-card" data-id="${product.id}">
+                    ${imageHtml}
                     <div class="item-details">
                         <h3 class="item-name">${product.name}</h3>
+                        <p class="item-category">${product.category || 'Uncategorized'}</p>
                         <p class="item-price">₱${product.price.toFixed(2)}</p>
                         <p class="item-stock ${stockStatus}-stock">${stockText}</p>
-                        <div class="item-actions">
-                            <button class="btn-add-to-cart" data-id="${product.id}" ${disabledStatus}>
-                                <i class="fas fa-shopping-cart"></i> Add to Cart
-                            </button>
-                            <button class="btn-view-details" data-id="${product.id}">
-                                <i class="fas fa-search"></i> View Details
-                            </button>
-                        </div>
+                    </div>
+                    <div class="item-actions">
+                        <button class="btn-view-details" data-id="${product.id}">
+                            <i class="fas fa-eye"></i> Details
+                        </button>
+                        <button class="btn-add-to-cart" data-id="${product.id}" ${disabledStatus}>
+                            <i class="fas fa-cart-plus"></i> Add
+                        </button>
                     </div>
                 </div>
             `;
@@ -401,49 +544,32 @@ document.addEventListener('DOMContentLoaded', function() {
             const amountTendered = parseFloat(document.getElementById('amountTendered').value);
             const change = amountTendered - total;
             
-            // Get selected payment method
-            const paymentMethod = document.querySelector('input[name="payment"]:checked').value;
-            
-            // Get selected discount type
-            let discountType = null;
-            let discountId = null;
-            document.querySelectorAll('.discount-option input[type="checkbox"]').forEach(checkbox => {
-                if (checkbox.checked) {
-                    discountType = checkbox.value;
-                }
-            });
-            
-            if (discountType) {
-                discountId = document.getElementById('discountIdNumber').value;
-            }
-            
-            // Create transaction object
+            // Build transaction object
             const transaction = {
-                items: cartItems,
-                subtotal,
-                tax,
-                discountType,
-                discountId,
-                discountAmount,
-                total,
-                paymentMethod,
-                amountTendered,
-                change,
-                date: new Date().toISOString()
+                user_id: localStorage.getItem('userId'),
+                total_amount: total,
+                payment_method: 'cash', // Default to cash for now
+                items: cartItems.map(item => ({
+                    item_id: item.id,
+                    quantity: item.quantity,
+                    price: item.price
+                }))
             };
             
-            // In a real app, send to server
-            // const response = await fetch('http://localhost:5000/api/transactions', {
-            //     method: 'POST',
-            //     headers: {
-            //         'Content-Type': 'application/json',
-            //         'Authorization': `Bearer ${localStorage.getItem('authToken')}`
-            //     },
-            //     body: JSON.stringify(transaction)
-            // });
+            // Send transaction to server
+            const response = await fetch(`${API_URL}/transactions`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${localStorage.getItem('authToken')}`
+                },
+                body: JSON.stringify(transaction)
+            });
             
-            // Simulate API call delay
-            await new Promise(resolve => setTimeout(resolve, 1000));
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.error || 'Transaction failed');
+            }
             
             // Show success message
             Swal.fire({
@@ -466,30 +592,30 @@ document.addEventListener('DOMContentLoaded', function() {
             
             // Refresh product list to update stock
             fetchProducts();
+            
         } catch (error) {
             console.error('Error completing transaction:', error);
             
             // Show error message
             Swal.fire({
                 title: 'Error',
-                text: 'Failed to complete transaction. Please try again.',
+                text: error.message || 'Failed to complete transaction. Please try again.',
                 icon: 'error',
                 confirmButtonColor: '#3498db',
                 background: '#141414',
                 color: '#f5f5f5'
             });
             
-            // Re-enable button
+            // Reset button
             const confirmBtn = document.getElementById('confirmPaymentBtn');
             confirmBtn.disabled = false;
-            confirmBtn.innerHTML = 'Complete Payment';
+            confirmBtn.textContent = 'Confirm Payment';
         }
     };
     
-    // Function to load transaction history
-    const loadTransactionHistory = async () => {
+    // Function to show transaction history
+    const showTransactionHistory = async () => {
         try {
-            // Show loading state
             const historyList = document.getElementById('historyList');
             historyList.innerHTML = `
                 <div class="loading-items">
@@ -498,50 +624,56 @@ document.addEventListener('DOMContentLoaded', function() {
                 </div>
             `;
             
-            // In a real app, you would fetch from your API
-            // const response = await fetch('http://localhost:5000/api/transactions', {
-            //     headers: {
-            //         'Authorization': `Bearer ${localStorage.getItem('authToken')}`
-            //     }
-            // });
-            // const transactions = await response.json();
+            // Show history modal
+            const historyModal = document.getElementById('historyModal');
+            historyModal.classList.add('show');
+            document.body.style.overflow = 'hidden';
             
-            // Simulate API delay
-            await new Promise(resolve => setTimeout(resolve, 800));
+            // Fetch transaction history from server
+            const userId = localStorage.getItem('userId');
+            const response = await fetch(`${API_URL}/transactions/user/${userId}?timestamp=${Date.now()}`);
             
-            // Simulate empty history
-            const transactions = [];
+            if (!response.ok) {
+                throw new Error('Failed to fetch transaction history');
+            }
+            
+            const transactions = await response.json();
             
             if (transactions.length === 0) {
                 historyList.innerHTML = `
-                    <div class="no-transactions">
-                        <i class="fas fa-receipt"></i>
-                        <p>No transactions found.</p>
+                    <div class="no-history">
+                        <i class="fas fa-info-circle"></i>
+                        <p>No transaction history found.</p>
                     </div>
                 `;
                 return;
             }
             
+            // Build history HTML
             let historyHTML = '';
             
             transactions.forEach(transaction => {
-                const date = new Date(transaction.date);
+                const date = new Date(transaction.transaction_date);
                 const formattedDate = date.toLocaleDateString('en-US', {
                     year: 'numeric',
-                    month: 'long',
+                    month: 'short',
                     day: 'numeric',
                     hour: '2-digit',
                     minute: '2-digit'
                 });
                 
                 historyHTML += `
-                    <div class="history-item">
-                        <div class="transaction-info">
-                            <div class="transaction-id">${transaction.id}</div>
-                            <div class="transaction-date">${formattedDate}</div>
-                            <div class="transaction-total">₱${transaction.total.toFixed(2)}</div>
+                    <div class="history-item" data-id="${transaction.transaction_id}">
+                        <div class="history-header">
+                            <div>
+                                <span class="transaction-id">#${transaction.transaction_id}</span>
+                                <span class="transaction-date">${formattedDate}</span>
+                            </div>
+                            <div class="transaction-amount">₱${parseFloat(transaction.total_amount).toFixed(2)}</div>
                         </div>
-                        <button class="btn-view-transaction" data-id="${transaction.id}">View Details</button>
+                        <button class="btn-view-transaction" data-id="${transaction.transaction_id}">
+                            View Details
+                        </button>
                     </div>
                 `;
             });
@@ -552,47 +684,57 @@ document.addEventListener('DOMContentLoaded', function() {
             document.querySelectorAll('.btn-view-transaction').forEach(button => {
                 button.addEventListener('click', function() {
                     const transactionId = this.getAttribute('data-id');
-                    const transaction = transactions.find(t => t.id === transactionId);
-                    
-                    if (transaction) {
-                        viewTransactionDetails(transaction);
-                    }
+                    viewTransactionDetails(transactionId);
                 });
             });
-        } catch (error) {
-            console.error('Error loading transaction history:', error);
             
-            // Show error state
+        } catch (error) {
+            console.error('Error fetching transaction history:', error);
+            
             const historyList = document.getElementById('historyList');
             historyList.innerHTML = `
-                <div class="error-items">
+                <div class="error-history">
                     <i class="fas fa-exclamation-circle"></i>
                     <p>Failed to load transaction history. Please try again.</p>
-                    <button class="btn-retry" onclick="loadTransactionHistory()">Retry</button>
+                    <button class="btn-retry" onclick="showTransactionHistory()">Retry</button>
                 </div>
             `;
         }
     };
     
     // Function to view transaction details
-    const viewTransactionDetails = (transaction) => {
-        // Create a new modal for transaction details
-        Swal.fire({
-            title: `Transaction ${transaction.id}`,
-            html: `
-                <div class="transaction-details-modal">
-                    <div class="transaction-details-info">
-                        <p><strong>Date:</strong> ${new Date(transaction.date).toLocaleDateString('en-US', {
-                            year: 'numeric',
-                            month: 'long',
-                            day: 'numeric',
-                            hour: '2-digit',
-                            minute: '2-digit'
-                        })}</p>
+    const viewTransactionDetails = async (transactionId) => {
+        try {
+            // Fetch transaction details from server
+            const response = await fetch(`${API_URL}/transactions/${transactionId}`);
+            
+            if (!response.ok) {
+                throw new Error('Failed to fetch transaction details');
+            }
+            
+            const transaction = await response.json();
+            
+            // Format date
+            const date = new Date(transaction.transaction_date);
+            const formattedDate = date.toLocaleDateString('en-US', {
+                year: 'numeric',
+                month: 'short',
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+            
+            // Show transaction details in a SweetAlert
+            Swal.fire({
+                title: `Transaction #${transaction.transaction_id}`,
+                html: `
+                <div class="transaction-details">
+                    <div class="transaction-details-header">
+                        <p><strong>Date:</strong> ${formattedDate}</p>
+                        <p><strong>Cashier:</strong> ${transaction.cashier_name}</p>
                     </div>
                     
-                    <h3>Items</h3>
-                    <table class="transaction-details-table">
+                    <table class="transaction-items-table">
                         <thead>
                             <tr>
                                 <th>Item</th>
@@ -604,8 +746,8 @@ document.addEventListener('DOMContentLoaded', function() {
                         <tbody>
                             ${transaction.items.map(item => `
                                 <tr>
-                                    <td>${item.name}</td>
-                                    <td>₱${item.price.toFixed(2)}</td>
+                                    <td>${item.item_name}</td>
+                                    <td>₱${parseFloat(item.price).toFixed(2)}</td>
                                     <td>${item.quantity}</td>
                                     <td>₱${(item.price * item.quantity).toFixed(2)}</td>
                                 </tr>
@@ -616,133 +758,127 @@ document.addEventListener('DOMContentLoaded', function() {
                     <div class="transaction-details-summary">
                         <div class="summary-row">
                             <span>Total:</span>
-                            <span>₱${transaction.total.toFixed(2)}</span>
+                            <span>₱${transaction.total_amount.toFixed(2)}</span>
                         </div>
                     </div>
                 </div>
             `,
-            showCloseButton: true,
-            showConfirmButton: true,
-            confirmButtonText: 'Print Receipt',
+                showCloseButton: true,
+                showConfirmButton: true,
+                confirmButtonText: 'Print Receipt',
+                confirmButtonColor: '#3498db',
+                background: '#141414',
+                color: '#f5f5f5',
+                width: '600px',
+                customClass: {
+                    container: 'transaction-modal-container'
+                }
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    // In a real app, this would print the receipt
+                    Swal.fire({
+                        title: 'Printing Receipt',
+                        text: 'The receipt is being printed...',
+                        icon: 'info',
+                        timer: 1500,
+                        showConfirmButton: false,
+                        background: '#141414',
+                        color: '#f5f5f5'
+                    });
+                }
+            });
+            
+        } catch (error) {
+            console.error('Error fetching transaction details:', error);
+            
+            Swal.fire({
+                title: 'Error',
+                text: 'Failed to load transaction details. Please try again.',
+                icon: 'error',
+                confirmButtonColor: '#3498db',
+                background: '#141414',
+                color: '#f5f5f5'
+            });
+        }
+    };
+    
+    // Function to calculate change
+    const calculateChange = () => {
+        const amountDue = parseFloat(document.getElementById('amountDue').textContent);
+        const amountTendered = parseFloat(document.getElementById('amountTendered').value) || 0;
+        
+        const change = amountTendered - amountDue;
+        document.getElementById('change').value = change >= 0 ? `₱${change.toFixed(2)}` : '₱0.00';
+        
+        // Enable/disable confirm button based on whether enough money was tendered
+        const confirmBtn = document.getElementById('confirmPaymentBtn');
+        confirmBtn.disabled = amountTendered < amountDue;
+    };
+    
+    // Function to handle logout with fixed-size modal
+    const handleLogout = () => {
+        Swal.fire({
+            title: 'Logout Confirmation',
+            text: 'Are you sure you want to log out?',
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonText: 'Yes, Logout',
+            cancelButtonText: 'Cancel',
             confirmButtonColor: '#3498db',
             background: '#141414',
             color: '#f5f5f5',
-            width: '600px',
+            width: '400px', // Fixed width for logout modal
             customClass: {
-                container: 'transaction-modal-container'
+                container: 'fixed-size-modal'
             }
         }).then((result) => {
             if (result.isConfirmed) {
-                // In a real app, this would print the receipt
-                Swal.fire({
-                    title: 'Printing Receipt',
-                    text: 'The receipt is being printed...',
-                    icon: 'info',
-                    timer: 1500,
-                    showConfirmButton: false,
-                    background: '#141414',
-                    color: '#f5f5f5'
-                });
+                // Clear all authentication data
+                localStorage.removeItem('authToken');
+                localStorage.removeItem('userName');
+                localStorage.removeItem('userRole');
+                localStorage.removeItem('userId');
+                
+                // Redirect to login page
+                window.location.href = 'login.html';
             }
         });
     };
-    
-    // Filter products by category
-    const filterByCategory = (category) => {
-        const filtered = category === 'all' ? 
-            allProducts : 
-            allProducts.filter(product => product.category === category);
-        
-        displayProducts(filtered);
-    };
-    
-    // Search products by name
-    const searchProducts = (query) => {
-        if (!query.trim()) {
-            displayProducts(allProducts);
-            return;
-        }
-        
-        const searchTerm = query.toLowerCase();
-        const filtered = allProducts.filter(product => 
-            product.name.toLowerCase().includes(searchTerm) || 
-            product.category.toLowerCase().includes(searchTerm)
-        );
-        
-        displayProducts(filtered);
-    };
-    
-    // Setup categories dynamically
-    const setupCategories = () => {
-        const categoryList = document.querySelector('.category-list');
-        if (categoryList) {
-            // Add "All Items" category which should always be present
-            categoryList.innerHTML = `
-                <button class="category-item active" data-category="all">All Items</button>
-            `;
-            
-            // In a real implementation, you would get unique categories from your products
-            // const uniqueCategories = [...new Set(allProducts.map(product => product.category))];
-            
-            // For demo, add placeholder categories
-            const placeholderCategories = [
-                'Engine Parts', 'Brake Systems', 'Suspension', 
-                'Oils & Lubricants', 'Electrical', 'Exhaust Systems', 
-                'Accessories', 'Maintenance'
-            ];
-            
-            placeholderCategories.forEach(category => {
-                const categoryBtn = document.createElement('button');
-                categoryBtn.className = 'category-item';
-                categoryBtn.setAttribute('data-category', category);
-                categoryBtn.textContent = category;
-                categoryList.appendChild(categoryBtn);
-            });
-            
-            // Add event listeners to category buttons
-            document.querySelectorAll('.category-item').forEach(button => {
-                button.addEventListener('click', function() {
-                    // Remove active class from all buttons
-                    document.querySelectorAll('.category-item').forEach(btn => {
-                        btn.classList.remove('active');
-                    });
-                    
-                    // Add active class to clicked button
-                    this.classList.add('active');
-                    
-                    // Filter products by category
-                    const category = this.getAttribute('data-category');
-                    filterByCategory(category);
+
+    // Set up the page when DOM is loaded
+    const setupPage = async () => {
+        // Set current date/time
+        const currentDateTimeDisplay = document.getElementById('currentDateTime');
+        if (currentDateTimeDisplay) {
+            const updateDateTime = () => {
+                const now = new Date();
+                currentDateTimeDisplay.textContent = now.toLocaleDateString('en-US', { 
+                    weekday: 'long',
+                    year: 'numeric', 
+                    month: 'long', 
+                    day: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit'
                 });
+            };
+            
+            updateDateTime();
+            setInterval(updateDateTime, 60000); // Update every minute
+        }
+        
+        // Setup logout button
+        const logoutBtn = document.querySelector('.btn-logout');
+        if (logoutBtn) {
+            logoutBtn.addEventListener('click', function(e) {
+                e.preventDefault();
+                handleLogout();
             });
         }
-    };
-    
-    // Init function to set up event listeners and load initial data
-    const init = async () => {
-        // Setup categories
-        setupCategories();
         
-        // Setup search functionality
+        // Setup search input
         const searchInput = document.getElementById('searchItems');
         if (searchInput) {
-            // Add search placeholder to the UI
-            const searchContainer = document.createElement('div');
-            searchContainer.className = 'search-container';
-            searchContainer.innerHTML = `
-                <i class="fas fa-search"></i>
-                <input type="text" id="searchItems" placeholder="Search items...">
-            `;
-            
-            // Add search container to the items section title
-            const itemsTitle = document.querySelector('.items h2');
-            if (itemsTitle) {
-                itemsTitle.innerHTML = 'Items';
-                itemsTitle.appendChild(searchContainer);
-            }
-            
-            // Add event listener for search input
-            document.getElementById('searchItems').addEventListener('input', function() {
+            searchInput.addEventListener('input', function() {
                 searchProducts(this.value);
             });
         }
@@ -805,26 +941,22 @@ document.addEventListener('DOMContentLoaded', function() {
                 <div class="discount-options">
                     <h3>Apply Discount</h3>
                     <div class="discount-types">
-                        <label class="discount-option">
-                            <input type="checkbox" name="discountType" value="senior" id="seniorDiscount">
-                            <span class="checkbox-custom"></span>
-                            <span>Senior Citizen (5%)</span>
-                        </label>
-                        <label class="discount-option">
-                            <input type="checkbox" name="discountType" value="pwd" id="pwdDiscount">
-                            <span class="checkbox-custom"></span>
-                            <span>PWD (2%)</span>
-                        </label>
-                        <label class="discount-option">
-                            <input type="checkbox" name="discountType" value="loyalty" id="loyaltyDiscount">
-                            <span class="checkbox-custom"></span>
-                            <span>Loyalty (3%)</span>
-                        </label>
+                        <div class="discount-option">
+                            <input type="checkbox" id="seniorDiscount" class="discount-checkbox">
+                            <label for="seniorDiscount">Senior Discount (20%)</label>
+                        </div>
+                        <div class="discount-option">
+                            <input type="checkbox" id="pwdDiscount" class="discount-checkbox">
+                            <label for="pwdDiscount">PWD Discount (20%)</label>
+                        </div>
+                        <div class="discount-option">
+                            <input type="checkbox" id="promoDiscount" class="discount-checkbox">
+                            <label for="promoDiscount">Promo Code (10%)</label>
+                        </div>
                     </div>
-                    
-                    <div id="discountIdContainer" class="discount-id-container" style="display: none;">
-                        <label for="discountIdNumber">ID Number:</label>
-                        <input type="text" id="discountIdNumber" placeholder="Enter ID number">
+                    <div id="discountIdContainer" style="display:none">
+                        <label for="discountId">ID Number:</label>
+                        <input type="text" id="discountId" placeholder="Enter ID Number">
                     </div>
                 </div>
                 
@@ -838,49 +970,103 @@ document.addEventListener('DOMContentLoaded', function() {
                         <span>Tax (12%):</span>
                         <span>₱<span id="checkout-tax">0.00</span></span>
                     </div>
-                    <div class="summary-row" id="discount-row" style="display: none;">
+                    <div class="summary-row" id="discount-row" style="display:none">
                         <span>Discount:</span>
                         <span>₱<span id="checkout-discount">0.00</span></span>
                     </div>
-                    <div class="summary-row total-final">
-                        <span>Total Due:</span>
+                    <div class="summary-row total">
+                        <span>Amount Due:</span>
                         <span>₱<span id="amountDue">0.00</span></span>
                     </div>
                 </div>
                 
-                <!-- Payment Method -->
-                <div class="payment-options">
-                    <label>
-                        <input type="radio" name="payment" value="cash" checked>
-                        <i class="fas fa-money-bill-wave"></i>
-                        <span>Cash</span>
-                    </label>
-                    <label>
-                        <input type="radio" name="payment" value="card">
-                        <i class="fas fa-credit-card"></i>
-                        <span>Card</span>
-                    </label>
-                    <label>
-                        <input type="radio" name="payment" value="gcash">
-                        <i class="fas fa-mobile-alt"></i>
-                        <span>GCash</span>
-                    </label>
-                </div>
-                
-                <!-- Payment Input -->
-                <div class="payment-input">
-                    <div>
+                <!-- Payment Form -->
+                <div class="payment-form">
+                    <div class="form-group">
                         <label for="amountTendered">Amount Tendered:</label>
-                        <input type="number" id="amountTendered" placeholder="Enter amount" step="0.01" min="0">
+                        <input type="number" id="amountTendered" min="0" step="0.01" placeholder="Enter amount">
                     </div>
-                    <div>
+                    <div class="form-group">
                         <label for="change">Change:</label>
                         <input type="text" id="change" value="₱0.00" readonly>
                     </div>
                 </div>
                 
-                <button class="btn-confirm-payment" id="confirmPaymentBtn" disabled>Complete Payment</button>
+                <div class="modal-actions">
+                    <button id="confirmPaymentBtn" class="btn-primary" disabled>Confirm Payment</button>
+                    <button id="cancelPaymentBtn" class="btn-secondary">Cancel</button>
+                </div>
             `;
+            
+            // Add event listeners for discount checkboxes
+            document.querySelectorAll('.discount-checkbox').forEach(checkbox => {
+                checkbox.addEventListener('change', function() {
+                    // Uncheck other checkboxes
+                    document.querySelectorAll('.discount-checkbox').forEach(cb => {
+                        if (cb !== this) cb.checked = false;
+                    });
+                    
+                    // Show/hide ID container
+                    const discountIdContainer = document.getElementById('discountIdContainer');
+                    const discountRow = document.getElementById('discount-row');
+                    
+                    if (this.checked && (this.id === 'seniorDiscount' || this.id === 'pwdDiscount')) {
+                        discountIdContainer.style.display = 'block';
+                    } else {
+                        discountIdContainer.style.display = 'none';
+                    }
+                    
+                    // Calculate discount
+                    const subtotal = parseFloat(document.getElementById('checkout-subtotal').textContent);
+                    let discountRate = 0;
+                    
+                    if (this.checked) {
+                        if (this.id === 'seniorDiscount' || this.id === 'pwdDiscount') {
+                            discountRate = 0.2; // 20% discount
+                        } else if (this.id === 'promoDiscount') {
+                            discountRate = 0.1; // 10% discount
+                        }
+                        
+                        discountRow.style.display = 'flex';
+                    } else {
+                        discountRow.style.display = 'none';
+                    }
+                    
+                    const discountAmount = subtotal * discountRate;
+                    document.getElementById('checkout-discount').textContent = discountAmount.toFixed(2);
+                    
+                    // Update amount due
+                    const tax = parseFloat(document.getElementById('checkout-tax').textContent);
+                    const amountDue = subtotal + tax - discountAmount;
+                    document.getElementById('amountDue').textContent = amountDue.toFixed(2);
+                    
+                    // Reset change calculation
+                    document.getElementById('amountTendered').value = '';
+                    document.getElementById('change').value = '₱0.00';
+                    document.getElementById('confirmPaymentBtn').disabled = true;
+                });
+            });
+            
+            // Add event listener for amount tendered input
+            const amountTenderedInput = document.getElementById('amountTendered');
+            if (amountTenderedInput) {
+                amountTenderedInput.addEventListener('input', calculateChange);
+            }
+            
+            // Add event listener for confirm payment button
+            const confirmPaymentBtn = document.getElementById('confirmPaymentBtn');
+            if (confirmPaymentBtn) {
+                confirmPaymentBtn.addEventListener('click', completeTransaction);
+            }
+            
+            // Add event listener for cancel payment button
+            const cancelPaymentBtn = document.getElementById('cancelPaymentBtn');
+            if (cancelPaymentBtn) {
+                cancelPaymentBtn.addEventListener('click', function() {
+                    checkoutModal.classList.remove('show');
+                    document.body.style.overflow = 'auto';
+                });
+            }
         }
         
         // Setup history modal
@@ -932,102 +1118,673 @@ document.addEventListener('DOMContentLoaded', function() {
             checkoutBtn.addEventListener('click', handleCheckout);
         }
         
-        // Confirm payment button
-        const confirmPaymentBtn = document.getElementById('confirmPaymentBtn');
-        if (confirmPaymentBtn) {
-            confirmPaymentBtn.addEventListener('click', completeTransaction);
-        }
-        
         // History button
         const historyBtn = document.getElementById('historyBtn');
         if (historyBtn) {
-            historyBtn.addEventListener('click', function() {
-                loadTransactionHistory();
-                const modal = document.getElementById('historyModal');
-                modal.classList.add('show');
-                document.body.style.overflow = 'hidden';
-            });
+            historyBtn.addEventListener('click', showTransactionHistory);
         }
-        
-        // Amount tendered input
-        const amountTenderedInput = document.getElementById('amountTendered');
-        if (amountTenderedInput) {
-            amountTenderedInput.addEventListener('input', function() {
-                const amountDue = parseFloat(document.getElementById('amountDue').textContent);
-                const amountTendered = parseFloat(this.value);
-                
-                if (!isNaN(amountTendered) && amountTendered >= amountDue) {
-                    confirmPaymentBtn.disabled = false;
-                    
-                    // Calculate change
-                    const change = amountTendered - amountDue;
-                    document.getElementById('change').value = `₱${change.toFixed(2)}`;
-                } else {
-                    confirmPaymentBtn.disabled = true;
-                    document.getElementById('change').value = `₱0.00`;
-                }
-            });
-        }
-        
-        // Discount checkboxes
-        document.querySelectorAll('.discount-option input[type="checkbox"]').forEach(checkbox => {
-            checkbox.addEventListener('change', function() {
-                // Uncheck other checkboxes
-                document.querySelectorAll('.discount-option input[type="checkbox"]').forEach(cb => {
-                    if (cb !== this) {
-                        cb.checked = false;
-                    }
-                });
-                
-                // Show/hide ID input if a discount is selected
-                const anyChecked = Array.from(document.querySelectorAll('.discount-option input[type="checkbox"]')).some(cb => cb.checked);
-                document.getElementById('discountIdContainer').style.display = anyChecked ? 'block' : 'none';
-                
-                // Show/hide discount row in summary
-                document.getElementById('discount-row').style.display = anyChecked ? 'flex' : 'none';
-                
-                // Calculate and apply discount
-                if (anyChecked) {
-                    const subtotal = parseFloat(document.getElementById('checkout-subtotal').textContent);
-                    let discountPercent = 0;
-                    
-                    if (this.value === 'senior') discountPercent = 0.05;
-                    else if (this.value === 'pwd') discountPercent = 0.02;
-                    else if (this.value === 'loyalty') discountPercent = 0.03;
-                    
-                    const discountAmount = subtotal * discountPercent;
-                    const tax = parseFloat(document.getElementById('checkout-tax').textContent);
-                    const total = subtotal + tax - discountAmount;
-                    
-                    document.getElementById('checkout-discount').textContent = discountAmount.toFixed(2);
-                    document.getElementById('amountDue').textContent = total.toFixed(2);
-                } else {
-                    const subtotal = parseFloat(document.getElementById('checkout-subtotal').textContent);
-                    const tax = parseFloat(document.getElementById('checkout-tax').textContent);
-                    const total = subtotal + tax;
-                    
-                    document.getElementById('checkout-discount').textContent = '0.00';
-                    document.getElementById('amountDue').textContent = total.toFixed(2);
-                }
-                
-                // Reset amount tendered
-                document.getElementById('amountTendered').value = '';
-                document.getElementById('change').value = '₱0.00';
-                document.getElementById('confirmPaymentBtn').disabled = true;
-            });
-        });
-        
-        // Add modal close behavior when clicking outside modal content
-        document.querySelectorAll('.modal').forEach(modal => {
-            modal.addEventListener('click', function(e) {
-                if (e.target === this) {
-                    this.classList.remove('show');
-                    document.body.style.overflow = 'auto';
-                }
-            });
-        });
     };
     
-    // Initialize the app
-    init();
+    // Initialize the page
+    setupPage();
+    
+    // Payment method switching
+    document.querySelectorAll('input[name="paymentMethod"]').forEach(radio => {
+        radio.addEventListener('change', function() {
+            // Hide all payment details
+            document.getElementById('cashDetails').classList.remove('active');
+            document.getElementById('cardDetails').classList.remove('active');
+            document.getElementById('gcashDetails').classList.remove('active');
+            
+            // Show the selected payment details
+            document.getElementById(`${this.value}Details`).classList.add('active');
+        });
+    });
+    
+    // Handle cash amount input for change calculation
+    document.getElementById('cashAmount').addEventListener('input', function() {
+        const cashAmount = parseFloat(this.value) || 0;
+        const totalAmount = parseFloat(document.getElementById('modalTotal').textContent.replace('₱', '')) || 0;
+        
+        let change = cashAmount - totalAmount;
+        change = change > 0 ? change : 0;
+        
+        document.getElementById('changeAmount').value = `₱${change.toFixed(2)}`;
+        
+        // Enable/disable complete payment button based on sufficient cash
+        const completePaymentBtn = document.getElementById('completePaymentBtn');
+        if (cashAmount >= totalAmount) {
+            completePaymentBtn.disabled = false;
+        } else {
+            completePaymentBtn.disabled = true;
+        }
+    });
+    
+    // Format the cart item template for the new design
+    function formatCartItem(item) {
+        return `
+            <div class="cart-item" data-id="${item.id}">
+                <button class="cart-item-delete" onclick="removeFromCart(${item.id})">
+                    <i class="fas fa-times"></i>
+                </button>
+                <div class="cart-item-header">
+                    <div class="cart-item-name">${item.name}</div>
+                    <div class="cart-item-price">₱${parseFloat(item.price).toFixed(2)}</div>
+                </div>
+                <div class="cart-item-footer">
+                    <div class="cart-item-quantity">
+                        <button class="quantity-btn" onclick="updateQuantity(${item.id}, -1)">
+                            <i class="fas fa-minus"></i>
+                        </button>
+                        <div class="quantity-value">${item.quantity}</div>
+                        <button class="quantity-btn" onclick="updateQuantity(${item.id}, 1)">
+                            <i class="fas fa-plus"></i>
+                        </button>
+                    </div>
+                    <div class="cart-item-subtotal">₱${(item.price * item.quantity).toFixed(2)}</div>
+                </div>
+            </div>
+        `;
+    }
+    
+    // Update the complete payment function to handle different payment methods
+    function completePayment() {
+        const paymentMethod = document.querySelector('input[name="paymentMethod"]:checked').value;
+        const printReceipt = document.getElementById('printReceipt').checked;
+        const emailReceipt = document.getElementById('emailReceipt').checked;
+        
+        let paymentDetails = {};
+        
+        // Collect payment details based on payment method
+        if (paymentMethod === 'cash') {
+            const cashAmount = parseFloat(document.getElementById('cashAmount').value) || 0;
+            const changeAmount = parseFloat(document.getElementById('changeAmount').value.replace('₱', '')) || 0;
+            
+            paymentDetails = {
+                method: 'cash',
+                cashAmount,
+                changeAmount
+            };
+        } else if (paymentMethod === 'card') {
+            paymentDetails = {
+                method: 'card',
+                cardNumber: document.getElementById('cardNumber').value,
+                cardName: document.getElementById('cardName').value,
+                cardExpiry: document.getElementById('cardExpiry').value
+            };
+        } else if (paymentMethod === 'gcash') {
+            paymentDetails = {
+                method: 'gcash',
+                gcashNumber: document.getElementById('gcashNumber').value,
+                referenceNumber: document.getElementById('gcashReference').value
+            };
+        }
+        
+        // Add receipt options
+        paymentDetails.printReceipt = printReceipt;
+        paymentDetails.emailReceipt = emailReceipt;
+        
+        // Process the transaction (existing logic)
+        // ...
+        
+        // Generate and print receipt if needed
+        if (printReceipt) {
+            generateAndPrintReceipt(paymentDetails);
+        }
+    }
+    
+    // Generate and print receipt function
+    function generateAndPrintReceipt(paymentDetails) {
+        // Create receipt HTML
+        const receiptHTML = `
+            <div class="receipt">
+                <div class="receipt-header">
+                    <h2>MotorTech</h2>
+                    <p>Motorcycle Parts & Accessories</p>
+                    <p>${new Date().toLocaleString()}</p>
+                    <p>Receipt #: ${generateReceiptNumber()}</p>
+                </div>
+                <div class="receipt-items">
+                    ${cart.map(item => `
+                        <div class="receipt-item">
+                            <div class="receipt-item-details">
+                                <span class="receipt-item-name">${item.name}</span>
+                                <span class="receipt-item-quantity">x${item.quantity}</span>
+                            </div>
+                            <span class="receipt-item-price">₱${(item.price * item.quantity).toFixed(2)}</span>
+                        </div>
+                    `).join('')}
+                </div>
+                <div class="receipt-summary">
+                    <div class="receipt-summary-row">
+                        <span>Subtotal:</span>
+                        <span>₱${calculateSubtotal().toFixed(2)}</span>
+                    </div>
+                    <div class="receipt-summary-row">
+                        <span>Tax (12%):</span>
+                        <span>₱${calculateTax().toFixed(2)}</span>
+                    </div>
+                    <div class="receipt-summary-row total">
+                        <span>Total:</span>
+                        <span>₱${calculateTotal().toFixed(2)}</span>
+                    </div>
+                </div>
+                <div class="receipt-payment">
+                    <div class="receipt-payment-method">
+                        <span>Payment Method:</span>
+                        <span>${paymentDetails.method.toUpperCase()}</span>
+                    </div>
+                    ${paymentDetails.method === 'cash' ? `
+                        <div class="receipt-payment-detail">
+                            <span>Amount Received:</span>
+                            <span>₱${paymentDetails.cashAmount.toFixed(2)}</span>
+                        </div>
+                        <div class="receipt-payment-detail">
+                            <span>Change:</span>
+                            <span>₱${paymentDetails.changeAmount.toFixed(2)}</span>
+                        </div>
+                    ` : ''}
+                </div>
+                <div class="receipt-footer">
+                    <p>Thank you for your purchase!</p>
+                    <p>Please come again.</p>
+                </div>
+            </div>
+        `;
+        
+        // Open a new window and write the receipt HTML
+        const receiptWindow = window.open('', '_blank', 'width=300,height=600');
+        receiptWindow.document.write(`
+            <html>
+            <head>
+                <title>Receipt</title>
+                <style>
+                    body {
+                        font-family: 'Courier New', monospace;
+                        font-size: 12px;
+                        line-height: 1.4;
+                        padding: 10px;
+                    }
+                    .receipt {
+                        width: 270px;
+                        margin: 0 auto;
+                    }
+                    .receipt-header {
+                        text-align: center;
+                        margin-bottom: 10px;
+                    }
+                    .receipt-header h2 {
+                        margin: 0;
+                        font-size: 16px;
+                    }
+                    .receipt-header p {
+                        margin: 5px 0;
+                    }
+                    .receipt-items {
+                        border-top: 1px dashed #000;
+                        border-bottom: 1px dashed #000;
+                        padding: 10px 0;
+                    }
+                    .receipt-item {
+                        display: flex;
+                        justify-content: space-between;
+                        margin-bottom: 5px;
+                    }
+                    .receipt-item-details {
+                        display: flex;
+                        flex-direction: column;
+                    }
+                    .receipt-summary {
+                        margin: 10px 0;
+                    }
+                    .receipt-summary-row {
+                        display: flex;
+                        justify-content: space-between;
+                    }
+                    .total {
+                        font-weight: bold;
+                        margin-top: 5px;
+                    }
+                    .receipt-payment {
+                        margin: 10px 0;
+                    }
+                    .receipt-payment-method, .receipt-payment-detail {
+                        display: flex;
+                        justify-content: space-between;
+                    }
+                    .receipt-footer {
+                        text-align: center;
+                        margin-top: 10px;
+                        border-top: 1px dashed #000;
+                        padding-top: 10px;
+                    }
+                    @media print {
+                        body {
+                            margin: 0;
+                            padding: 0;
+                        }
+                        .receipt {
+                            width: 100%;
+                        }
+                    }
+                </style>
+            </head>
+            <body>
+                ${receiptHTML}
+                <script>
+                    window.onload = function() {
+                        window.print();
+                        // Optional: Close the window after printing
+                        // setTimeout(function() { window.close(); }, 500);
+                    }
+                </script>
+            </body>
+            </html>
+        `);
+    }
+    
+    // Generate a receipt number
+    function generateReceiptNumber() {
+        const date = new Date();
+        const year = date.getFullYear().toString().slice(2);
+        const month = (date.getMonth() + 1).toString().padStart(2, '0');
+        const day = date.getDate().toString().padStart(2, '0');
+        const random = Math.floor(Math.random() * 1000).toString().padStart(3, '0');
+        
+        return `RT${year}${month}${day}-${random}`;
+    }
+});
+
+// Cart functionality with real-time price updates
+let cart = [];
+const TAX_RATE = 0.12; // 12% tax rate
+
+// Function to add item to cart with real-time price updates
+function addToCart(itemId, itemName, itemPrice) {
+    // Check if item already in cart
+    const existingItemIndex = cart.findIndex(item => item.id === itemId);
+    
+    if (existingItemIndex !== -1) {
+        // Item already in cart, increment quantity
+        cart[existingItemIndex].quantity++;
+        
+        // Update the UI for this specific item
+        updateCartItemUI(cart[existingItemIndex]);
+    } else {
+        // Add new item to cart
+        const newItem = {
+            id: itemId,
+            name: itemName,
+            price: itemPrice,
+            quantity: 1
+        };
+        cart.push(newItem);
+        
+        // Add new item to UI
+        addCartItemToUI(newItem);
+    }
+    
+    // Update cart count and totals
+    updateCartTotals();
+    
+    // Animate the item card
+    animateItemAddedToCart(itemId);
+}
+
+// Function to update the UI for a specific cart item
+function updateCartItemUI(item) {
+    const cartItemElement = document.querySelector(`.cart-item[data-id="${item.id}"]`);
+    if (cartItemElement) {
+        // Update quantity display
+        const quantityElement = cartItemElement.querySelector('.quantity-value');
+        if (quantityElement) {
+            quantityElement.textContent = item.quantity;
+        }
+        
+        // Update subtotal if it exists in the UI
+        const subtotalElement = cartItemElement.querySelector('.cart-item-subtotal');
+        if (subtotalElement) {
+            subtotalElement.textContent = `₱${(item.price * item.quantity).toFixed(2)}`;
+        }
+    }
+}
+
+// Function to add a new cart item to the UI
+function addCartItemToUI(item) {
+    const cartItems = document.getElementById('cartItems');
+    const emptyCart = document.getElementById('emptyCart');
+    
+    // Hide empty cart message
+    if (emptyCart) {
+        emptyCart.style.display = 'none';
+    }
+    
+    // Create new cart item element with proper horizontal layout
+    const cartItemElement = document.createElement('div');
+    cartItemElement.className = 'cart-item';
+    cartItemElement.dataset.id = item.id;
+    
+    cartItemElement.innerHTML = `
+        <div class="cart-item-header">
+            <div class="cart-item-name">${item.name}</div>
+            <div class="cart-item-price">₱${parseFloat(item.price).toFixed(2)}</div>
+        </div>
+        <div class="cart-item-controls">
+            <div class="cart-item-quantity">
+                <button class="quantity-btn quantity-decrease" onclick="updateQuantity(${item.id}, -1)">
+                    <i class="fas fa-minus"></i>
+                </button>
+                <div class="quantity-value">${item.quantity}</div>
+                <button class="quantity-btn quantity-increase" onclick="updateQuantity(${item.id}, 1)">
+                    <i class="fas fa-plus"></i>
+                </button>
+            </div>
+        </div>
+        <button class="cart-item-delete" onclick="removeFromCart(${item.id})">
+            <i class="fas fa-times"></i>
+        </button>
+    `;
+    
+    cartItems.appendChild(cartItemElement);
+    
+    // Update checkout button state
+    document.getElementById('checkoutBtn').disabled = false;
+}
+
+// Function to update item quantity
+function updateQuantity(itemId, change) {
+    const itemIndex = cart.findIndex(item => item.id === itemId);
+    
+    if (itemIndex === -1) return;
+    
+    // Update quantity
+    cart[itemIndex].quantity += change;
+    
+    // Remove item if quantity becomes 0
+    if (cart[itemIndex].quantity <= 0) {
+        removeFromCart(itemId);
+        return;
+    }
+    
+    // Update UI
+    updateCartItemUI(cart[itemIndex]);
+    
+    // Update totals
+    updateCartTotals();
+}
+
+// Function to remove item from cart
+function removeFromCart(itemId) {
+    // Find and remove the item from the cart array
+    cart = cart.filter(item => item.id !== itemId);
+    
+    // Remove the item from the UI
+    const cartItemElement = document.querySelector(`.cart-item[data-id="${itemId}"]`);
+    if (cartItemElement) {
+        cartItemElement.classList.add('removing');
+        
+        // Animation before removal
+        setTimeout(() => {
+            cartItemElement.remove();
+            
+            // Show empty cart message if cart is empty
+            if (cart.length === 0) {
+                const emptyCart = document.getElementById('emptyCart');
+                if (emptyCart) {
+                    emptyCart.style.display = 'flex';
+                }
+                
+                // Disable checkout button
+                document.getElementById('checkoutBtn').disabled = true;
+            }
+        }, 300);
+    }
+    
+    // Update totals immediately
+    updateCartTotals();
+}
+
+// Calculate subtotal
+function calculateSubtotal() {
+    return cart.reduce((total, item) => total + (item.price * item.quantity), 0);
+}
+
+// Calculate tax
+function calculateTax() {
+    return calculateSubtotal() * TAX_RATE;
+}
+
+// Calculate total
+function calculateTotal() {
+    return calculateSubtotal() + calculateTax();
+}
+
+// Update cart totals in UI
+function updateCartTotals() {
+    const subtotal = calculateSubtotal();
+    const tax = calculateTax();
+    const total = calculateTotal();
+    
+    // Update cart counter
+    const totalItems = cart.reduce((count, item) => count + item.quantity, 0);
+    const cartCountElement = document.getElementById('cartCount');
+    if (cartCountElement) {
+        cartCountElement.textContent = totalItems;
+        cartCountElement.style.display = totalItems > 0 ? 'flex' : 'none';
+    }
+    
+    // Update summary values
+    document.getElementById('subtotalAmount').textContent = `₱${subtotal.toFixed(2)}`;
+    document.getElementById('taxAmount').textContent = `₱${tax.toFixed(2)}`;
+    document.getElementById('totalAmount').textContent = `₱${total.toFixed(2)}`;
+    
+    // Also update checkout modal totals if it exists and is open
+    const modalSubtotal = document.getElementById('modalSubtotal');
+    const modalTax = document.getElementById('modalTax'); 
+    const modalTotal = document.getElementById('modalTotal');
+    
+    if (modalSubtotal) modalSubtotal.textContent = `₱${subtotal.toFixed(2)}`;
+    if (modalTax) modalTax.textContent = `₱${tax.toFixed(2)}`;
+    if (modalTotal) modalTotal.textContent = `₱${total.toFixed(2)}`;
+}
+
+// Animation for adding item to cart
+function animateItemAddedToCart(itemId) {
+    const itemCard = document.querySelector(`.item-card[data-id="${itemId}"]`);
+    if (itemCard) {
+        itemCard.classList.add('item-added-animation');
+        setTimeout(() => {
+            itemCard.classList.remove('item-added-animation');
+        }, 500);
+    }
+}
+
+// Initialize cart on page load
+document.addEventListener('DOMContentLoaded', () => {
+    // Clear any existing cart data
+    cart = [];
+    
+    // Initialize cart UI
+    updateCartTotals();
+    
+    // Set checkout button to disabled initially
+    const checkoutBtn = document.getElementById('checkoutBtn');
+    if (checkoutBtn) {
+        checkoutBtn.disabled = true;
+    }
+    
+    // Add animation class for removing items
+    const style = document.createElement('style');
+    style.textContent = `
+        @keyframes removeItem {
+            0% { opacity: 1; transform: translateX(0); }
+            100% { opacity: 0; transform: translateX(40px); }
+        }
+        .cart-item.removing {
+            animation: removeItem 0.3s ease forwards;
+        }
+    `;
+    document.head.appendChild(style);
+});
+
+// Function to view item details in a modal
+function openItemDetailsModal(itemId) {
+    // Get modal references
+    const modal = document.getElementById('itemDetailsModal');
+    const modalItemName = document.getElementById('modalItemName');
+    const modalItemCategory = document.getElementById('modalItemCategory');
+    const modalItemPrice = document.getElementById('modalItemPrice');
+    const modalItemDescription = document.getElementById('modalItemDescription');
+    const modalItemStock = document.getElementById('modalItemStock');
+    const modalItemId = document.getElementById('modalItemId');
+    const modalAddToCartBtn = document.getElementById('modalAddToCartBtn');
+    const modalImage = document.getElementById('modalItemImage');
+    const modalPlaceholder = document.getElementById('itemPlaceholderLarge');
+    const notAvailableOverlay = document.getElementById('notAvailableOverlay');
+    
+    // Show loading state
+    modalItemName.textContent = 'Loading...';
+    modalItemCategory.textContent = '';
+    modalItemPrice.textContent = '';
+    modalItemDescription.textContent = 'Loading item details...';
+    modalItemStock.textContent = 'Checking...';
+    modalImage.style.display = 'none';
+    modalPlaceholder.style.display = 'flex';
+    notAvailableOverlay.style.display = 'none';
+    
+    // Open the modal immediately to show loading state
+    modal.classList.add('show');
+    
+    // Fetch item details
+    fetch(`http://localhost:5000/api/inventory/${itemId}`)
+        .then(response => response.json())
+        .then(item => {
+            console.log('Item details:', item);
+            
+            // Populate modal with item details
+            modalItemName.textContent = item.item_name || 'Unknown Item';
+            modalItemCategory.textContent = item.category || 'Uncategorized';
+            modalItemPrice.textContent = `₱${parseFloat(item.price).toFixed(2)}`;
+            modalItemDescription.textContent = item.description || 'No description available for this product.';
+            modalItemId.textContent = item.item_id || '-';
+            
+            // Handle stock status display
+            const stockQty = parseInt(item.stock_quantity);
+            if (stockQty <= 0) {
+                modalItemStock.textContent = 'Out of Stock';
+                modalItemStock.className = 'meta-value out-of-stock';
+                modalAddToCartBtn.disabled = true;
+                notAvailableOverlay.style.display = 'flex';
+            } else if (stockQty < 10) {
+                modalItemStock.textContent = `Low Stock (${stockQty})`;
+                modalItemStock.className = 'meta-value low-stock';
+                modalAddToCartBtn.disabled = false;
+            } else {
+                modalItemStock.textContent = `In Stock (${stockQty})`;
+                modalItemStock.className = 'meta-value stock';
+                modalAddToCartBtn.disabled = false;
+            }
+            
+            // Handle image display - using same logic as product cards
+            if (item.image && item.image !== 'null' && item.image !== 'undefined') {
+                // Construct proper image path based on environment
+                let imagePath = '';
+                if (window.location.href.includes(':5500') || window.location.href.includes('localhost')) {
+                    imagePath = window.location.origin + '/public' + item.image;
+                } else {
+                    imagePath = item.image;
+                }
+                
+                console.log('Setting modal image path:', imagePath);
+                
+                // Set image source and show it when loaded
+                modalImage.src = imagePath;
+                modalImage.onload = function() {
+                    modalImage.style.display = 'block';
+                    modalPlaceholder.style.display = 'none';
+                };
+                modalImage.onerror = function() {
+                    console.error('Failed to load image:', imagePath);
+                    modalImage.style.display = 'none';
+                    modalPlaceholder.style.display = 'flex';
+                };
+            } else {
+                // No image available
+                modalImage.style.display = 'none';
+                modalPlaceholder.style.display = 'flex';
+            }
+            
+            // Set up Add to Cart button
+            modalAddToCartBtn.onclick = function() {
+                if (stockQty > 0) {
+                    addToCart(item.item_id, item.item_name, item.price);
+                    closeModal('itemDetailsModal');
+                    
+                    // Show success message
+                    Swal.fire({
+                        title: 'Added to Cart!',
+                        text: `${item.item_name} has been added to your cart.`,
+                        icon: 'success',
+                        timer: 1500,
+                        showConfirmButton: false,
+                        background: '#141414',
+                        color: '#f5f5f5'
+                    });
+                }
+            };
+        })
+        .catch(error => {
+            console.error('Error fetching item details:', error);
+            
+            // Show error in modal
+            modalItemName.textContent = 'Error Loading Item';
+            modalItemDescription.textContent = 'There was an error loading this item. Please try again.';
+            modalItemCategory.textContent = 'Error';
+            modalItemPrice.textContent = '';
+            modalItemStock.textContent = 'Unknown';
+            modalItemStock.className = 'meta-value';
+            modalImage.style.display = 'none';
+            modalPlaceholder.style.display = 'flex';
+            modalAddToCartBtn.disabled = true;
+        });
+}
+
+// Function to close any modal
+function closeModal(modalId) {
+    const modal = document.getElementById(modalId);
+    if (modal) {
+        modal.classList.remove('show');
+    }
+}
+
+// Add event listeners when DOM is loaded
+document.addEventListener('DOMContentLoaded', function() {
+    // Close modal when the X is clicked
+    document.querySelectorAll('.modal .close').forEach(button => {
+        button.addEventListener('click', function() {
+            const modal = this.closest('.modal');
+            modal.classList.remove('show');
+        });
+    });
+    
+    // Close modal when clicking outside the modal content
+    document.querySelectorAll('.modal').forEach(modal => {
+        modal.addEventListener('click', function(e) {
+            if (e.target === this) {
+                this.classList.remove('show');
+            }
+        });
+    });
+    
+    // Setup event delegation for View Details buttons
+    document.addEventListener('click', function(e) {
+        // Find if a View Details button or its child was clicked
+        const button = e.target.closest('.btn-view-details');
+        if (button) {
+            const itemId = button.getAttribute('data-id');
+            if (itemId) {
+                openItemDetailsModal(itemId);
+            }
+        }
+    });
 });

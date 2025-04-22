@@ -13,28 +13,6 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <link rel="stylesheet" href="css/admin.css">
 
-    <!-- Add this authentication check script in the head section -->
-    <script>
-        // Authentication check - must run before any other scripts
-        (function() {
-            // Check if user is logged in
-            const authToken = localStorage.getItem('authToken');
-            if (!authToken) {
-                // Redirect to login if no auth token is found
-                window.location.href = 'login.html';
-                return;
-            }
-            
-            // Check user role
-            const userRole = localStorage.getItem('userRole');
-            if (userRole !== 'admin') {
-                // Redirect non-admin users to POS
-                window.location.href = 'pos.html';
-                return;
-            }
-        })();
-    </script>
-
     <!-- Defer scripts to improve initial load performance -->
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11" defer></script>
     <script src="js/admindesign.js" defer></script>
@@ -288,12 +266,12 @@
         </main>
     </div>
 
-    <!-- Add Item Modal -->
-    <div class="modal" id="addItemModal">
+    <!-- Add Item Modal - now with form-modal class -->
+    <div class="modal large-form-modal" id="addItemModal">
         <div class="modal-content">
             <span class="close">&times;</span>
             <h2><i class="fas fa-plus-circle"></i> Add New Item</h2>
-            <form id="addItemForm">
+            <form id="addItemForm" onsubmit="return false;" autocomplete="off">
                 <div class="form-group">
                     <label for="itemName">Item Name</label>
                     <input type="text" id="itemName" name="item_name" required>
@@ -337,8 +315,8 @@
         </div>
     </div>
 
-    <!-- Edit Item Modal -->
-    <div class="modal" id="editItemModal">
+    <!-- Edit Item Modal - now with large-form-modal class -->
+    <div class="modal large-form-modal" id="editItemModal">
         <div class="modal-content">
             <span class="close">&times;</span>
             <h2><i class="fas fa-edit"></i> Edit Item</h2>
@@ -387,8 +365,8 @@
         </div>
     </div>
 
-    <!-- Delete Item Confirmation Modal -->
-    <div class="modal" id="deleteItemModal">
+    <!-- Delete Item Confirmation Modal - now with improved spacing -->
+    <div class="modal confirmation-modal" id="deleteItemModal">
         <div class="modal-content">
             <span class="close">&times;</span>
             <h2><i class="fas fa-trash-alt"></i> Delete Item</h2>
@@ -404,8 +382,8 @@
         </div>
     </div>
 
-    <!-- Add User Modal -->
-    <div class="modal" id="addUserModal">
+    <!-- Add User Modal - now with large-form-modal class -->
+    <div class="modal large-form-modal" id="addUserModal">
         <div class="modal-content">
             <span class="close">&times;</span>
             <h2><i class="fas fa-user-plus"></i> Add New User</h2>
@@ -442,8 +420,8 @@
         </div>
     </div>
 
-    <!-- Edit User Modal -->
-    <div class="modal" id="editUserModal">
+    <!-- Edit User Modal - now with large-form-modal class -->
+    <div class="modal large-form-modal" id="editUserModal">
         <div class="modal-content">
             <span class="close">&times;</span>
             <h2><i class="fas fa-user-edit"></i> Edit User</h2>
@@ -481,8 +459,8 @@
         </div>
     </div>
 
-    <!-- Delete User Confirmation Modal -->
-    <div class="modal" id="deleteUserModal">
+    <!-- Delete User Confirmation Modal - now with improved spacing -->
+    <div class="modal confirmation-modal" id="deleteUserModal">
         <div class="modal-content">
             <span class="close">&times;</span>
             <h2><i class="fas fa-user-minus"></i> Delete User</h2>
@@ -498,5 +476,46 @@
             </div>
         </div>
     </div>
+
+    <!-- Add this script right before the </body> tag -->
+    <script>
+        // This will run immediately when the page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            // Check if we need to go to a specific section (e.g., after submitting a form with an image)
+            const lastSection = localStorage.getItem('lastActiveSection');
+            if (lastSection) {
+                // Function to switch to the correct section
+                const showSection = (sectionId) => {
+                    // Hide all sections
+                    document.querySelectorAll('.section').forEach(section => {
+                        section.classList.remove('active');
+                    });
+                    
+                    // Show the requested section
+                    const section = document.getElementById(sectionId);
+                    if (section) {
+                        section.classList.add('active');
+                    }
+                    
+                    // Update sidebar menu active state
+                    document.querySelectorAll('.menu li').forEach(item => {
+                        item.classList.remove('active');
+                    });
+                    
+                    const menuItem = document.querySelector(`.menu li a[href="#${sectionId}"]`);
+                    if (menuItem) {
+                        menuItem.parentElement.classList.add('active');
+                    }
+                };
+
+                // Show the stored section
+                showSection(lastSection);
+                console.log('Navigated to section:', lastSection);
+                
+                // Clear the stored section to avoid future unexpected redirects
+                localStorage.removeItem('lastActiveSection');
+            }
+        });
+    </script>
 </body>
 </html>

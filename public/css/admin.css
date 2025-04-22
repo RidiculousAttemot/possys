@@ -752,13 +752,13 @@ table tr:hover {
   left: 0;
   width: 100%;
   height: 100%;
-  background-color: rgba(0, 0, 0, 0.5);
   overflow: hidden;
   align-items: center;
   justify-content: center;
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
   transition: all 0.3s ease;
+  background-color: rgba(0, 0, 0, 0.5);
 }
 
 .modal.show {
@@ -793,28 +793,10 @@ table tr:hover {
   }
 }
 
-.modal-content h2 {
-  margin: 0;
-  padding: 20px 25px;
-  color: var(--text-color);
-  font-size: 1.5rem;
-  font-weight: 600;
-  background: linear-gradient(to right, rgba(52, 152, 219, 0.1), rgba(52, 152, 219, 0.02));
-  border-bottom: 1px solid rgba(52, 152, 219, 0.2);
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.modal-content h2 i {
-  color: var(--primary-color);
-  font-size: 1.3rem;
-}
-
-.modal-content .close {
+.close {
   position: absolute;
-  top: 15px;
-  right: 15px;
+  top: 20px;
+  right: 20px;
   font-size: 24px;
   color: var(--text-dark);
   cursor: pointer;
@@ -825,41 +807,82 @@ table tr:hover {
   align-items: center;
   justify-content: center;
   border-radius: 50%;
-  background: rgba(0, 0, 0, 0.1);
-  z-index: 10;
 }
 
-.modal-content .close:hover {
+.close:hover {
   color: var(--danger);
   background-color: rgba(231, 76, 60, 0.1);
   transform: rotate(90deg);
 }
 
-.modal-body {
-  padding: 20px 25px;
-  max-height: calc(85vh - 70px); /* Subtract header height */
-  overflow-y: auto; /* Allow scrolling for content */
+.modal-content h2 {
+  margin-top: 0;
+  margin-bottom: 20px;
+  color: var(--text-color);
+  padding-bottom: 15px;
+  border-bottom: 1px solid var(--border-color);
+  padding-right: 30px;
 }
 
-.modal form {
-  padding: 20px 25px;
-  max-height: calc(85vh - 70px);
+/* Modal styling enhancements */
+.modal {
+  display: none;
+  position: fixed;
+  z-index: 1000;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  overflow: auto;
+  align-items: center;
+  justify-content: center;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  background-color: rgba(0, 0, 0, 0.5);
+}
+
+.modal-content {
+  position: relative;
+  background-color: var(--dark-secondary);
+  width: 500px; /* Default width for most modals */
+  max-width: 95%; /* Prevent overflow on small screens */
+  max-height: 90vh; /* Allow more height for form modals */
+  padding: 0;
+  border-radius: 15px;
+  box-shadow: 0 5px 30px rgba(0, 0, 0, 0.5);
+  overflow: hidden;
+  border: 1px solid rgba(52, 152, 219, 0.2);
+}
+
+/* Special sizing for form modals */
+#addUserModal .modal-content,
+#addItemModal .modal-content,
+#editUserModal .modal-content,
+#editItemModal .modal-content {
+  width: 600px; /* Wider for forms with many fields */
+  max-height: 95vh; /* More height for these specific modals */
+  overflow-y: auto; /* Enable scrolling for longer forms */
+}
+
+/* Auto scroll for modals with a lot of content */
+.modal-content form {
+  max-height: 70vh;
   overflow-y: auto;
+  padding: 0 25px;
+  margin-bottom: 20px;
 }
 
-.modal p {
-  color: var(--text-dark);
-  margin: 20px 25px;
-  line-height: 1.5;
-}
-
-.delete-item-details, 
-.delete-user-details {
-  background-color: rgba(0, 0, 0, 0.2);
-  margin: 15px 25px;
-  padding: 15px;
-  border-radius: 8px;
-  border-left: 3px solid var(--danger);
+/* Ensure buttons are always visible */
+.form-actions {
+  position: sticky;
+  bottom: 0;
+  background-color: var(--dark-secondary);
+  padding: 15px 0;
+  margin-top: 20px;
+  border-top: 1px solid rgba(52, 152, 219, 0.1);
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
 }
 
 /* Form styling */
@@ -1420,4 +1443,185 @@ button:disabled {
 .role-cashier {
   background-color: rgba(155, 89, 182, 0.1);
   color: #9b59b6;
+}
+
+/* Modal styling with variable size support */
+.modal {
+  display: none;
+  position: fixed;
+  z-index: 1000;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  overflow: auto;
+  align-items: center;
+  justify-content: center;
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
+  background-color: rgba(0, 0, 0, 0.5);
+  padding: 20px;
+}
+
+.modal-content {
+  position: relative;
+  background-color: var(--dark-secondary);
+  max-width: 95%; /* Prevent overflow on small screens */
+  max-height: 90vh; /* Allow enough height */
+  padding: 0;
+  border-radius: 15px;
+  box-shadow: 0 5px 30px rgba(0, 0, 0, 0.5);
+  overflow: hidden;
+  border: 1px solid rgba(52, 152, 219, 0.2);
+}
+
+/* Form modals - adaptive width */
+.form-modal .modal-content {
+  width: auto; /* Allow content to determine width */
+  min-width: 500px; /* Minimum width */
+}
+
+/* Confirmation modals - narrower */
+.confirmation-modal .modal-content {
+  width: 450px;
+  padding-bottom: 20px;
+  max-width: 95%;
+}
+
+/* Fixed-size modals - login/logout */
+.fixed-size-modal .modal-content {
+  width: 400px;
+}
+
+/* Large modals for forms with many fields */
+.large-form-modal .modal-content {
+  width: 650px;
+  max-height: 90vh;
+}
+
+/* Ensure modal headers are consistent */
+.modal-content h2 {
+  margin: 0;
+  padding: 20px 25px;
+  background: linear-gradient(to right, rgba(52, 152, 219, 0.1), rgba(52, 152, 219, 0.02));
+  border-bottom: 1px solid rgba(52, 152, 219, 0.2);
+  font-size: 1.5rem;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.modal-content h2 i {
+  color: var(--primary-color);
+}
+
+/* Proper scrolling for form content */
+.modal-content form {
+  padding: 20px 25px;
+  max-height: calc(90vh - 80px); /* Subtract header height + padding */
+  overflow-y: auto;
+  margin-bottom: 0;
+}
+
+/* Ensure action buttons are always visible at bottom */
+.form-actions {
+  position: sticky;
+  bottom: 0;
+  background-color: var(--dark-secondary);
+  padding: 15px 25px;
+  margin-top: 10px;
+  border-top: 1px solid rgba(52, 152, 219, 0.1);
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  z-index: 5;
+}
+
+/* For confirmation modals */
+.delete-item-details, 
+.delete-user-details {
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 8px;
+  padding: 20px;
+  margin: 20px 25px;
+  border-left: 3px solid rgba(231, 76, 60, 0.5);
+}
+
+.delete-item-details p,
+.delete-user-details p {
+  margin-bottom: 10px;
+  color: var(--text-color);
+}
+
+.delete-item-details p:last-child,
+.delete-user-details p:last-child {
+  margin-bottom: 0;
+}
+
+.delete-item-details strong,
+.delete-user-details strong {
+  display: inline-block;
+  min-width: 80px;
+  color: var(--primary-color);
+}
+
+/* Delete confirmation message */
+.confirmation-modal p {
+  padding: 0 25px;
+  margin-top: 20px;
+  color: var(--text-dark);
+  line-height: 1.5;
+}
+
+/* Delete buttons */
+.confirmation-modal .form-actions {
+  padding: 15px 25px;
+  margin-top: 20px;
+}
+
+.btn-danger {
+  background: linear-gradient(to right, #e74c3c, #c0392b);
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 5px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.btn-danger:hover {
+  background: linear-gradient(to right, #c0392b, #e74c3c);
+  transform: translateY(-2px);
+  box-shadow: 0 5px 15px rgba(231, 76, 60, 0.3);
+}
+
+.btn-danger:active {
+  transform: translateY(0);
+}
+
+/* Inventory table image styling */
+.inventory-table .item-image {
+    width: 50px;
+    height: 50px;
+    overflow: hidden;
+    border-radius: 5px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto;
+    background-color: var(--dark-accent);
+    margin-left: 3px;
+}
+
+.inventory-table .item-image img {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+    display: block;
+}
+
+.inventory-table .item-image .no-image {
+    font-size: 24px;
+    color: var(--text-dark);
 }
