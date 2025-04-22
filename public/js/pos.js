@@ -1452,43 +1452,66 @@ function updateCartItemUI(item) {
 // Function to add a new cart item to the UI
 function addCartItemToUI(item) {
     const cartItems = document.getElementById('cartItems');
-    const emptyCart = document.getElementById('emptyCart');
+    const emptyCart = document.querySelector('.empty-cart');
     
     // Hide empty cart message
     if (emptyCart) {
         emptyCart.style.display = 'none';
     }
     
-    // Create new cart item element with proper horizontal layout
+    // Create new cart item element with POS-style layout
     const cartItemElement = document.createElement('div');
     cartItemElement.className = 'cart-item';
     cartItemElement.dataset.id = item.id;
     
+    // Calculate subtotal for this item
+    const subtotal = (item.price * item.quantity).toFixed(2);
+    
+    // New layout based on standard POS design like in the image
     cartItemElement.innerHTML = `
-        <div class="cart-item-header">
+        <div class="cart-item-details">
             <div class="cart-item-name">${item.name}</div>
             <div class="cart-item-price">₱${parseFloat(item.price).toFixed(2)}</div>
         </div>
-        <div class="cart-item-controls">
-            <div class="cart-item-quantity">
-                <button class="quantity-btn quantity-decrease" onclick="updateQuantity(${item.id}, -1)">
+        <div class="cart-item-actions">
+            <div class="quantity-control">
+                <button class="quantity-btn minus-btn" onclick="updateQuantity(${item.id}, -1)">
                     <i class="fas fa-minus"></i>
                 </button>
-                <div class="quantity-value">${item.quantity}</div>
-                <button class="quantity-btn quantity-increase" onclick="updateQuantity(${item.id}, 1)">
+                <input type="text" class="quantity-value" value="${item.quantity}" readonly>
+                <button class="quantity-btn plus-btn" onclick="updateQuantity(${item.id}, 1)">
                     <i class="fas fa-plus"></i>
                 </button>
             </div>
+            <div class="cart-item-subtotal">₱${subtotal}</div>
+            <button class="cart-item-delete" onclick="removeFromCart(${item.id})">
+                <i class="fas fa-trash-alt"></i>
+            </button>
         </div>
-        <button class="cart-item-delete" onclick="removeFromCart(${item.id})">
-            <i class="fas fa-times"></i>
-        </button>
     `;
     
     cartItems.appendChild(cartItemElement);
     
     // Update checkout button state
     document.getElementById('checkoutBtn').disabled = false;
+}
+
+// Function to update the UI for a specific cart item
+function updateCartItemUI(item) {
+    const cartItemElement = document.querySelector(`.cart-item[data-id="${item.id}"]`);
+    if (cartItemElement) {
+        // Update quantity display
+        const quantityInput = cartItemElement.querySelector('.quantity-value');
+        if (quantityInput) {
+            quantityInput.value = item.quantity;
+        }
+        
+        // Update subtotal display
+        const subtotalElement = cartItemElement.querySelector('.cart-item-subtotal');
+        if (subtotalElement) {
+            subtotalElement.textContent = `₱${(item.price * item.quantity).toFixed(2)}`;
+        }
+    }
 }
 
 // Function to update item quantity
@@ -1529,13 +1552,22 @@ function removeFromCart(itemId) {
             
             // Show empty cart message if cart is empty
             if (cart.length === 0) {
-                const emptyCart = document.getElementById('emptyCart');
-                if (emptyCart) {
-                    emptyCart.style.display = 'flex';
-                }
+                const cartItems = document.getElementById('cartItems');
+                cartItems.innerHTML = `
+                    <div class="empty-cart">
+                        <i class="fas fa-shopping-cart"></i>
+                        <p>Your cart is empty</p>
+                        <p>Add products to start billing</p>
+                    </div>
+                `;
                 
                 // Disable checkout button
                 document.getElementById('checkoutBtn').disabled = true;
+                
+                // Reset all totals to zero
+                document.getElementById('subtotal').textContent = '0.00';
+                document.getElementById('tax').textContent = '0.00';
+                document.getElementById('total').textContent = '0.00';
             }
         }, 300);
     }
@@ -1788,3 +1820,27 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 });
+
+// Function to create cart item HTML structure - updated to match iPod Shuffle layout
+const createCartItemHTML = (item) => {
+  const totalPrice = item.price * item.quantity;
+  
+  return `
+    <div class="cart-item" data-id="${item.id}">
+      <div class="cart-item-info">
+        <div class="cart-item-name">${item.name}</div>
+        <div class="cart-item-price">₱${item.price.toFixed(2)}</div>
+      </div>
+      <div class="cart-item-actions">
+        <div class="quantity-control">
+          <button class="quantity-btn minus-btn" data-id="${item.id}">−</button>
+          <input type="text" class="quantity-value" value="${item.quantity}" readonly>
+          <button class="quantity-btn plus-btn" data-id="${item.id}">+</button>
+        </div>
+        <button class="cart-item-delete" data-id="${item.id}">
+          <i class="fas fa-trash"></i>
+        </button>
+      </div>
+    </div>
+  `;
+};
