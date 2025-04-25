@@ -298,14 +298,14 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     };
     
-    // Function to add product to cart
+    // Function to add product to cart (ensure it uses cartItems)
     const addToCart = (productId) => {
         const product = allProducts.find(p => p.id === productId);
         if (!product) return;
-        
+
         // Check if product is already in cart
         const existingItem = cartItems.find(item => item.id === productId);
-        
+
         if (existingItem) {
             // Increment quantity if it won't exceed stock
             if (existingItem.quantity < product.stock) {
@@ -327,87 +327,155 @@ document.addEventListener('DOMContentLoaded', function() {
                 id: product.id,
                 name: product.name,
                 price: product.price,
-                quantity: 1
+                quantity: 1,
+                stock: product.stock // Store stock for quantity checks
             });
         }
-        
+
+        // Save to localStorage (optional but good practice)
+        localStorage.setItem('cartItems', JSON.stringify(cartItems));
+
         // Update cart display
         updateCart();
     };
-    
-    // Function to update cart display
+
+    // Function to update cart display (use the structure from posdesign.js)
     const updateCart = () => {
         const cartContainer = document.getElementById('cartItems');
         const checkoutBtn = document.getElementById('checkoutBtn');
-        
+        const emptyCartMessage = document.getElementById('emptyCart'); // Get reference to empty cart message
+
+        // Load from localStorage if cartItems is empty (e.g., on page load)
         if (cartItems.length === 0) {
-            cartContainer.innerHTML = `
-                <div class="empty-cart">
-                    <i class="fas fa-shopping-cart"></i>
-                    <p>Your cart is empty</p>
-                    <p>Add products to start billing</p>
-                </div>
-            `;
+            const storedCart = JSON.parse(localStorage.getItem('cartItems')) || [];
+            if (storedCart.length > 0) {
+                cartItems = storedCart;
+            }
+        }
+
+        if (cartItems.length === 0) {
+            if (cartContainer) cartContainer.innerHTML = ''; // Clear container
+            if (emptyCartMessage) emptyCartMessage.style.display = 'flex'; // Show empty message
             checkoutBtn.disabled = true;
         } else {
+            if (emptyCartMessage) emptyCartMessage.style.display = 'none'; // Hide empty message
             let cartHTML = '';
             let subtotal = 0;
-            
+
             cartItems.forEach(item => {
-                const itemTotal = item.price * item.quantity;
-                subtotal += itemTotal;
-                
-                cartHTML += `
-                    <div class="cart-item">
-                        <div>
-                            <div>${item.name}</div>
-                            <div class="item-price">₱${item.price.toFixed(2)} × <span class="item-quantity">${item.quantity}</span></div>
-                        </div>
-                        <div>
-                            <span>₱${itemTotal.toFixed(2)}</span>
-                            <button class="btn-remove" data-id="${item.id}">×</button>
-                        </div>
-                    </div>
-                `;
+                // Use the createCartItemHTML from posdesign.js if available
+                if (window.createCartItemHTML) {
+                    cartHTML += window.createCartItemHTML(item);
+                } else {
+                    // Fallback basic HTML (should not be needed if posdesign.js loads first)
+                    cartHTML += `<div>${item.name} - ${item.quantity} x ₱${item.price.toFixed(2)}</div>`;
+                }
+                subtotal += item.price * item.quantity;
             });
-            
-            cartContainer.innerHTML = cartHTML;
-            
-            // Add event listeners to remove buttons
-            document.querySelectorAll('.btn-remove').forEach(button => {
-                button.addEventListener('click', function() {
-                    const itemId = parseInt(this.getAttribute('data-id'));
-                    removeFromCart(itemId);
-                });
-            });
-            
+
+            if (cartContainer) {
+                cartContainer.innerHTML = cartHTML;
+                // Re-attach event listeners after updating innerHTML
+                addCartActionListeners();
+            }
+
             // Enable checkout button
             checkoutBtn.disabled = false;
-            
-            // Update summary values
-            const tax = subtotal * 0.12;
+
+            // Calculate totals
+            const tax = subtotal * 0.5;
             const total = subtotal + tax;
-            
-            document.getElementById('subtotal').textContent = subtotal.toFixed(2);
-            document.getElementById('tax').textContent = tax.toFixed(2);
-            document.getElementById('total').textContent = total.toFixed(2);
+
+            // Update only the total amount in the cart summary
+            document.getElementById('totalAmount').textContent = total.toFixed(2);
+
+            // Update cart counter badge
+            const totalItemsCount = cartItems.reduce((count, item) => count + item.quantity, 0);
+            const cartCountElement = document.getElementById('cartCount');
+            if (cartCountElement) {
+                cartCountElement.textContent = totalItemsCount;
+                cartCountElement.style.display = totalItemsCount > 0 ? 'inline-block' : 'none'; // Or 'flex' depending on styling
+            }
         }
     };
-    
-    // Function to remove item from cart
+
+    // Function to remove item from cart (ensure it uses cartItems)
     const removeFromCart = (productId) => {
-        // Find the item in the cart
         const itemIndex = cartItems.findIndex(item => item.id === productId);
-        
+
         if (itemIndex > -1) {
-            // Remove the item from cart
             cartItems.splice(itemIndex, 1);
-            
-            // Update cart display
-            updateCart();
+            localStorage.setItem('cartItems', JSON.stringify(cartItems)); // Update localStorage
+            updateCart(); // Update display
         }
     };
-    
+
+    // Function to update quantity (ensure it uses cartItems)
+    const updateCartItemQuantity = (productId, change) => {
+        const itemIndex = cartItems.findIndex(item => item.id === parseInt(productId));
+
+        if (itemIndex !== -1) {
+            const product = allProducts.find(p => p.id === cartItems[itemIndex].id) || cartItems[itemIndex]; // Use stored stock if available
+            const newQuantity = cartItems[itemIndex].quantity + change;
+
+            if (newQuantity <= 0) {
+                // Remove item if quantity is 0 or less
+                removeFromCart(productId);
+            } else if (newQuantity > product.stock) {
+                // Prevent exceeding stock
+                Swal.fire({
+                    title: 'Stock Limit Reached',
+                    text: `Only ${product.stock} available for ${cartItems[itemIndex].name}.`,
+                    icon: 'warning',
+                    confirmButtonColor: '#3498db',
+                    background: '#141414',
+                    color: '#f5f5f5'
+                });
+            } else {
+                // Update quantity
+                cartItems[itemIndex].quantity = newQuantity;
+                localStorage.setItem('cartItems', JSON.stringify(cartItems)); // Update localStorage
+                updateCart(); // Update display
+            }
+        }
+    };
+
+    // Function to add event listeners to cart buttons (quantity/delete)
+    const addCartActionListeners = () => {
+        document.querySelectorAll('.cart-item .plus-btn').forEach(button => {
+            // Remove existing listener before adding new one to prevent duplicates
+            button.replaceWith(button.cloneNode(true));
+        });
+        document.querySelectorAll('.cart-item .minus-btn').forEach(button => {
+            button.replaceWith(button.cloneNode(true));
+        });
+        document.querySelectorAll('.cart-item .cart-item-delete').forEach(button => {
+            button.replaceWith(button.cloneNode(true));
+        });
+
+        // Add new listeners
+        document.querySelectorAll('.cart-item .plus-btn').forEach(button => {
+            button.addEventListener('click', function() {
+                const itemId = this.getAttribute('data-id');
+                updateCartItemQuantity(itemId, 1);
+            });
+        });
+
+        document.querySelectorAll('.cart-item .minus-btn').forEach(button => {
+            button.addEventListener('click', function() {
+                const itemId = this.getAttribute('data-id');
+                updateCartItemQuantity(itemId, -1);
+            });
+        });
+
+        document.querySelectorAll('.cart-item .cart-item-delete').forEach(button => {
+            button.addEventListener('click', function() {
+                const itemId = this.getAttribute('data-id');
+                removeFromCart(parseInt(itemId));
+            });
+        });
+    };
+
     // Function to show product details
     const showProductDetails = (productId) => {
         const product = allProducts.find(p => p.id === productId);
@@ -496,7 +564,7 @@ document.addEventListener('DOMContentLoaded', function() {
         checkoutItems.innerHTML = checkoutHTML;
         
         // Update summary values
-        const tax = subtotal * 0.12;
+        const tax = subtotal * 0.5;
         const total = subtotal + tax;
         
         document.getElementById('checkout-subtotal').textContent = subtotal.toFixed(2);
@@ -889,7 +957,7 @@ document.addEventListener('DOMContentLoaded', function() {
             checkoutSection.innerHTML = `
                 <h2>Shopping Cart</h2>
                 <div class="cart-items" id="cartItems">
-                    <div class="empty-cart">
+                    <div class="empty-cart" id="emptyCart">
                         <i class="fas fa-shopping-cart"></i>
                         <p>Your cart is empty</p>
                         <p>Add products to start billing</p>
@@ -897,17 +965,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 </div>
                 
                 <div class="cart-summary">
-                    <div class="summary-row">
-                        <span>Subtotal:</span>
-                        <span>₱<span id="subtotal">0.00</span></span>
-                    </div>
-                    <div class="summary-row">
-                        <span>Tax (12%):</span>
-                        <span>₱<span id="tax">0.00</span></span>
-                    </div>
                     <div class="summary-row total">
                         <span>Total:</span>
-                        <span>₱<span id="total">0.00</span></span>
+                        <span>₱<span id="totalAmount">0.00</span></span>
                     </div>
                 </div>
                 
@@ -1564,10 +1624,8 @@ function removeFromCart(itemId) {
                 // Disable checkout button
                 document.getElementById('checkoutBtn').disabled = true;
                 
-                // Reset all totals to zero
-                document.getElementById('subtotal').textContent = '0.00';
-                document.getElementById('tax').textContent = '0.00';
-                document.getElementById('total').textContent = '0.00';
+                // Reset total to zero (removed subtotal and tax references)
+                document.getElementById('totalAmount').textContent = '0.00';
             }
         }, 300);
     }
@@ -1605,9 +1663,7 @@ function updateCartTotals() {
         cartCountElement.style.display = totalItems > 0 ? 'flex' : 'none';
     }
     
-    // Update summary values
-    document.getElementById('subtotalAmount').textContent = `₱${subtotal.toFixed(2)}`;
-    document.getElementById('taxAmount').textContent = `₱${tax.toFixed(2)}`;
+    // Update only the total amount in the cart summary
     document.getElementById('totalAmount').textContent = `₱${total.toFixed(2)}`;
     
     // Also update checkout modal totals if it exists and is open
@@ -1821,26 +1877,44 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 });
 
-// Function to create cart item HTML structure - updated to match iPod Shuffle layout
-const createCartItemHTML = (item) => {
-  const totalPrice = item.price * item.quantity;
-  
+// Function to create cart item HTML - updated to match the iPod Shuffle layout
+function createCartItemHTML(item) {
   return `
     <div class="cart-item" data-id="${item.id}">
       <div class="cart-item-info">
         <div class="cart-item-name">${item.name}</div>
         <div class="cart-item-price">₱${item.price.toFixed(2)}</div>
       </div>
-      <div class="cart-item-actions">
-        <div class="quantity-control">
-          <button class="quantity-btn minus-btn" data-id="${item.id}">−</button>
-          <input type="text" class="quantity-value" value="${item.quantity}" readonly>
-          <button class="quantity-btn plus-btn" data-id="${item.id}">+</button>
-        </div>
+      <div class="cart-item-controls">
+        <button class="quantity-btn minus-btn" data-id="${item.id}">-</button>
+        <span class="quantity-value">${item.quantity}</span>
+        <button class="quantity-btn plus-btn" data-id="${item.id}">+</button>
         <button class="cart-item-delete" data-id="${item.id}">
           <i class="fas fa-trash"></i>
         </button>
       </div>
     </div>
   `;
-};
+}
+
+// Modify the event listeners for quantity buttons to match the new HTML structure
+document.addEventListener('click', function(e) {
+  // Increase quantity button
+  if(e.target.classList.contains('plus-btn')) {
+    const itemId = e.target.getAttribute('data-id');
+    updateCartItemQuantity(itemId, 1);
+  }
+  
+  // Decrease quantity button
+  if(e.target.classList.contains('minus-btn')) {
+    const itemId = e.target.getAttribute('data-id');
+    updateCartItemQuantity(itemId, -1);
+  }
+  
+  // Delete button
+  if(e.target.classList.contains('cart-item-delete') || 
+     (e.target.parentElement && e.target.parentElement.classList.contains('cart-item-delete'))) {
+    const itemId = e.target.getAttribute('data-id') || e.target.parentElement.getAttribute('data-id');
+    removeCartItem(itemId);
+  }
+});
