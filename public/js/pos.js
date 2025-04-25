@@ -1533,7 +1533,7 @@ function addCartItemToUI(item) {
             <div class="cart-item-name">${item.name}</div>
             <div class="cart-item-price">₱${parseFloat(item.price).toFixed(2)}</div>
         </div>
-        <div class="cart-item-actions">
+        <div class="cart-item-controls">
             <div class="quantity-control">
                 <button class="quantity-btn minus-btn" onclick="updateQuantity(${item.id}, -1)">
                     <i class="fas fa-minus"></i>
@@ -1877,7 +1877,7 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 });
 
-// Function to create cart item HTML - updated to match the iPod Shuffle layout
+// Function to create cart item HTML - fixed layout with product info and centered controls
 function createCartItemHTML(item) {
   return `
     <div class="cart-item" data-id="${item.id}">
@@ -1885,36 +1885,14 @@ function createCartItemHTML(item) {
         <div class="cart-item-name">${item.name}</div>
         <div class="cart-item-price">₱${item.price.toFixed(2)}</div>
       </div>
-      <div class="cart-item-controls">
+      <div class="quantity-wrapper">
         <button class="quantity-btn minus-btn" data-id="${item.id}">-</button>
         <span class="quantity-value">${item.quantity}</span>
         <button class="quantity-btn plus-btn" data-id="${item.id}">+</button>
-        <button class="cart-item-delete" data-id="${item.id}">
-          <i class="fas fa-trash"></i>
-        </button>
       </div>
+      <button class="cart-item-delete" data-id="${item.id}">
+        <i class="fas fa-trash"></i>
+      </button>
     </div>
   `;
 }
-
-// Modify the event listeners for quantity buttons to match the new HTML structure
-document.addEventListener('click', function(e) {
-  // Increase quantity button
-  if(e.target.classList.contains('plus-btn')) {
-    const itemId = e.target.getAttribute('data-id');
-    updateCartItemQuantity(itemId, 1);
-  }
-  
-  // Decrease quantity button
-  if(e.target.classList.contains('minus-btn')) {
-    const itemId = e.target.getAttribute('data-id');
-    updateCartItemQuantity(itemId, -1);
-  }
-  
-  // Delete button
-  if(e.target.classList.contains('cart-item-delete') || 
-     (e.target.parentElement && e.target.parentElement.classList.contains('cart-item-delete'))) {
-    const itemId = e.target.getAttribute('data-id') || e.target.parentElement.getAttribute('data-id');
-    removeCartItem(itemId);
-  }
-});

@@ -673,4 +673,380 @@ styleElement.textContent = `
             }
         }
     });
+
+    // Create and append the full-page checkout modal to the document body
+    const checkoutModal = document.createElement('div');
+    checkoutModal.id = 'checkoutModal';
+    checkoutModal.className = 'fullpage-modal';
+    
+    checkoutModal.innerHTML = `
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2><i class="fas fa-shopping-cart"></i> Complete Your Purchase</h2>
+                <button class="close">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="checkout-items-section">
+                    <h3>Order Summary</h3>
+                    <div class="checkout-items">
+                        <table class="checkout-table">
+                            <thead>
+                                <tr>
+                                    <th>Item</th>
+                                    <th>Quantity</th>
+                                    <th>Unit Price</th>
+                                    <th>Total</th>
+                                </tr>
+                            </thead>
+                            <tbody id="checkoutItemsTable">
+                                <!-- Cart items will be loaded here dynamically -->
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    <div class="payment-summary">
+                        <div class="summary-row">
+                            <span>Subtotal:</span>
+                            <span id="subtotalAmount">₱0.00</span>
+                        </div>
+                        <div class="summary-row discount-row" id="discountRow" style="display: none;">
+                            <span>Discount:</span>
+                            <span id="discountAmount">₱0.00</span>
+                        </div>
+                        <div class="summary-row total-final">
+                            <span>Total:</span>
+                            <span id="totalAmount">₱0.00</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="checkout-payment-section">
+                    <h3>Payment Method</h3>
+                    <div class="payment-options">
+                        <div class="payment-option">
+                            <input type="radio" id="paymentCash" name="paymentMethod" value="cash" checked>
+                            <label for="paymentCash">
+                                <i class="fas fa-money-bill-wave"></i>
+                                <span>Cash</span>
+                            </label>
+                        </div>
+                        <div class="payment-option">
+                            <input type="radio" id="paymentCard" name="paymentMethod" value="card">
+                            <label for="paymentCard">
+                                <i class="fas fa-credit-card"></i>
+                                <span>Card</span>
+                            </label>
+                        </div>
+                        <div class="payment-option">
+                            <input type="radio" id="paymentGcash" name="paymentMethod" value="gcash">
+                            <label for="paymentGcash">
+                                <i class="fas fa-mobile-alt"></i>
+                                <span>GCash</span>
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <div id="cashDetails" class="payment-details-section">
+                        <div class="payment-input-group">
+                            <div class="form-group">
+                                <label for="cashAmount">Amount Received</label>
+                                <input type="number" id="cashAmount" placeholder="Enter amount" min="0" step="0.01">
+                            </div>
+                        </div>
+                        <div class="payment-input-group">
+                            <div class="form-group">
+                                <label>Change</label>
+                                <div id="changeAmount" class="change-display">₱0.00</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div id="cardDetails" class="payment-details-section" style="display: none;">
+                        <div class="payment-input-group">
+                            <div class="form-group">
+                                <label for="cardNumber">Card Number</label>
+                                <input type="text" id="cardNumber" placeholder="•••• •••• •••• ••••">
+                            </div>
+                        </div>
+                        <div class="payment-input-group">
+                            <div class="form-group">
+                                <label for="cardName">Cardholder Name</label>
+                                <input type="text" id="cardName" placeholder="Name on card">
+                            </div>
+                        </div>
+                        <div class="payment-input-group">
+                            <div class="form-group">
+                                <label for="cardExpiry">Expiry Date</label>
+                                <input type="text" id="cardExpiry" placeholder="MM/YY">
+                            </div>
+                            <div class="form-group">
+                                <label for="cardCvv">CVV</label>
+                                <input type="password" id="cardCvv" placeholder="•••">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div id="gcashDetails" class="payment-details-section" style="display: none;">
+                        <div class="payment-input-group">
+                            <div class="form-group">
+                                <label for="gcashNumber">GCash Number</label>
+                                <input type="text" id="gcashNumber" placeholder="09XX XXX XXXX">
+                            </div>
+                        </div>
+                        <div class="payment-input-group">
+                            <div class="form-group">
+                                <label for="gcashReference">Reference Number</label>
+                                <input type="text" id="gcashReference" placeholder="Enter reference number">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="receipt-options">
+                        <h3>Receipt Options</h3>
+                        <div class="receipt-option">
+                            <input type="checkbox" id="printReceipt" checked>
+                            <label for="printReceipt">Print receipt</label>
+                        </div>
+                        <div class="receipt-option">
+                            <input type="checkbox" id="emailReceipt">
+                            <label for="emailReceipt">Email receipt</label>
+                        </div>
+                    </div>
+                    
+                    <button id="confirmPaymentBtn" class="btn-confirm-payment">
+                        <i class="fas fa-check-circle"></i> Complete Transaction
+                    </button>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-secondary cancel-checkout">Cancel</button>
+                <button class="btn-apply-discount">
+                    <i class="fas fa-tag"></i> Apply Discount
+                </button>
+            </div>
+        </div>
+    `;
+    
+    document.body.appendChild(checkoutModal);
+    
+    // Setup modal functionality
+    const closeBtn = checkoutModal.querySelector('.close');
+    const cancelBtn = checkoutModal.querySelector('.cancel-checkout');
+    
+    closeBtn.addEventListener('click', function() {
+        checkoutModal.classList.remove('show');
+        document.body.style.overflow = 'auto';
+    });
+    
+    cancelBtn.addEventListener('click', function() {
+        checkoutModal.classList.remove('show');
+        document.body.style.overflow = 'auto';
+    });
+    
+    // Setup payment method switching
+    const paymentMethods = document.querySelectorAll('input[name="paymentMethod"]');
+    paymentMethods.forEach(method => {
+        method.addEventListener('change', function() {
+            // Hide all payment details sections
+            document.querySelectorAll('.payment-details-section').forEach(section => {
+                section.style.display = 'none';
+            });
+            
+            // Show the selected payment details section
+            const selectedMethod = this.value;
+            document.getElementById(`${selectedMethod}Details`).style.display = 'block';
+        });
+    });
+    
+    // Calculate change for cash payments
+    const cashAmountInput = document.getElementById('cashAmount');
+    if (cashAmountInput) {
+        cashAmountInput.addEventListener('input', function() {
+            const cashAmount = parseFloat(this.value) || 0;
+            const totalAmount = parseFloat(document.getElementById('totalAmount').textContent.replace('₱', '')) || 0;
+            const changeAmount = cashAmount - totalAmount;
+            
+            document.getElementById('changeAmount').textContent = changeAmount >= 0 ? 
+                `₱${changeAmount.toFixed(2)}` : '₱0.00';
+            
+            // Enable/disable confirm button based on valid cash amount
+            const confirmBtn = document.getElementById('confirmPaymentBtn');
+            confirmBtn.disabled = cashAmount < totalAmount;
+        });
+    }
+    
+    // Make checkout button open the modal
+    const checkoutBtn = document.querySelector('.btn-checkout');
+    if (checkoutBtn) {
+        checkoutBtn.addEventListener('click', function() {
+            openCheckoutModal();
+        });
+    }
+    
+    // Expose the openCheckoutModal function globally
+    window.openCheckoutModal = function() {
+        const cartItems = window.getCartItems ? window.getCartItems() : [];
+        
+        if (cartItems.length === 0) {
+            Swal.fire({
+                title: 'Empty Cart',
+                text: 'Please add items to your cart before checkout',
+                icon: 'warning',
+                confirmButtonColor: '#3498db',
+                background: '#141414',
+                color: '#f5f5f5'
+            });
+            return;
+        }
+        
+        // Populate checkout items table
+        const checkoutItemsTable = document.getElementById('checkoutItemsTable');
+        let html = '';
+        let subtotal = 0;
+        
+        cartItems.forEach(item => {
+            const itemTotal = item.price * item.quantity;
+            subtotal += itemTotal;
+            
+            html += `
+                <tr>
+                    <td>${item.name}</td>
+                    <td class="text-center">${item.quantity}</td>
+                    <td class="text-right">₱${parseFloat(item.price).toFixed(2)}</td>
+                    <td class="text-right">₱${parseFloat(itemTotal).toFixed(2)}</td>
+                </tr>
+            `;
+        });
+        
+        checkoutItemsTable.innerHTML = html;
+        
+        // Update summary
+        document.getElementById('subtotalAmount').textContent = `₱${parseFloat(subtotal).toFixed(2)}`;
+        document.getElementById('totalAmount').textContent = `₱${parseFloat(subtotal).toFixed(2)}`;
+        
+        // Reset payment method
+        document.getElementById('paymentCash').checked = true;
+        document.getElementById('cashDetails').style.display = 'block';
+        document.getElementById('cardDetails').style.display = 'none';
+        document.getElementById('gcashDetails').style.display = 'none';
+        
+        // Reset cash amount and change
+        document.getElementById('cashAmount').value = '';
+        document.getElementById('changeAmount').textContent = '₱0.00';
+        
+        // Show the modal
+        checkoutModal.classList.add('show');
+        document.body.style.overflow = 'hidden'; // Prevent scrolling behind modal
+    };
+    
+    // Handle the confirm payment button
+    const confirmPaymentBtn = document.getElementById('confirmPaymentBtn');
+    if (confirmPaymentBtn) {
+        confirmPaymentBtn.addEventListener('click', function() {
+            // Get selected payment method
+            const paymentMethod = document.querySelector('input[name="paymentMethod"]:checked').value;
+            
+            // Validate payment details based on method
+            let isValid = true;
+            let errorMessage = '';
+            
+            if (paymentMethod === 'cash') {
+                const cashAmount = parseFloat(document.getElementById('cashAmount').value) || 0;
+                const totalAmount = parseFloat(document.getElementById('totalAmount').textContent.replace('₱', '')) || 0;
+                
+                if (cashAmount < totalAmount) {
+                    isValid = false;
+                    errorMessage = 'Cash amount must be greater than or equal to the total amount';
+                }
+            } else if (paymentMethod === 'card') {
+                const cardNumber = document.getElementById('cardNumber').value;
+                const cardName = document.getElementById('cardName').value;
+                const cardExpiry = document.getElementById('cardExpiry').value;
+                const cardCvv = document.getElementById('cardCvv').value;
+                
+                if (!cardNumber || !cardName || !cardExpiry || !cardCvv) {
+                    isValid = false;
+                    errorMessage = 'Please fill in all card details';
+                }
+            } else if (paymentMethod === 'gcash') {
+                const gcashNumber = document.getElementById('gcashNumber').value;
+                const gcashReference = document.getElementById('gcashReference').value;
+                
+                if (!gcashNumber || !gcashReference) {
+                    isValid = false;
+                    errorMessage = 'Please fill in all GCash details';
+                }
+            }
+            
+            if (!isValid) {
+                Swal.fire({
+                    title: 'Invalid Payment',
+                    text: errorMessage,
+                    icon: 'error',
+                    confirmButtonColor: '#3498db',
+                    background: '#141414',
+                    color: '#f5f5f5'
+                });
+                return;
+            }
+            
+            // Process payment
+            processPayment(paymentMethod);
+        });
+    }
+    
+    // Function to process payment
+    function processPayment(paymentMethod) {
+        // Show loading state
+        const confirmBtn = document.getElementById('confirmPaymentBtn');
+        confirmBtn.disabled = true;
+        confirmBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
+        
+        // Simulate payment processing (replace with actual API call)
+        setTimeout(() => {
+            // Close modal
+            document.getElementById('checkoutModal').classList.remove('show');
+            document.body.style.overflow = 'auto';
+            
+            // Clear cart
+            if (window.clearCart) {
+                window.clearCart();
+            }
+            
+            // Show success message
+            Swal.fire({
+                title: 'Payment Successful!',
+                text: 'Your transaction has been completed successfully.',
+                icon: 'success',
+                confirmButtonColor: '#3498db',
+                background: '#141414',
+                color: '#f5f5f5'
+            });
+            
+            // Reset button state
+            confirmBtn.disabled = false;
+            confirmBtn.innerHTML = '<i class="fas fa-check-circle"></i> Complete Transaction';
+            
+        }, 1500); // Simulate a 1.5 second payment process
+    }
 });
+
+// Override the createCartItemHTML function to match the updated iPod Shuffle style layout
+window.createCartItemHTML = function(item) {
+    return `
+        <div class="cart-item" data-id="${item.id}">
+            <div class="cart-item-info">
+                <div class="cart-item-name">${item.name}</div>
+                <div class="cart-item-price">₱${item.price.toFixed(2)}</div>
+            </div>
+            <div class="quantity-wrapper">
+                <button class="quantity-btn minus-btn" data-id="${item.id}">-</button>
+                <span class="quantity-value">${item.quantity}</span>
+                <button class="quantity-btn plus-btn" data-id="${item.id}">+</button>
+            </div>
+            <button class="cart-item-delete" data-id="${item.id}">
+                <i class="fas fa-trash"></i>
+            </button>
+        </div>
+    `;
+};
