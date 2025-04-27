@@ -1601,7 +1601,7 @@ function removeFromCart(itemId) {
     // Find and remove the item from the cart array
     cart = cart.filter(item => item.id !== itemId);
     
-    // Remove the item from the UI
+    // Remove the item from the UI with animation
     const cartItemElement = document.querySelector(`.cart-item[data-id="${itemId}"]`);
     if (cartItemElement) {
         cartItemElement.classList.add('removing');
@@ -1613,44 +1613,81 @@ function removeFromCart(itemId) {
             // Show empty cart message if cart is empty
             if (cart.length === 0) {
                 const cartItems = document.getElementById('cartItems');
-                cartItems.innerHTML = `
-                    <div class="empty-cart">
-                        <i class="fas fa-shopping-cart"></i>
-                        <p>Your cart is empty</p>
-                        <p>Add products to start billing</p>
-                    </div>
-                `;
+                const emptyCartMessage = document.getElementById('emptyCart');
+                
+                // If emptyCart element exists, show it
+                if (emptyCartMessage) {
+                    emptyCartMessage.style.display = 'flex';
+                } else {
+                    // Otherwise create the empty cart message
+                    cartItems.innerHTML = `
+                        <div class="empty-cart" id="emptyCart">
+                            <i class="fas fa-shopping-cart"></i>
+                            <p>Your cart is empty</p>
+                            <p>Add products to start billing</p>
+                        </div>
+                    `;
+                }
                 
                 // Disable checkout button
-                document.getElementById('checkoutBtn').disabled = true;
+                const checkoutBtn = document.getElementById('checkoutBtn');
+                if (checkoutBtn) {
+                    checkoutBtn.disabled = true;
+                }
                 
-                // Reset total to zero (removed subtotal and tax references)
-                document.getElementById('totalAmount').textContent = '0.00';
+                // Reset total to zero immediately when cart is empty
+                const totalAmount = document.getElementById('totalAmount');
+                if (totalAmount) {
+                    totalAmount.textContent = '0.00';
+                }
             }
         }, 300);
     }
     
-    // Update totals immediately
-    updateCartTotals();
+    // Update cart totals immediately
+    if (cart.length === 0) {
+        // If cart is empty, explicitly set all totals to zero
+        resetCartTotals();
+    } else {
+        // If there are still items, calculate the new totals
+        updateCartTotals();
+    }
 }
 
-// Calculate subtotal
-function calculateSubtotal() {
-    return cart.reduce((total, item) => total + (item.price * item.quantity), 0);
+// New function to explicitly reset cart totals to zero
+function resetCartTotals() {
+    // Reset total in cart summary
+    const totalAmount = document.getElementById('totalAmount');
+    if (totalAmount) {
+        totalAmount.textContent = '0.00';
+    }
+    
+    // Reset cart count badge
+    const cartCountElement = document.getElementById('cartCount');
+    if (cartCountElement) {
+        cartCountElement.textContent = '0';
+        cartCountElement.style.display = 'none';
+    }
+    
+    // Also reset checkout modal totals if they exist
+    const modalSubtotal = document.getElementById('modalSubtotal');
+    const modalTax = document.getElementById('modalTax');
+    const modalTotal = document.getElementById('modalTotal');
+    
+    if (modalSubtotal) modalSubtotal.textContent = '0.00';
+    if (modalTax) modalTax.textContent = '0.00';
+    if (modalTotal) modalTotal.textContent = '0.00';
 }
 
-// Calculate tax
-function calculateTax() {
-    return calculateSubtotal() * TAX_RATE;
-}
-
-// Calculate total
-function calculateTotal() {
-    return calculateSubtotal() + calculateTax();
-}
-
-// Update cart totals in UI
+// Update the existing updateCartTotals function to check for empty cart first
 function updateCartTotals() {
+    // If cart is empty, reset totals to zero and exit
+    if (cart.length === 0) {
+        resetCartTotals();
+        return;
+    }
+    
+    // Original logic for calculating totals when cart has items
     const subtotal = calculateSubtotal();
     const tax = calculateTax();
     const total = calculateTotal();
@@ -1663,17 +1700,20 @@ function updateCartTotals() {
         cartCountElement.style.display = totalItems > 0 ? 'flex' : 'none';
     }
     
-    // Update only the total amount in the cart summary
-    document.getElementById('totalAmount').textContent = `₱${total.toFixed(2)}`;
+    // Update the total amount in the cart summary
+    const totalAmount = document.getElementById('totalAmount');
+    if (totalAmount) {
+        totalAmount.textContent = total.toFixed(2);
+    }
     
     // Also update checkout modal totals if it exists and is open
     const modalSubtotal = document.getElementById('modalSubtotal');
     const modalTax = document.getElementById('modalTax'); 
     const modalTotal = document.getElementById('modalTotal');
     
-    if (modalSubtotal) modalSubtotal.textContent = `₱${subtotal.toFixed(2)}`;
-    if (modalTax) modalTax.textContent = `₱${tax.toFixed(2)}`;
-    if (modalTotal) modalTotal.textContent = `₱${total.toFixed(2)}`;
+    if (modalSubtotal) modalSubtotal.textContent = subtotal.toFixed(2);
+    if (modalTax) modalTax.textContent = tax.toFixed(2);
+    if (modalTotal) modalTotal.textContent = total.toFixed(2);
 }
 
 // Animation for adding item to cart
