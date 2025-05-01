@@ -1102,9 +1102,9 @@ document.addEventListener('DOMContentLoaded', function() {
                         <span>Cash</span>
                     </label>
                     <label>
-                        <input type="radio" name="payment" value="gcash">
+                        <input type="radio" name="payment" value="ewallet">
                         <i class="fas fa-mobile-alt"></i>
-                        <span>GCash</span>
+                        <span>E-Wallet</span>
                     </label>
                     <label>
                         <input type="radio" name="payment" value="card">
@@ -1112,9 +1112,9 @@ document.addEventListener('DOMContentLoaded', function() {
                         <span>Card</span>
                     </label>
                     <label>
-                        <input type="radio" name="payment" value="paymaya">
-                        <i class="fas fa-wallet"></i>
-                        <span>PayMaya</span>
+                        <input type="radio" name="payment" value="banktransfer">
+                        <i class="fas fa-university"></i>
+                        <span>Bank Transfer</span>
                     </label>
                 </div>
                 
@@ -1269,7 +1269,7 @@ document.addEventListener('DOMContentLoaded', function() {
             // Hide all payment details
             document.getElementById('cashDetails').classList.remove('active');
             document.getElementById('cardDetails').classList.remove('active');
-            document.getElementById('gcashDetails').classList.remove('active');
+            document.getElementById('ewalletDetails').classList.remove('active');
             
             // Show the selected payment details
             document.getElementById(`${this.value}Details`).classList.add('active');
@@ -1347,11 +1347,11 @@ document.addEventListener('DOMContentLoaded', function() {
                 cardName: document.getElementById('cardName').value,
                 cardExpiry: document.getElementById('cardExpiry').value
             };
-        } else if (paymentMethod === 'gcash') {
+        } else if (paymentMethod === 'ewallet') {
             paymentDetails = {
-                method: 'gcash',
-                gcashNumber: document.getElementById('gcashNumber').value,
-                referenceNumber: document.getElementById('gcashReference').value
+                method: 'ewallet',
+                ewalletNumber: document.getElementById('ewalletNumber').value,
+                referenceNumber: document.getElementById('ewalletReference').value
             };
         }
         

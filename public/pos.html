@@ -143,6 +143,13 @@
                         </label>
                     </div>
                     <div class="payment-option">
+                        <input type="radio" id="ewalletPayment" name="paymentMethod" value="ewallet">
+                        <label for="ewalletPayment">
+                            <i class="fas fa-mobile-alt"></i>
+                            <span>E-Wallet</span>
+                        </label>
+                    </div>
+                    <div class="payment-option">
                         <input type="radio" id="cardPayment" name="paymentMethod" value="card">
                         <label for="cardPayment">
                             <i class="fas fa-credit-card"></i>
@@ -150,10 +157,10 @@
                         </label>
                     </div>
                     <div class="payment-option">
-                        <input type="radio" id="gcashPayment" name="paymentMethod" value="gcash">
-                        <label for="gcashPayment">
-                            <i class="fas fa-mobile-alt"></i>
-                            <span>GCash</span>
+                        <input type="radio" id="banktransferPayment" name="paymentMethod" value="banktransfer">
+                        <label for="banktransferPayment">
+                            <i class="fas fa-university"></i>
+                            <span>Bank Transfer</span>
                         </label>
                     </div>
                 </div>
@@ -200,18 +207,40 @@
                         </div>
                     </div>
                     
-                    <!-- GCash payment details -->
-                    <div id="gcashDetails">
+                    <!-- E-Wallet payment details -->
+                    <div id="ewalletDetails">
                         <div class="payment-input-group">
                             <div class="form-group">
-                                <label for="gcashNumber">GCash Number</label>
-                                <input type="text" id="gcashNumber" placeholder="09XX-XXX-XXXX">
+                                <label for="ewalletNumber">E-Wallet Number</label>
+                                <input type="text" id="ewalletNumber" placeholder="09XX-XXX-XXXX">
                             </div>
                         </div>
                         <div class="payment-input-group">
                             <div class="form-group">
-                                <label for="gcashReference">Reference Number</label>
-                                <input type="text" id="gcashReference" placeholder="Enter reference number">
+                                <label for="ewalletReference">Reference Number</label>
+                                <input type="text" id="ewalletReference" placeholder="Enter reference number">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Bank Transfer details -->
+                    <div id="banktransferDetails">
+                        <div class="payment-input-group">
+                            <div class="form-group">
+                                <label for="bankName">Bank Name</label>
+                                <input type="text" id="bankName" placeholder="Enter bank name">
+                            </div>
+                        </div>
+                        <div class="payment-input-group">
+                            <div class="form-group">
+                                <label for="accountNumber">Account Number</label>
+                                <input type="text" id="accountNumber" placeholder="Enter account number">
+                            </div>
+                        </div>
+                        <div class="payment-input-group">
+                            <div class="form-group">
+                                <label for="bankReference">Reference Number</label>
+                                <input type="text" id="bankReference" placeholder="Enter reference/tracking number">
                             </div>
                         </div>
                     </div>

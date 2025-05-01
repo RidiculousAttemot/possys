@@ -1248,6 +1248,12 @@ main {
   display: none;
 }
 
+/* Updated to include Bank Transfer and E-Wallet styling */
+#cashDetails.active, #cardDetails.active, #ewalletDetails.active, #banktransferDetails.active {
+  display: block;
+  animation: fadeIn 0.3s ease;
+}
+
 #cashDetails.active, #cardDetails.active, #gcashDetails.active {
   display: block;
   animation: fadeIn 0.3s ease;
@@ -3568,7 +3574,7 @@ main {
   padding: 10px 12px;
   margin-bottom: 8px;
   border: 1px solid var(--border-color);
-  transition: var(--transition);
+  transition: var (--transition);
 }
 
 .cart-item:hover {

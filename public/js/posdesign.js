@@ -739,6 +739,18 @@ styleElement.textContent = `
                             <input type="radio" name="paymentMethod" value="paymaya">
                             <span class="option-label"><i class="fas fa-wallet"></i> PayMaya</span>
                         </label>
+                        <label class="payment-option">
+                            <input type="radio" name="paymentMethod" value="ewallet">
+                            <span class="option-label"><i class="fas fa-mobile-alt"></i> E-Wallet</span>
+                        </label>
+                        <label class="payment-option">
+                            <input type="radio" name="paymentMethod" value="card">
+                            <span class="option-label"><i class="fas fa-credit-card"></i> Card</span>
+                        </label>
+                        <label class="payment-option">
+                            <input type="radio" name="paymentMethod" value="banktransfer">
+                            <span class="option-label"><i class="fas fa-university"></i> Bank Transfer</span>
+                        </label>
                     </div>
                     
                     <div id="cashPaymentFields" class="payment-details-section">
@@ -1065,7 +1077,7 @@ function processPayment(paymentMethod) {
                 case 'gcash': paymentMethodName = 'GCash'; break;
                 case 'gotyme': paymentMethodName = 'GoTyme'; break;
                 case 'bank': paymentMethodName = 'Bank Transfer'; break;
-                case 'paymaya': paymentMethodName = 'PayMaya'; break;
+                case 'banktransfer': paymentMethodName = 'Bank Transfer'; break;
                 case 'debit': paymentMethodName = 'Debit Card'; break;
                 case 'credit': paymentMethodName = 'Credit Card'; break;
                 default: paymentMethodName = 'E-Payment'; break;
@@ -1688,6 +1700,8 @@ function processPayment() {
             case 'gcash': paymentMethodName = 'GCash'; break;
             case 'card': paymentMethodName = 'Card'; break;
             case 'paymaya': paymentMethodName = 'PayMaya'; break;
+            case 'ewallet': paymentMethodName = 'E-Wallet'; break;
+            case 'banktransfer': paymentMethodName = 'Bank Transfer'; break;
         }
         
         // Show success message with payment method
