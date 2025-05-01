@@ -640,16 +640,16 @@ document.addEventListener('DOMContentLoaded', function() {
             confirmBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
             
             // Get transaction details
-            const subtotal = parseFloat(document.getElementById('checkout-subtotal').textContent);
-            const tax = parseFloat(document.getElementById('checkout-tax').textContent);
-            const discountAmount = parseFloat(document.getElementById('checkout-discount').textContent || '0');
-            const total = parseFloat(document.getElementById('amountDue').textContent);
+            const subtotal = parseFloat(document.getElementById('checkout-subtotal').textContent.replace(/,/g, ''));
+            const tax = parseFloat(document.getElementById('checkout-tax').textContent.replace(/,/g, ''));
+            const discountAmount = parseFloat(document.getElementById('checkout-discount').textContent.replace(/,/g, '') || '0');
+            const total = parseFloat(document.getElementById('amountDue').textContent.replace(/,/g, ''));
             const amountTendered = parseFloat(document.getElementById('amountTendered').value);
             const change = amountTendered - total;
             
             // Get payment method details
             const paymentMethodSelect = document.getElementById('paymentMethodSelect');
-            let paymentMethod = paymentMethodSelect ? paymentMethodSelect.value : 'cash';
+            let paymentMethod = document.querySelector('input[name="payment"]:checked').value;
             
             // Get e-payment type if applicable
             if (paymentMethod === 'epayment') {
@@ -686,14 +686,153 @@ document.addEventListener('DOMContentLoaded', function() {
                 throw new Error(errorData.error || 'Transaction failed');
             }
             
-            // Show success message
+            const responseData = await response.json();
+            const transactionId = responseData.transaction_id || 'N/A';
+            const transactionDate = new Date().toLocaleString();
+            
+            // Get customer-facing receipt name based on payment method 
+            const paymentMethodNames = {
+                'cash': 'Cash',
+                'card': 'Card',
+                'gcash': 'GCash',
+                'paymaya': 'PayMaya',
+                'ewallet': 'E-Wallet',
+                'banktransfer': 'Bank Transfer'
+            };
+            
+            const paymentMethodName = paymentMethodNames[paymentMethod] || 'Other';
+            
+            // Format items for receipt
+            const itemList = cartItems.map(item => {
+                return `
+                    <tr>
+                        <td>${item.name}</td>
+                        <td class="text-right">${item.quantity.toLocaleString()}</td>
+                        <td class="text-right">₱${item.price.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
+                        <td class="text-right">₱${(item.price * item.quantity).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
+                    </tr>
+                `;
+            }).join('');
+            
+            // Create custom transaction complete modal
             Swal.fire({
-                title: 'Transaction Complete!',
-                text: `Total: ₱${total.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}, Change: ₱${change.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}`,
-                icon: 'success',
+                title: '<div class="transaction-success-title"><i class="fas fa-check-circle success-icon pulse"></i>Transaction Complete!</div>',
+                html: `
+                    <div class="transaction-success-container">
+                        <div class="transaction-success-header">
+                            <div class="transaction-id">Transaction #${transactionId}</div>
+                            <div class="transaction-date">${transactionDate}</div>
+                        </div>
+                        
+                        <div class="transaction-success-summary">
+                            <div class="payment-method">
+                                <i class="${getPaymentIcon(paymentMethod)}"></i>
+                                <span>${paymentMethodName}</span>
+                            </div>
+                            
+                            <div class="transaction-success-amount">
+                                <div class="amount-label">Total Paid</div>
+                                <div class="amount-value">₱${total.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</div>
+                            </div>
+                            
+                            ${paymentMethod === 'cash' ? `
+                                <div class="change-container">
+                                    <div>
+                                        <div class="change-label">Amount Tendered</div>
+                                        <div class="tendered-value">₱${amountTendered.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</div>
+                                    </div>
+                                    <div>
+                                        <div class="change-label">Change</div>
+                                        <div class="change-value">₱${change.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</div>
+                                    </div>
+                                </div>
+                            ` : ''}
+                        </div>
+                        
+                        <div class="transaction-success-items">
+                            <div class="items-header">Items Purchased</div>
+                            <div class="items-table-container">
+                                <table class="items-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Item</th>
+                                            <th class="text-right">Qty</th>
+                                            <th class="text-right">Price</th>
+                                            <th class="text-right">Subtotal</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        ${itemList}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                        
+                        <div class="transaction-success-footer">
+                            <div class="receipt-buttons">
+                                <button class="btn-print-receipt">
+                                    <i class="fas fa-print"></i> Print Receipt
+                                </button>
+                                <button class="btn-email-receipt">
+                                    <i class="fas fa-envelope"></i> Email Receipt
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                `,
+                showConfirmButton: true,
+                confirmButtonText: 'Done',
                 confirmButtonColor: '#3498db',
                 background: '#141414',
-                color: '#f5f5f5'
+                width: '600px',
+                customClass: {
+                    popup: 'transaction-success-popup',
+                    title: 'transaction-success-title-container',
+                    confirmButton: 'transaction-confirm-button',
+                    htmlContainer: 'transaction-success-html-container'
+                },
+                showClass: {
+                    popup: 'animate__animated animate__fadeInUp animate__faster'
+                },
+                hideClass: {
+                    popup: 'animate__animated animate__fadeOutDown animate__faster'
+                },
+                didOpen: () => {
+                    // Add event listener for print receipt button
+                    document.querySelector('.btn-print-receipt').addEventListener('click', function() {
+                        printReceipt(responseData, cartItems, total, amountTendered, change, paymentMethodName);
+                    });
+                    
+                    // Add event listener for email receipt button
+                    document.querySelector('.btn-email-receipt').addEventListener('click', function() {
+                        Swal.fire({
+                            title: 'Enter Email',
+                            input: 'email',
+                            inputPlaceholder: 'customer@example.com',
+                            showCancelButton: true,
+                            confirmButtonText: 'Send',
+                            confirmButtonColor: '#3498db',
+                            background: '#141414',
+                            color: '#f5f5f5',
+                            inputValidator: (value) => {
+                                if (!value) {
+                                    return 'Please enter an email address';
+                                }
+                            }
+                        }).then((result) => {
+                            if (result.isConfirmed) {
+                                Swal.fire({
+                                    title: 'Receipt Sent!',
+                                    text: `Receipt has been sent to ${result.value}`,
+                                    icon: 'success',
+                                    confirmButtonColor: '#3498db',
+                                    background: '#141414',
+                                    color: '#f5f5f5'
+                                });
+                            }
+                        });
+                    });
+                }
             });
             
             // Close modal
@@ -701,9 +840,47 @@ document.addEventListener('DOMContentLoaded', function() {
             modal.classList.remove('show');
             document.body.style.overflow = 'auto';
             
-            // Clear cart
+            // Clear cart properly
             cartItems = [];
+            // Also clear localStorage to ensure complete reset
+            localStorage.removeItem('cartItems');
             updateCart();
+
+            // Ensure cart UI is properly reset
+            const cartContainer = document.getElementById('cartItems');
+            if (cartContainer) {
+                cartContainer.innerHTML = `
+                    <div class="empty-cart" id="emptyCart">
+                        <i class="fas fa-shopping-cart"></i>
+                        <p>Your cart is empty</p>
+                        <p>Add products to start billing</p>
+                    </div>
+                `;
+            }
+            
+            // Disable checkout button
+            const checkoutBtn = document.getElementById('checkoutBtn');
+            if (checkoutBtn) {
+                checkoutBtn.disabled = true;
+            }
+            
+            // Reset cart count badge if it exists
+            const cartCountElement = document.getElementById('cartCount');
+            if (cartCountElement) {
+                cartCountElement.textContent = '0';
+                cartCountElement.style.display = 'none';
+            }
+
+            // Reset total amount
+            const totalAmount = document.getElementById('totalAmount');
+            if (totalAmount) {
+                totalAmount.textContent = '0.00';
+            }
+            
+            // Also clear the global cart array if it exists
+            if (window.cart && Array.isArray(window.cart)) {
+                window.cart = [];
+            }
             
             // Refresh product list to update stock
             fetchProducts();
@@ -724,10 +901,145 @@ document.addEventListener('DOMContentLoaded', function() {
             // Reset button
             const confirmBtn = document.getElementById('confirmPaymentBtn');
             confirmBtn.disabled = false;
-            confirmBtn.textContent = 'Confirm Payment';
+            confirmBtn.innerHTML = '<i class="fas fa-check-circle"></i> Confirm Payment';
         }
     };
     
+    // Helper function to get payment icon based on payment method
+    function getPaymentIcon(paymentMethod) {
+        const iconMap = {
+            'cash': 'fas fa-money-bill-wave',
+            'card': 'fas fa-credit-card',
+            'gcash': 'fas fa-mobile-alt',
+            'paymaya': 'fas fa-wallet',
+            'ewallet': 'fas fa-mobile-alt',
+            'banktransfer': 'fas fa-university'
+        };
+        
+        return iconMap[paymentMethod] || 'fas fa-dollar-sign';
+    }
+    
+    // Function to print receipt
+    function printReceipt(transaction, items, total, amountTendered, change, paymentMethodName) {
+        const receiptDate = new Date().toLocaleString();
+        const receiptItems = items.map(item => {
+            return `
+                <tr>
+                    <td>${item.name}</td>
+                    <td>${item.quantity}</td>
+                    <td>₱${item.price.toFixed(2)}</td>
+                    <td>₱${(item.price * item.quantity).toFixed(2)}</td>
+                </tr>
+            `;
+        }).join('');
+        
+        const printWindow = window.open('', '_blank');
+        printWindow.document.write(`
+            <html>
+                <head>
+                    <title>Receipt</title>
+                    <style>
+                        body {
+                            font-family: 'Courier New', monospace;
+                            font-size: 12px;
+                            margin: 0;
+                            padding: 20px;
+                            color: #000;
+                            max-width: 300px;
+                        }
+                        .receipt-header {
+                            text-align: center;
+                            margin-bottom: 20px;
+                        }
+                        .receipt-header h1 {
+                            font-size: 18px;
+                            margin: 0;
+                        }
+                        .receipt-header p {
+                            margin: 5px 0;
+                        }
+                        .receipt-items {
+                            width: 100%;
+                            border-collapse: collapse;
+                            margin: 20px 0;
+                        }
+                        .receipt-items th, .receipt-items td {
+                            text-align: left;
+                            padding: 5px;
+                        }
+                        .receipt-items th {
+                            border-bottom: 1px solid #000;
+                        }
+                        .receipt-totals {
+                            margin-top: 15px;
+                            text-align: right;
+                        }
+                        .receipt-total {
+                            font-weight: bold;
+                            border-top: 1px solid #000;
+                            padding-top: 5px;
+                        }
+                        .receipt-footer {
+                            text-align: center;
+                            margin-top: 20px;
+                            border-top: 1px dotted #000;
+                            padding-top: 10px;
+                        }
+                        @media print {
+                            body {
+                                width: 100%;
+                                max-width: 300px;
+                                margin: 0;
+                                padding: 0;
+                            }
+                        }
+                    </style>
+                </head>
+                <body>
+                    <div class="receipt-header">
+                        <h1>MotorTech Parts & Accessories</h1>
+                        <p>123 Main Street, City</p>
+                        <p>Tel: (123) 456-7890</p>
+                        <p>${receiptDate}</p>
+                        <p>Transaction #: ${transaction.transaction_id || "N/A"}</p>
+                    </div>
+                    
+                    <table class="receipt-items">
+                        <thead>
+                            <tr>
+                                <th>Item</th>
+                                <th>Qty</th>
+                                <th>Price</th>
+                                <th>Total</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${receiptItems}
+                        </tbody>
+                    </table>
+                    
+                    <div class="receipt-totals">
+                        <p><strong>Payment Method:</strong> ${paymentMethodName}</p>
+                        <p><strong>Total:</strong> ₱${total.toFixed(2)}</p>
+                        ${paymentMethodName === 'Cash' ? `
+                            <p><strong>Amount Tendered:</strong> ₱${amountTendered.toFixed(2)}</p>
+                            <p><strong>Change:</strong> ₱${change.toFixed(2)}</p>
+                        ` : ''}
+                        <p class="receipt-total">Thank you for your purchase!</p>
+                    </div>
+                    
+                    <div class="receipt-footer">
+                        <p>Customer Copy</p>
+                        <p>Please keep this receipt for your records.</p>
+                    </div>
+                </body>
+            </html>
+        `);
+        printWindow.document.close();
+        printWindow.focus();
+        printWindow.print();
+    }
+
     // Function to show transaction history
     const showTransactionHistory = async () => {
         try {
