@@ -370,7 +370,7 @@ main {
     position: relative;
     display: flex;
     flex-direction: column;
-    height: 340px; /* Increased height to accommodate larger image */
+    height: 320px; /* Reduced from 340px to remove extra space */
     border-radius: 15px;
     background-color: var(--dark-color);
 }
@@ -468,12 +468,12 @@ main {
     display: flex;
     flex-direction: column;
     flex-grow: 1;
-    gap: 3px; /* Add gap to control spacing between elements */
+    gap: 2px; /* Reduced from 3px to tighten spacing */
 }
 
 .item-name {
     font-size: 15px; /* Reduced font size from 16px */
-    margin: 0 0 4px 0; /* Reduced margin from 10px to 6px */
+    margin: 0 0 3px 0; /* Reduced from 4px to tighten spacing */
     color: var(--text-color);
     white-space: nowrap;
     overflow: hidden;
@@ -498,8 +498,8 @@ main {
 .item-stock {
     color: var(--text-dark);
     font-size: 12px;
-    margin-bottom: 4px; /* Reduced from 6px to 4px */
-    line-height: 1.1; /* Add tighter line height */
+    margin-bottom: 0; 
+    line-height: 1.1; 
 }
 
 .item-stock.low-stock {
@@ -3772,7 +3772,7 @@ discount-option input:checked ~ .checkbox-custom::after {
 }
 
 .cart-item:hover {
-  border-color: var(--primary-color);
+  border-color: var (--primary-color);
   transform: translateY(-2px);
   box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
 }

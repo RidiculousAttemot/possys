@@ -204,7 +204,6 @@ document.addEventListener('DOMContentLoaded', function() {
         filteredProducts.forEach(product => {
             const stockStatus = product.stock > 10 ? 'normal' : (product.stock > 0 ? 'low' : 'out-of-stock');
             const stockText = product.stock > 0 ? `${product.stock} in stock` : 'Out of stock';
-            const disabledStatus = product.stock <= 0 ? 'disabled' : '';
             
             // Debug the image path
             console.log(`Product ${product.name} image path:`, product.image);
@@ -243,9 +242,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 `;
             }
             
-            // Create product card HTML
+            // Create product card HTML - adding cursor:pointer style and removing action buttons
             productsHTML += `
-                <div class="item-card" data-id="${product.id}">
+                <div class="item-card" data-id="${product.id}" style="cursor: pointer;">
                     ${imageHtml}
                     <div class="item-details">
                         <h3 class="item-name">${product.name}</h3>
@@ -253,31 +252,24 @@ document.addEventListener('DOMContentLoaded', function() {
                         <p class="item-price">₱${product.price.toFixed(2)}</p>
                         <p class="item-stock ${stockStatus}-stock">${stockText}</p>
                     </div>
-                    <div class="item-actions">
-                        <button class="btn-view-details" data-id="${product.id}">
-                            <i class="fas fa-eye"></i> Details
-                        </button>
-                        <button class="btn-add-to-cart" data-id="${product.id}" ${disabledStatus}>
-                            <i class="fas fa-cart-plus"></i> Add
-                        </button>
-                    </div>
                 </div>
             `;
         });
         
         productGrid.innerHTML = productsHTML;
         
-        // Add event listeners to the new buttons
+        // Add event listeners to the product cards
         addProductEventListeners();
     };
     
     // Function to add event listeners to product buttons
     const addProductEventListeners = () => {
-        // Add to cart buttons
-        document.querySelectorAll('.btn-add-to-cart').forEach(button => {
-            if (!button.disabled) {
-                button.addEventListener('click', function() {
-                    const productId = parseInt(this.getAttribute('data-id'));
+        // Make entire card clickable for adding to cart or viewing details
+        document.querySelectorAll('.item-card').forEach(card => {
+            card.addEventListener('click', function() {
+                const productId = parseInt(this.getAttribute('data-id'));
+                const product = allProducts.find(p => p.id === productId);
+                if (product && product.stock > 0) {
                     addToCart(productId);
                     
                     // Add animation to show item was added
@@ -285,13 +277,15 @@ document.addEventListener('DOMContentLoaded', function() {
                     setTimeout(() => {
                         this.classList.remove('item-added-animation');
                     }, 500);
-                });
-            }
-        });
-        
-        // View details buttons
-        document.querySelectorAll('.btn-view-details').forEach(button => {
-            button.addEventListener('click', function() {
+                } else if (product) {
+                    // For out of stock items, show product details instead
+                    showProductDetails(productId);
+                }
+            });
+            
+            // Add context menu (right-click) for details
+            card.addEventListener('contextmenu', function(e) {
+                e.preventDefault(); // Prevent default browser context menu
                 const productId = parseInt(this.getAttribute('data-id'));
                 showProductDetails(productId);
             });
@@ -354,9 +348,30 @@ document.addEventListener('DOMContentLoaded', function() {
         }
 
         if (cartItems.length === 0) {
-            if (cartContainer) cartContainer.innerHTML = ''; // Clear container
-            if (emptyCartMessage) emptyCartMessage.style.display = 'flex'; // Show empty message
+            if (cartContainer) {
+                // Clear container and show empty cart message
+                cartContainer.innerHTML = `
+                    <div class="empty-cart" id="emptyCart">
+                        <i class="fas fa-shopping-cart"></i>
+                        <p>Your cart is empty</p>
+                        <p>Add products to start billing</p>
+                    </div>
+                `;
+            }
             checkoutBtn.disabled = true;
+            
+            // Reset total to zero
+            const totalAmount = document.getElementById('totalAmount');
+            if (totalAmount) {
+                totalAmount.textContent = '0.00';
+            }
+            
+            // Reset cart count badge
+            const cartCountElement = document.getElementById('cartCount');
+            if (cartCountElement) {
+                cartCountElement.textContent = '0';
+                cartCountElement.style.display = 'none';
+            }
         } else {
             if (emptyCartMessage) emptyCartMessage.style.display = 'none'; // Hide empty message
             let cartHTML = '';
@@ -383,7 +398,7 @@ document.addEventListener('DOMContentLoaded', function() {
             checkoutBtn.disabled = false;
 
             // Calculate totals
-            const tax = subtotal * 0.5;
+            const tax = subtotal * 0.0012; // Changed from 0.5 to 0.0012 (0.12%);
             const total = subtotal + tax;
 
             // Update only the total amount in the cart summary
@@ -564,7 +579,7 @@ document.addEventListener('DOMContentLoaded', function() {
         checkoutItems.innerHTML = checkoutHTML;
         
         // Update summary values
-        const tax = subtotal * 0.5;
+        const tax = subtotal * 0.5;;
         const total = subtotal + tax;
         
         document.getElementById('checkout-subtotal').textContent = subtotal.toFixed(2);
@@ -1321,7 +1336,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         <span>₱${calculateSubtotal().toFixed(2)}</span>
                     </div>
                     <div class="receipt-summary-row">
-                        <span>Tax (12%):</span>
+                        <span>Tax (12%):</span>n>
                         <span>₱${calculateTax().toFixed(2)}</span>
                     </div>
                     <div class="receipt-summary-row total">
@@ -1457,7 +1472,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
 // Cart functionality with real-time price updates
 let cart = [];
-const TAX_RATE = 0.12; // 12% tax rate
+const TAX_RATE = 0.12; // 12% tax raterate (changed from 12%)
 
 // Function to add item to cart with real-time price updates
 function addToCart(itemId, itemName, itemPrice) {
@@ -1613,21 +1628,15 @@ function removeFromCart(itemId) {
             // Show empty cart message if cart is empty
             if (cart.length === 0) {
                 const cartItems = document.getElementById('cartItems');
-                const emptyCartMessage = document.getElementById('emptyCart');
                 
-                // If emptyCart element exists, show it
-                if (emptyCartMessage) {
-                    emptyCartMessage.style.display = 'flex';
-                } else {
-                    // Otherwise create the empty cart message
-                    cartItems.innerHTML = `
-                        <div class="empty-cart" id="emptyCart">
-                            <i class="fas fa-shopping-cart"></i>
-                            <p>Your cart is empty</p>
-                            <p>Add products to start billing</p>
-                        </div>
-                    `;
-                }
+                // Create the empty cart message directly
+                cartItems.innerHTML = `
+                    <div class="empty-cart" id="emptyCart">
+                        <i class="fas fa-shopping-cart"></i>
+                        <p>Your cart is empty</p>
+                        <p>Add products to start billing</p>
+                    </div>
+                `;
                 
                 // Disable checkout button
                 const checkoutBtn = document.getElementById('checkoutBtn');
@@ -1732,8 +1741,20 @@ document.addEventListener('DOMContentLoaded', () => {
     // Clear any existing cart data
     cart = [];
     
-    // Initialize cart UI
-    updateCartTotals();
+    // Initialize cart UI with empty cart message
+    const cartItems = document.getElementById('cartItems');
+    if (cartItems) {
+        cartItems.innerHTML = `
+            <div class="empty-cart" id="emptyCart">
+                <i class="fas fa-shopping-cart"></i>
+                <p>Your cart is empty</p>
+                <p>Add products to start billing</p>
+            </div>
+        `;
+    }
+    
+    // Initialize totals to zero
+    resetCartTotals();
     
     // Set checkout button to disabled initially
     const checkoutBtn = document.getElementById('checkoutBtn');
