@@ -3958,3 +3958,95 @@ main {
     grid-template-columns: 1fr;
   }
 }
+
+/* Payment Options - Updated grid layout */
+.payment-options {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 15px;
+  margin: 20px 0;
+}
+
+.payment-options label {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 15px 10px;
+  background-color: var(--dark-color);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: var(--transition);
+  border: 1px solid var(--border-color);
+  gap: 8px;
+  text-align: center;
+  height: 100px;
+}
+
+.payment-options label:hover {
+  background-color: rgba(52, 152, 219, 0.1);
+  transform: translateY(-2px);
+  border-color: var(--primary-color);
+}
+
+.payment-options input[type="radio"] {
+  position: absolute;
+  opacity: 0;
+}
+
+.payment-options input:checked + i {
+  color: var(--primary-color);
+}
+
+.payment-options input:checked ~ span {
+  color: var(--primary-color);
+  font-weight: 500;
+}
+
+.payment-options input:checked + label,
+.payment-options label:has(input:checked) {
+  border-color: var(--primary-color);
+  background-color: rgba(52, 152, 219, 0.1);
+  box-shadow: 0 4px 10px rgba(52, 152, 219, 0.2);
+}
+
+.payment-options label i {
+  font-size: 28px;
+  color: var(--text-dark);
+  transition: var(--transition);
+  margin-bottom: 8px;
+}
+
+.payment-options label:hover i {
+  color: var(--primary-color);
+}
+
+/* Cash Payment Fields - Ensure they're only shown when needed */
+#cashPaymentFields {
+  display: flex;
+  margin: 20px 0;
+  gap: 15px;
+  animation: fadeIn 0.3s ease;
+}
+
+#cashPaymentFields.hidden {
+  display: none;
+}
+
+/* Responsive adjustments for payment methods */
+@media (max-width: 768px) {
+  .payment-options {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  
+  #cashPaymentFields {
+    flex-direction: column;
+  }
+}
+
+@media (max-width: 480px) {
+  .payment-options {
+    grid-template-columns: 1fr;
+  }
+}

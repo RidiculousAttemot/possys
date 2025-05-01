@@ -601,6 +601,23 @@ document.addEventListener('DOMContentLoaded', function() {
         document.getElementById('amountTendered').value = '';
         document.getElementById('change').value = '₱0.00';
         document.getElementById('confirmPaymentBtn').disabled = true;
+
+        // Reset payment method to cash (default)
+        const cashRadio = document.querySelector('input[name="payment"][value="cash"]');
+        if (cashRadio) {
+            cashRadio.checked = true;
+        }
+        
+        // Show cash payment fields
+        const cashPaymentFields = document.getElementById('cashPaymentFields');
+        if (cashPaymentFields) {
+            cashPaymentFields.style.display = 'flex';
+        }
+        
+        // Reset payment fields
+        document.getElementById('amountTendered').value = '';
+        document.getElementById('change').value = '₱0.00';
+        document.getElementById('confirmPaymentBtn').disabled = true;
     };
     
     // Function to handle checkout
@@ -1029,6 +1046,33 @@ document.addEventListener('DOMContentLoaded', function() {
                     </tbody>
                 </table>
                 
+                <!-- Discount Options -->
+                <div class="discount-options">
+                    <h3>Apply Discount</h3>
+                    <div class="discount-types">
+                        <label class="discount-option">
+                            <input type="checkbox" name="discountType" value="senior" id="seniorDiscount">
+                            <span class="checkbox-custom"></span>
+                            <span>Senior Citizen (5%)</span>
+                        </label>
+                        <label class="discount-option">
+                            <input type="checkbox" name="discountType" value="pwd" id="pwdDiscount">
+                            <span class="checkbox-custom"></span>
+                            <span>PWD (2%)</span>
+                        </label>
+                        <label class="discount-option">
+                            <input type="checkbox" name="discountType" value="loyalty" id="loyaltyDiscount">
+                            <span class="checkbox-custom"></span>
+                            <span>Loyalty (3%)</span>
+                        </label>
+                    </div>
+                    
+                    <div id="discountIdContainer" class="discount-id-container" style="display: none;">
+                        <label for="discountIdNumber">ID Number:</label>
+                        <input type="text" id="discountIdNumber" placeholder="Enter ID number">
+                    </div>
+                </div>
+                
                 <!-- Payment Summary -->
                 <div class="payment-summary">
                     <div class="summary-row">
@@ -1043,32 +1087,50 @@ document.addEventListener('DOMContentLoaded', function() {
                         <span>Discount:</span>
                         <span>₱<span id="checkout-discount">0.00</span></span>
                     </div>
-                    <div class="summary-row total">
-                        <span>Amount Due:</span>
+                    <div class="summary-row total-final">
+                        <span>Total Due:</span>
                         <span>₱<span id="amountDue">0.00</span></span>
                     </div>
                 </div>
                 
-                <!-- Payment Form - Improved UI -->
-                <div class="payment-form">
-                    <div class="form-group">
-                        <label for="amountTendered"><i class="fas fa-money-bill-wave"></i> Amount Tendered:</label>
-                        <input type="number" id="amountTendered" min="0" step="0.01" placeholder="Enter amount">
+                <!-- Payment Method Selection -->
+                <h3>Payment Method</h3>
+                <div class="payment-options">
+                    <label>
+                        <input type="radio" name="payment" value="cash" checked>
+                        <i class="fas fa-money-bill-wave"></i>
+                        <span>Cash</span>
+                    </label>
+                    <label>
+                        <input type="radio" name="payment" value="gcash">
+                        <i class="fas fa-mobile-alt"></i>
+                        <span>GCash</span>
+                    </label>
+                    <label>
+                        <input type="radio" name="payment" value="card">
+                        <i class="fas fa-credit-card"></i>
+                        <span>Card</span>
+                    </label>
+                    <label>
+                        <input type="radio" name="payment" value="paymaya">
+                        <i class="fas fa-wallet"></i>
+                        <span>PayMaya</span>
+                    </label>
+                </div>
+                
+                <!-- Cash Payment Fields (only shown for cash payment) -->
+                <div id="cashPaymentFields" class="payment-input">
+                    <div>
+                        <label for="amountTendered">Amount Tendered:</label>
+                        <input type="number" id="amountTendered" placeholder="Enter amount" step="0.01" min="0">
                     </div>
-                    <div class="form-group">
-                        <label for="change"><i class="fas fa-coins"></i> Change:</label>
-                        <input type="text" id="change" value="₱0.00" readonly disabled>
+                    <div>
+                        <label for="change">Change:</label>
+                        <input type="text" id="change" value="₱0.00" readonly>
                     </div>
                 </div>
                 
-                <div class="modal-actions">
-                    <button id="confirmPaymentBtn" class="btn-primary" disabled>
-                        <i class="fas fa-check-circle"></i> Confirm Payment
-                    </button>
-                    <button id="cancelPaymentBtn" class="btn-secondary">
-                        <i class="fas fa-times-circle"></i> Cancel
-                    </button>
-                </div>
+                <button class="btn-confirm-payment" id="confirmPaymentBtn" disabled>Complete Payment</button>
             `;
             
             // Add event listener for amount tendered input
@@ -1146,6 +1208,55 @@ document.addEventListener('DOMContentLoaded', function() {
         const historyBtn = document.getElementById('historyBtn');
         if (historyBtn) {
             historyBtn.addEventListener('click', showTransactionHistory);
+        }
+
+        // Payment method radio buttons
+        document.querySelectorAll('input[name="payment"]').forEach(radio => {
+            radio.addEventListener('change', function() {
+                const cashPaymentFields = document.getElementById('cashPaymentFields');
+                const confirmPaymentBtn = document.getElementById('confirmPaymentBtn');
+                
+                if (this.value === 'cash') {
+                    // Show cash payment fields
+                    cashPaymentFields.style.display = 'flex';
+                    
+                    // Disable confirm button until valid amount is entered
+                    confirmPaymentBtn.disabled = true;
+                    
+                    // Check if there's already a valid amount
+                    const amountTendered = parseFloat(document.getElementById('amountTendered').value) || 0;
+                    const amountDue = parseFloat(document.getElementById('amountDue').textContent) || 0;
+                    
+                    // Enable button if amount is valid
+                    confirmPaymentBtn.disabled = amountTendered < amountDue;
+                } else {
+                    // Hide cash payment fields for non-cash methods
+                    cashPaymentFields.style.display = 'none';
+                    
+                    // Enable button immediately (since payment is exact)
+                    confirmPaymentBtn.disabled = false;
+                }
+            });
+        });
+        
+        // Amount tendered input
+        const amountTenderedInput = document.getElementById('amountTendered');
+        if (amountTenderedInput) {
+            amountTenderedInput.addEventListener('input', function() {
+                const amountDue = parseFloat(document.getElementById('amountDue').textContent);
+                const amountTendered = parseFloat(this.value) || 0;
+                
+                if (!isNaN(amountTendered) && amountTendered >= amountDue) {
+                    confirmPaymentBtn.disabled = false;
+                    
+                    // Calculate change
+                    const change = amountTendered - amountDue;
+                    document.getElementById('change').value = `₱${change.toFixed(2)}`;
+                } else {
+                    confirmPaymentBtn.disabled = true;
+                    document.getElementById('change').value = `₱0.00`;
+                }
+            });
         }
     };
     
