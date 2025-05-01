@@ -630,12 +630,12 @@ styleElement.textContent = `
             <div class="cart-item" data-id="${item.id}">
                 <div class="cart-item-info">
                     <div class="cart-item-name">${item.name}</div>
-                    <div class="cart-item-price">₱${item.price.toFixed(2)}</div>
+                    <div class="cart-item-price">₱${item.price.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</div>
                 </div>
                 <div class="cart-item-controls">
                     <div class="quantity-wrapper">
                         <button class="quantity-btn minus-btn" data-id="${item.id}">-</button>
-                        <span class="quantity-value">${item.quantity}</span>
+                        <span class="quantity-value">${item.quantity.toLocaleString()}</span>
                         <button class="quantity-btn plus-btn" data-id="${item.id}">+</button>
                     </div>
                     <button class="cart-item-delete" data-id="${item.id}">
@@ -677,7 +677,7 @@ styleElement.textContent = `
     // Create and append the full-page checkout modal to the document body
     const checkoutModal = document.createElement('div');
     checkoutModal.id = 'checkoutModal';
-    checkoutModal.className = 'fullpage-modal';
+    checkoutModal.className = 'modal';
     
     checkoutModal.innerHTML = `
         <div class="modal-content">
@@ -719,85 +719,36 @@ styleElement.textContent = `
                         </div>
                     </div>
                 </div>
-                
+                    
                 <div class="checkout-payment-section">
                     <h3>Payment Method</h3>
-                    <div class="payment-options">
-                        <div class="payment-option">
-                            <input type="radio" id="paymentCash" name="paymentMethod" value="cash" checked>
-                            <label for="paymentCash">
-                                <i class="fas fa-money-bill-wave"></i>
-                                <span>Cash</span>
-                            </label>
-                        </div>
-                        <div class="payment-option">
-                            <input type="radio" id="paymentCard" name="paymentMethod" value="card">
-                            <label for="paymentCard">
-                                <i class="fas fa-credit-card"></i>
-                                <span>Card</span>
-                            </label>
-                        </div>
-                        <div class="payment-option">
-                            <input type="radio" id="paymentGcash" name="paymentMethod" value="gcash">
-                            <label for="paymentGcash">
-                                <i class="fas fa-mobile-alt"></i>
-                                <span>GCash</span>
-                            </label>
-                        </div>
+                    <div class="payment-method-options">
+                        <label class="payment-option">
+                            <input type="radio" name="paymentMethod" value="cash" checked>
+                            <span class="option-label"><i class="fas fa-money-bill-wave"></i> Cash</span>
+                        </label>
+                        <label class="payment-option">
+                            <input type="radio" name="paymentMethod" value="gcash">
+                            <span class="option-label"><i class="fas fa-mobile-alt"></i> GCash</span>
+                        </label>
+                        <label class="payment-option">
+                            <input type="radio" name="paymentMethod" value="card">
+                            <span class="option-label"><i class="fas fa-credit-card"></i> Card</span>
+                        </label>
+                        <label class="payment-option">
+                            <input type="radio" name="paymentMethod" value="paymaya">
+                            <span class="option-label"><i class="fas fa-wallet"></i> PayMaya</span>
+                        </label>
                     </div>
                     
-                    <div id="cashDetails" class="payment-details-section">
-                        <div class="payment-input-group">
-                            <div class="form-group">
-                                <label for="cashAmount">Amount Received</label>
-                                <input type="number" id="cashAmount" placeholder="Enter amount" min="0" step="0.01">
-                            </div>
+                    <div id="cashPaymentFields" class="payment-details-section">
+                        <div class="form-group">
+                            <label for="cashAmount"><i class="fas fa-money-bill-wave"></i> Amount Received</label>
+                            <input type="number" id="cashAmount" placeholder="Enter amount" min="0" step="0.01">
                         </div>
-                        <div class="payment-input-group">
-                            <div class="form-group">
-                                <label>Change</label>
-                                <div id="changeAmount" class="change-display">₱0.00</div>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div id="cardDetails" class="payment-details-section" style="display: none;">
-                        <div class="payment-input-group">
-                            <div class="form-group">
-                                <label for="cardNumber">Card Number</label>
-                                <input type="text" id="cardNumber" placeholder="•••• •••• •••• ••••">
-                            </div>
-                        </div>
-                        <div class="payment-input-group">
-                            <div class="form-group">
-                                <label for="cardName">Cardholder Name</label>
-                                <input type="text" id="cardName" placeholder="Name on card">
-                            </div>
-                        </div>
-                        <div class="payment-input-group">
-                            <div class="form-group">
-                                <label for="cardExpiry">Expiry Date</label>
-                                <input type="text" id="cardExpiry" placeholder="MM/YY">
-                            </div>
-                            <div class="form-group">
-                                <label for="cardCvv">CVV</label>
-                                <input type="password" id="cardCvv" placeholder="•••">
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div id="gcashDetails" class="payment-details-section" style="display: none;">
-                        <div class="payment-input-group">
-                            <div class="form-group">
-                                <label for="gcashNumber">GCash Number</label>
-                                <input type="text" id="gcashNumber" placeholder="09XX XXX XXXX">
-                            </div>
-                        </div>
-                        <div class="payment-input-group">
-                            <div class="form-group">
-                                <label for="gcashReference">Reference Number</label>
-                                <input type="text" id="gcashReference" placeholder="Enter reference number">
-                            </div>
+                        <div class="form-group">
+                            <label><i class="fas fa-coins"></i> Change</label>
+                            <input type="text" id="changeAmount" class="change-display" value="₱0.00" readonly disabled>
                         </div>
                     </div>
                     
@@ -813,15 +764,14 @@ styleElement.textContent = `
                         </div>
                     </div>
                     
-                    <button id="confirmPaymentBtn" class="btn-confirm-payment">
+                    <button id="confirmPaymentBtn" class="btn-primary" disabled>
                         <i class="fas fa-check-circle"></i> Complete Transaction
                     </button>
                 </div>
             </div>
             <div class="modal-footer">
-                <button class="btn-secondary cancel-checkout">Cancel</button>
-                <button class="btn-apply-discount">
-                    <i class="fas fa-tag"></i> Apply Discount
+                <button class="btn-secondary cancel-checkout">
+                    <i class="fas fa-times-circle"></i> Cancel
                 </button>
             </div>
         </div>
@@ -863,11 +813,11 @@ styleElement.textContent = `
     if (cashAmountInput) {
         cashAmountInput.addEventListener('input', function() {
             const cashAmount = parseFloat(this.value) || 0;
-            const totalAmount = parseFloat(document.getElementById('totalAmount').textContent.replace('₱', '')) || 0;
+            const totalAmount = parseFloat(document.getElementById('totalAmount').textContent.replace('₱', '').replace(/,/g, '')) || 0;
             const changeAmount = cashAmount - totalAmount;
             
             document.getElementById('changeAmount').textContent = changeAmount >= 0 ? 
-                `₱${changeAmount.toFixed(2)}` : '₱0.00';
+                `₱${changeAmount.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}` : '₱0.00';
             
             // Enable/disable confirm button based on valid cash amount
             const confirmBtn = document.getElementById('confirmPaymentBtn');
@@ -911,9 +861,9 @@ styleElement.textContent = `
             html += `
                 <tr>
                     <td>${item.name}</td>
-                    <td class="text-center">${item.quantity}</td>
-                    <td class="text-right">₱${parseFloat(item.price).toFixed(2)}</td>
-                    <td class="text-right">₱${parseFloat(itemTotal).toFixed(2)}</td>
+                    <td class="text-center">${item.quantity.toLocaleString()}</td>
+                    <td class="text-right">₱${parseFloat(item.price).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
+                    <td class="text-right">₱${parseFloat(itemTotal).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
                 </tr>
             `;
         });
@@ -921,18 +871,30 @@ styleElement.textContent = `
         checkoutItemsTable.innerHTML = html;
         
         // Update summary
-        document.getElementById('subtotalAmount').textContent = `₱${parseFloat(subtotal).toFixed(2)}`;
-        document.getElementById('totalAmount').textContent = `₱${parseFloat(subtotal).toFixed(2)}`;
+        document.getElementById('subtotalAmount').textContent = `₱${parseFloat(subtotal).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+        document.getElementById('totalAmount').textContent = `₱${parseFloat(subtotal).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
         
-        // Reset payment method
-        document.getElementById('paymentCash').checked = true;
-        document.getElementById('cashDetails').style.display = 'block';
-        document.getElementById('cardDetails').style.display = 'none';
-        document.getElementById('gcashDetails').style.display = 'none';
-        
-        // Reset cash amount and change
-        document.getElementById('cashAmount').value = '';
-        document.getElementById('changeAmount').textContent = '₱0.00';
+        // Reset payment method to cash
+        const cashRadio = document.querySelector('input[name="paymentMethod"][value="cash"]');
+        if (cashRadio) {
+            cashRadio.checked = true;
+            
+            // Show cash payment fields since cash is default
+            const cashPaymentFields = document.getElementById('cashPaymentFields');
+            if (cashPaymentFields) {
+                cashPaymentFields.style.display = 'block';
+            }
+            
+            // Reset cash amount and change
+            document.getElementById('cashAmount').value = '';
+            document.getElementById('changeAmount').value = '₱0.00';
+            
+            // Disable confirm button until valid cash amount is entered
+            const confirmPaymentBtn = document.getElementById('confirmPaymentBtn');
+            if (confirmPaymentBtn) {
+                confirmPaymentBtn.disabled = true;
+            }
+        }
         
         // Show the modal
         checkoutModal.classList.add('show');
@@ -1037,11 +999,11 @@ window.createCartItemHTML = function(item) {
         <div class="cart-item" data-id="${item.id}">
             <div class="cart-item-info">
                 <div class="cart-item-name">${item.name}</div>
-                <div class="cart-item-price">₱${item.price.toFixed(2)}</div>
+                <div class="cart-item-price">₱${item.price.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</div>
             </div>
             <div class="quantity-wrapper">
                 <button class="quantity-btn minus-btn" data-id="${item.id}">-</button>
-                <span class="quantity-value">${item.quantity}</span>
+                <span class="quantity-value">${item.quantity.toLocaleString()}</span>
                 <button class="quantity-btn plus-btn" data-id="${item.id}">+</button>
             </div>
             <button class="cart-item-delete" data-id="${item.id}">
@@ -1050,3 +1012,715 @@ window.createCartItemHTML = function(item) {
         </div>
     `;
 };
+
+// Setup payment method switching
+const paymentMethodSelect = document.getElementById('paymentMethodSelect');
+const epaymentOptions = document.getElementById('epaymentOptions');
+
+if (paymentMethodSelect) {
+    paymentMethodSelect.addEventListener('change', function() {
+        // Show/hide e-payment options based on selection
+        if (this.value === 'epayment') {
+            epaymentOptions.style.display = 'block';
+        } else {
+            epaymentOptions.style.display = 'none';
+        }
+    });
+}
+
+// Function to process payment
+function processPayment(paymentMethod) {
+    // Show loading state
+    const confirmBtn = document.getElementById('confirmPaymentBtn');
+    confirmBtn.disabled = true;
+    confirmBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
+    
+    // Get selected payment method
+    const paymentMethodSelect = document.getElementById('paymentMethodSelect');
+    const selectedPaymentMethod = paymentMethodSelect.value;
+    
+    // Get e-payment type if applicable
+    let paymentTypeForReceipt = selectedPaymentMethod;
+    if (selectedPaymentMethod === 'epayment') {
+        const epaymentTypeSelect = document.getElementById('epaymentTypeSelect');
+        paymentTypeForReceipt = epaymentTypeSelect.value;
+    }
+    
+    // Simulate payment processing (replace with actual API call)
+    setTimeout(() => {
+        // Close modal
+        document.getElementById('checkoutModal').classList.remove('show');
+        document.body.style.overflow = 'auto';
+        
+        // Clear cart
+        if (window.clearCart) {
+            window.clearCart();
+        }
+        
+        // Get payment method name for success message
+        let paymentMethodName = 'Cash';
+        if (selectedPaymentMethod === 'epayment') {
+            const epaymentTypeSelect = document.getElementById('epaymentTypeSelect');
+            switch (epaymentTypeSelect.value) {
+                case 'gcash': paymentMethodName = 'GCash'; break;
+                case 'gotyme': paymentMethodName = 'GoTyme'; break;
+                case 'bank': paymentMethodName = 'Bank Transfer'; break;
+                case 'paymaya': paymentMethodName = 'PayMaya'; break;
+                case 'debit': paymentMethodName = 'Debit Card'; break;
+                case 'credit': paymentMethodName = 'Credit Card'; break;
+                default: paymentMethodName = 'E-Payment'; break;
+            }
+        }
+        
+        // Show success message
+        Swal.fire({
+            title: 'Payment Successful!',
+            text: `Your transaction has been completed successfully using ${paymentMethodName}.`,
+            icon: 'success',
+            confirmButtonColor: '#3498db',
+            background: '#141414',
+            color: '#f5f5f5'
+        });
+        
+        // Reset button state
+        confirmBtn.disabled = false;
+        confirmBtn.innerHTML = '<i class="fas fa-check-circle"></i> Complete Transaction';
+        
+    }, 1500); // Simulate a 1.5 second payment process
+}
+
+// Expose the openCheckoutModal function globally
+window.openCheckoutModal = function() {
+    const cartItems = window.getCartItems ? window.getCartItems() : [];
+    
+    // ...existing code...
+    
+    // Reset payment method selection
+    const paymentMethodSelect = document.getElementById('paymentMethodSelect');
+    if (paymentMethodSelect) {
+        paymentMethodSelect.value = 'cash';
+    }
+    
+    // Hide e-payment options
+    const epaymentOptions = document.getElementById('epaymentOptions');
+    if (epaymentOptions) {
+        epaymentOptions.style.display = 'none';
+    }
+    
+    // Reset cash amount and change
+    document.getElementById('cashAmount').value = '';
+    document.getElementById('changeAmount').textContent = '₱0.00';
+    
+    // Show the modal
+    checkoutModal.classList.add('show');
+    document.body.style.overflow = 'hidden'; // Prevent scrolling behind modal
+};
+
+// Add this CSS style to override and improve the payment form in checkout modal
+const checkoutStyle = document.createElement('style');
+checkoutStyle.textContent = `
+    /* Better styling for payment inputs */
+    #cashAmount, #changeAmount {
+        width: 100%;
+        padding: 12px 15px;
+        border-radius: 8px;
+        background-color: var(--dark-accent);
+        border: 1px solid var(--border-color);
+        color: var(--text-color);
+        font-size: 16px;
+        transition: var(--transition);
+    }
+    
+    #cashAmount:focus {
+        outline: none;
+        border-color: var(--primary-color);
+        box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.2);
+    }
+    
+    #changeAmount {
+        background-color: var(--dark-secondary);
+        color: var(--primary-color);
+        font-weight: 600;
+    }
+    
+    #confirmPaymentBtn {
+        width: 100%;
+        padding: 14px;
+        border-radius: 8px;
+        border: none;
+        background: linear-gradient(to right, var(--primary-color), var(--primary-dark));
+        color: white;
+        font-size: 16px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: var(--transition);
+        margin-top: 20px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+    }
+    
+    #confirmPaymentBtn:hover:not(:disabled) {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(52, 152, 219, 0.3);
+    }
+    
+    #confirmPaymentBtn:disabled {
+        background: linear-gradient(to right, var(--secondary-dark), var(--secondary-color));
+        cursor: not-allowed;
+        opacity: 0.7;
+    }
+    
+    .btn-secondary.cancel-checkout {
+        width: 100%;
+        padding: 12px;
+        border-radius: 8px;
+        background-color: var(--dark-color);
+        color: var(--text-color);
+        font-size: 16px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: var(--transition);
+        border: 1px solid var(--border-color);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+        margin-top: 10px;
+    }
+    
+    .btn-secondary.cancel-checkout:hover {
+        background-color: var(--dark-accent);
+        border-color: var(--danger);
+        transform: translateY(-2px);
+    }
+    
+    .change-display {
+        padding: 12px;
+        border-radius: 8px;
+        background-color: var(--dark-secondary);
+        border: 1px solid var(--border-color);
+        color: var(--primary-color);
+        font-size: 16px;
+        font-weight: 600;
+        text-align: left;
+    }
+`;
+
+document.head.appendChild(checkoutStyle);
+
+// Override createCartItemHTML function to support formatted numbers
+window.createCartItemHTML = function(item) {
+    const itemTotal = (item.price * item.quantity).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
+    return `
+        <div class="cart-item" data-id="${item.id}">
+            <div class="cart-item-info">
+                <div class="cart-item-name">${item.name}</div>
+                <div class="cart-item-price">₱${item.price.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</div>
+            </div>
+            <div class="cart-quantity-control">
+                <button class="cart-quantity-btn cart-minus-btn" data-id="${item.id}">−</button>
+                <div class="cart-quantity-value">${item.quantity.toLocaleString()}</div>
+                <button class="cart-quantity-btn cart-plus-btn" data-id="${item.id}">+</button>
+            </div>
+            <div class="cart-item-actions">
+                <div class="cart-item-total">₱${itemTotal}</div>
+                <button class="cart-item-delete" data-id="${item.id}">
+                    <i class="fas fa-trash"></i>
+                </button>
+            </div>
+        </div>
+    `;
+};
+
+// Calculate change for cash payments with formatted numbers
+const cashAmountInput = document.getElementById('cashAmount');
+if (cashAmountInput) {
+    cashAmountInput.addEventListener('input', function() {
+        const cashAmount = parseFloat(this.value) || 0;
+        const totalAmount = parseFloat(document.getElementById('totalAmount').textContent.replace('₱', '').replace(/,/g, '')) || 0;
+        const changeAmount = cashAmount - totalAmount;
+        
+        document.getElementById('changeAmount').textContent = changeAmount >= 0 ? 
+            `₱${changeAmount.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}` : '₱0.00';
+        
+        // Enable/disable confirm button based on valid cash amount
+        const confirmBtn = document.getElementById('confirmPaymentBtn');
+        confirmBtn.disabled = cashAmount < totalAmount;
+    });
+}
+
+// Expose the openCheckoutModal function globally with formatted numbers
+window.openCheckoutModal = function() {
+    const cartItems = window.getCartItems ? window.getCartItems() : [];
+    
+    if (cartItems.length === 0) {
+        Swal.fire({
+            title: 'Empty Cart',
+            text: 'Please add items to your cart before checkout',
+            icon: 'warning',
+            confirmButtonColor: '#3498db',
+            background: '#141414',
+            color: '#f5f5f5'
+        });
+        return;
+    }
+    
+    // Populate checkout items table with formatted numbers
+    const checkoutItemsTable = document.getElementById('checkoutItemsTable');
+    let html = '';
+    let subtotal = 0;
+    
+    cartItems.forEach(item => {
+        const itemTotal = item.price * item.quantity;
+        subtotal += itemTotal;
+        
+        html += `
+            <tr>
+                <td>${item.name}</td>
+                <td class="text-center">${item.quantity.toLocaleString()}</td>
+                <td class="text-right">₱${parseFloat(item.price).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
+                <td class="text-right">₱${parseFloat(itemTotal).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
+            </tr>
+        `;
+    });
+    
+    checkoutItemsTable.innerHTML = html;
+    
+    // Update summary with formatted numbers
+    document.getElementById('subtotalAmount').textContent = `₱${parseFloat(subtotal).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+    document.getElementById('totalAmount').textContent = `₱${parseFloat(subtotal).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+    
+    // Reset payment method
+    document.getElementById('paymentCash').checked = true;
+    document.getElementById('cashDetails').style.display = 'block';
+    document.getElementById('cardDetails').style.display = 'none';
+    document.getElementById('gcashDetails').style.display = 'none';
+    
+    // Reset cash amount and change
+    document.getElementById('cashAmount').value = '';
+    document.getElementById('changeAmount').textContent = '₱0.00';
+    
+    // Show the modal
+    checkoutModal.classList.add('show');
+    document.body.style.overflow = 'hidden'; // Prevent scrolling behind modal
+};
+
+// Override the createCartItemHTML function to use the new vertical layout with formatted numbers
+window.createCartItemHTML = function(item) {
+    return `
+        <div class="cart-item" data-id="${item.id}">
+            <div class="cart-item-info">
+                <div class="cart-item-name">${item.name}</div>
+                <div class="cart-item-price">₱${item.price.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</div>
+            </div>
+            <div class="cart-item-controls">
+                <div class="quantity-wrapper">
+                    <button class="quantity-btn minus-btn" data-id="${item.id}">-</button>
+                    <span class="quantity-value">${item.quantity.toLocaleString()}</span>
+                    <button class="quantity-btn plus-btn" data-id="${item.id}">+</button>
+                </div>
+                <button class="cart-item-delete" data-id="${item.id}">
+                    <i class="fas fa-trash"></i>
+                </button>
+            </div>
+        </div>
+    `;
+};
+
+// Override the createCartItemHTML function to match the updated iPod Shuffle style layout with formatted numbers
+window.createCartItemHTML = function(item) {
+    return `
+        <div class="cart-item" data-id="${item.id}">
+            <div class="cart-item-info">
+                <div class="cart-item-name">${item.name}</div>
+                <div class="cart-item-price">₱${item.price.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</div>
+            </div>
+            <div class="quantity-wrapper">
+                <button class="quantity-btn minus-btn" data-id="${item.id}">-</button>
+                <span class="quantity-value">${item.quantity.toLocaleString()}</span>
+                <button class="quantity-btn plus-btn" data-id="${item.id}">+</button>
+            </div>
+            <button class="cart-item-delete" data-id="${item.id}">
+                <i class="fas fa-trash"></i>
+            </button>
+        </div>
+    `;
+};
+
+// Make sure the checkout button opens the modal
+document.addEventListener('DOMContentLoaded', function() {
+    // Ensure the checkout button works properly
+    const setupCheckoutButton = () => {
+        const checkoutBtn = document.querySelector('.btn-checkout');
+        if (checkoutBtn) {
+            // Remove any existing click event listeners to avoid duplicates
+            const newCheckoutBtn = checkoutBtn.cloneNode(true);
+            checkoutBtn.parentNode.replaceChild(newCheckoutBtn, checkoutBtn);
+            
+            // Add new click event listener
+            newCheckoutBtn.addEventListener('click', function() {
+                console.log('Checkout button clicked');
+                if (window.openCheckoutModal) {
+                    window.openCheckoutModal();
+                } else {
+                    console.error('openCheckoutModal function not found');
+                    // Fallback to direct modal display
+                    const checkoutModal = document.getElementById('checkoutModal');
+                    if (checkoutModal) {
+                        checkoutModal.classList.add('show');
+                        document.body.style.overflow = 'hidden';
+                    } else {
+                        console.error('checkoutModal element not found');
+                    }
+                }
+            });
+        } else {
+            console.error('Checkout button not found in the DOM');
+        }
+    };
+    
+    // Run setup for checkout button
+    setupCheckoutButton();
+    
+    // Make openCheckoutModal globally available and ensure it works properly
+    window.openCheckoutModal = function() {
+        const cartItems = window.getCartItems ? window.getCartItems() : [];
+        
+        if (cartItems.length === 0) {
+            Swal.fire({
+                title: 'Empty Cart',
+                text: 'Please add items to your cart before checkout',
+                icon: 'warning',
+                confirmButtonColor: '#3498db',
+                background: '#141414',
+                color: '#f5f5f5'
+            });
+            return;
+        }
+        
+        console.log('Opening checkout modal with items:', cartItems);
+        
+        // Populate checkout items table with formatted numbers
+        const checkoutItemsTable = document.getElementById('checkoutItemsTable');
+        if (!checkoutItemsTable) {
+            console.error('checkoutItemsTable element not found');
+            return;
+        }
+        
+        let html = '';
+        let subtotal = 0;
+        
+        cartItems.forEach(item => {
+            const itemTotal = item.price * item.quantity;
+            subtotal += itemTotal;
+            
+            html += `
+                <tr>
+                    <td>${item.name}</td>
+                    <td class="text-center">${item.quantity.toLocaleString()}</td>
+                    <td class="text-right">₱${parseFloat(item.price).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
+                    <td class="text-right">₱${parseFloat(itemTotal).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
+                </tr>
+            `;
+        });
+        
+        checkoutItemsTable.innerHTML = html;
+        
+        // Update summary with formatted numbers
+        const subtotalAmount = document.getElementById('subtotalAmount');
+        const totalAmount = document.getElementById('totalAmount');
+        
+        if (subtotalAmount) {
+            subtotalAmount.textContent = `₱${parseFloat(subtotal).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+        } else {
+            console.error('subtotalAmount element not found');
+        }
+        
+        if (totalAmount) {
+            totalAmount.textContent = `₱${parseFloat(subtotal).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+        } else {
+            console.error('totalAmount element not found');
+        }
+        
+        // Reset payment method (if applicable)
+        const cashRadio = document.querySelector('input[name="paymentMethod"][value="cash"]');
+        if (cashRadio) {
+            cashRadio.checked = true;
+        }
+        
+        // Reset cash amount and change
+        const cashAmount = document.getElementById('cashAmount');
+        const changeAmount = document.getElementById('changeAmount');
+        
+        if (cashAmount) {
+            cashAmount.value = '';
+        }
+        
+        if (changeAmount) {
+            changeAmount.value = '₱0.00';
+        }
+        
+        // Show the modal
+        const checkoutModal = document.getElementById('checkoutModal');
+        if (checkoutModal) {
+            checkoutModal.classList.add('show');
+            document.body.style.overflow = 'hidden'; // Prevent scrolling behind modal
+        } else {
+            console.error('checkoutModal element not found');
+        }
+    };
+    
+    // Define getCartItems function if it doesn't exist
+    if (!window.getCartItems) {
+        window.getCartItems = function() {
+            // Try to access cart items from pos.js or use localStorage as fallback
+            if (window.cartItems && Array.isArray(window.cartItems)) {
+                return window.cartItems;
+            } else {
+                // Fallback to localStorage
+                const storedCart = JSON.parse(localStorage.getItem('cartItems')) || [];
+                return storedCart;
+            }
+        };
+    }
+});
+
+// Override and ensure the checkout button event handler works
+const checkoutBtn = document.getElementById('checkoutBtn');
+if (checkoutBtn) {
+    // Remove any existing event listeners to prevent duplicates
+    const newCheckoutBtn = checkoutBtn.cloneNode(true);
+    checkoutBtn.parentNode.replaceChild(newCheckoutBtn, checkoutBtn);
+    
+    // Add new click event listener
+    newCheckoutBtn.addEventListener('click', function() {
+        console.log('Checkout button clicked');
+        const checkoutModal = document.getElementById('checkoutModal');
+        if (checkoutModal) {
+            // Check if cart is empty first
+            const cartItems = window.getCartItems ? window.getCartItems() : [];
+            if (cartItems.length === 0) {
+                Swal.fire({
+                    title: 'Empty Cart',
+                    text: 'Please add items to your cart before checkout',
+                    icon: 'warning',
+                    confirmButtonColor: '#3498db',
+                    background: '#141414',
+                    color: '#f5f5f5'
+                });
+                return;
+            }
+            
+            // Show modal
+            checkoutModal.classList.add('show');
+            document.body.style.overflow = 'hidden';
+            
+            // Use openCheckoutModal if available to populate data
+            if (window.openCheckoutModal) {
+                window.openCheckoutModal();
+            }
+        } else {
+            console.error('Checkout modal not found');
+        }
+    });
+}
+
+// Add this code to handle payment method switching and related UI updates
+document.addEventListener('DOMContentLoaded', function() {
+    // Setup payment method radio buttons
+    const setupPaymentMethodHandlers = () => {
+        const paymentMethodRadios = document.querySelectorAll('input[name="paymentMethod"]');
+        const cashPaymentFields = document.getElementById('cashPaymentFields');
+        const confirmPaymentBtn = document.getElementById('confirmPaymentBtn');
+
+        if (paymentMethodRadios.length > 0) {
+            paymentMethodRadios.forEach(radio => {
+                radio.addEventListener('change', function() {
+                    if (this.value === 'cash') {
+                        // Show cash payment fields and require validation
+                        cashPaymentFields.style.display = 'block';
+                        confirmPaymentBtn.disabled = true;
+                        
+                        // Check current cash amount value for validation
+                        const cashAmount = parseFloat(document.getElementById('cashAmount').value) || 0;
+                        const totalAmount = parseFloat(document.getElementById('totalAmount').textContent.replace('₱', '').replace(/,/g, '')) || 0;
+                        confirmPaymentBtn.disabled = cashAmount < totalAmount;
+                    } else {
+                        // Hide cash payment fields and enable button immediately for other payment methods
+                        cashPaymentFields.style.display = 'none';
+                        confirmPaymentBtn.disabled = false;
+                    }
+                });
+            });
+        }
+    };
+
+    // Call setup function
+    setupPaymentMethodHandlers();
+});
+
+// Update the cash amount input handler
+const cashAmountInput = document.getElementById('cashAmount');
+if (cashAmountInput) {
+    cashAmountInput.addEventListener('input', function() {
+        const cashAmount = parseFloat(this.value) || 0;
+        const totalAmount = parseFloat(document.getElementById('totalAmount').textContent.replace('₱', '').replace(/,/g, '')) || 0;
+        const changeAmount = cashAmount - totalAmount;
+        
+        document.getElementById('changeAmount').value = changeAmount >= 0 ? 
+            `₱${changeAmount.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}` : '₱0.00';
+        
+        // Enable/disable confirm button based on valid cash amount
+        const confirmBtn = document.getElementById('confirmPaymentBtn');
+        confirmBtn.disabled = cashAmount < totalAmount;
+    });
+}
+
+// Update the openCheckoutModal function to handle payment methods properly
+window.openCheckoutModal = function() {
+    const cartItems = window.getCartItems ? window.getCartItems() : [];
+    
+    if (cartItems.length === 0) {
+        Swal.fire({
+            title: 'Empty Cart',
+            text: 'Please add items to your cart before checkout',
+            icon: 'warning',
+            confirmButtonColor: '#3498db',
+            background: '#141414',
+            color: '#f5f5f5'
+        });
+        return;
+    }
+    
+    // Populate checkout items table
+    const checkoutItemsTable = document.getElementById('checkoutItemsTable');
+    let html = '';
+    let subtotal = 0;
+    
+    cartItems.forEach(item => {
+        const itemTotal = item.price * item.quantity;
+        subtotal += itemTotal;
+        
+        html += `
+            <tr>
+                <td>${item.name}</td>
+                <td class="text-center">${item.quantity.toLocaleString()}</td>
+                <td class="text-right">₱${parseFloat(item.price).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
+                <td class="text-right">₱${parseFloat(itemTotal).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
+            </tr>
+        `;
+    });
+    
+    checkoutItemsTable.innerHTML = html;
+    
+    // Update summary
+    document.getElementById('subtotalAmount').textContent = `₱${parseFloat(subtotal).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+    document.getElementById('totalAmount').textContent = `₱${parseFloat(subtotal).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+    
+    // Reset payment method to cash
+    const cashRadio = document.querySelector('input[name="paymentMethod"][value="cash"]');
+    if (cashRadio) {
+        cashRadio.checked = true;
+        
+        // Show cash payment fields since cash is default
+        const cashPaymentFields = document.getElementById('cashPaymentFields');
+        if (cashPaymentFields) {
+            cashPaymentFields.style.display = 'block';
+        }
+        
+        // Reset cash amount and change
+        document.getElementById('cashAmount').value = '';
+        document.getElementById('changeAmount').value = '₱0.00';
+        
+        // Disable confirm button until valid cash amount is entered
+        const confirmPaymentBtn = document.getElementById('confirmPaymentBtn');
+        if (confirmPaymentBtn) {
+            confirmPaymentBtn.disabled = true;
+        }
+    }
+    
+    // Show the modal
+    checkoutModal.classList.add('show');
+    document.body.style.overflow = 'hidden'; // Prevent scrolling behind modal
+};
+
+// Update processPayment function to handle different payment methods
+function processPayment() {
+    // Show loading state
+    const confirmBtn = document.getElementById('confirmPaymentBtn');
+    confirmBtn.disabled = true;
+    confirmBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
+    
+    // Get selected payment method
+    const selectedPaymentMethod = document.querySelector('input[name="paymentMethod"]:checked').value;
+    
+    // Get payment details based on method
+    let paymentDetails = {
+        method: selectedPaymentMethod
+    };
+    
+    // For cash payment, add amount and change
+    if (selectedPaymentMethod === 'cash') {
+        const cashAmount = parseFloat(document.getElementById('cashAmount').value) || 0;
+        const totalAmount = parseFloat(document.getElementById('totalAmount').textContent.replace('₱', '').replace(/,/g, '')) || 0;
+        const changeAmount = cashAmount - totalAmount;
+        
+        paymentDetails.cashAmount = cashAmount;
+        paymentDetails.changeAmount = changeAmount;
+    }
+    
+    // Simulate payment processing
+    setTimeout(() => {
+        // Close modal
+        document.getElementById('checkoutModal').classList.remove('show');
+        document.body.style.overflow = 'auto';
+        
+        // Clear cart
+        if (window.clearCart) {
+            window.clearCart();
+        }
+        
+        // Get payment method name for success message
+        let paymentMethodName = 'Cash';
+        switch (selectedPaymentMethod) {
+            case 'gcash': paymentMethodName = 'GCash'; break;
+            case 'card': paymentMethodName = 'Card'; break;
+            case 'paymaya': paymentMethodName = 'PayMaya'; break;
+        }
+        
+        // Show success message with payment method
+        let successMessage = `Your transaction has been completed successfully using ${paymentMethodName}.`;
+        
+        // Add change information for cash payments
+        if (selectedPaymentMethod === 'cash') {
+            successMessage += ` Change: ₱${paymentDetails.changeAmount.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+        }
+        
+        Swal.fire({
+            title: 'Payment Successful!',
+            text: successMessage,
+            icon: 'success',
+            confirmButtonColor: '#3498db',
+            background: '#141414',
+            color: '#f5f5f5'
+        });
+        
+        // Reset button state
+        confirmBtn.disabled = false;
+        confirmBtn.innerHTML = '<i class="fas fa-check-circle"></i> Complete Transaction';
+        
+    }, 1500); // Simulate a 1.5 second payment process
+}
+
+// Update the confirmPaymentBtn event listener
+const confirmPaymentBtn = document.getElementById('confirmPaymentBtn');
+if (confirmPaymentBtn) {
+    // Replace existing listener by cloning the button
+    const newConfirmPaymentBtn = confirmPaymentBtn.cloneNode(true);
+    confirmPaymentBtn.parentNode.replaceChild(newConfirmPaymentBtn, confirmPaymentBtn);
+    
+    // Add new event listener
+    newConfirmPaymentBtn.addEventListener('click', processPayment);
+}

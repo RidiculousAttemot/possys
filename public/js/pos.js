@@ -167,7 +167,7 @@ document.addEventListener('DOMContentLoaded', function() {
         filterAndDisplayProducts();
     };
     
-    // Function to display products with proper image paths
+    // Function to display products with proper image paths and number formatting
     function displayProducts(products, category = 'all') {
         const productGrid = document.getElementById('productGrid');
         
@@ -203,7 +203,7 @@ document.addEventListener('DOMContentLoaded', function() {
         
         filteredProducts.forEach(product => {
             const stockStatus = product.stock > 10 ? 'normal' : (product.stock > 0 ? 'low' : 'out-of-stock');
-            const stockText = product.stock > 0 ? `${product.stock} in stock` : 'Out of stock';
+            const stockText = product.stock > 0 ? `${product.stock.toLocaleString()} in stock` : 'Out of stock';
             
             // Debug the image path
             console.log(`Product ${product.name} image path:`, product.image);
@@ -242,14 +242,14 @@ document.addEventListener('DOMContentLoaded', function() {
                 `;
             }
             
-            // Create product card HTML - adding cursor:pointer style and removing action buttons
+            // Create product card HTML with formatted prices
             productsHTML += `
                 <div class="item-card" data-id="${product.id}" style="cursor: pointer;">
                     ${imageHtml}
                     <div class="item-details">
                         <h3 class="item-name">${product.name}</h3>
                         <p class="item-category">${product.category || 'Uncategorized'}</p>
-                        <p class="item-price">₱${product.price.toFixed(2)}</p>
+                        <p class="item-price">₱${product.price.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</p>
                         <p class="item-stock ${stockStatus}-stock">${stockText}</p>
                     </div>
                 </div>
@@ -278,8 +278,15 @@ document.addEventListener('DOMContentLoaded', function() {
                         this.classList.remove('item-added-animation');
                     }, 500);
                 } else if (product) {
-                    // For out of stock items, show product details instead
-                    showProductDetails(productId);
+                    // Alert for out-of-stock items without showing details modal afterward
+                    Swal.fire({
+                        title: 'Out of Stock',
+                        text: `${product.name} is currently out of stock.`,
+                        icon: 'warning',
+                        confirmButtonColor: '#3498db',
+                        background: '#141414',
+                        color: '#f5f5f5'
+                    });
                 }
             });
             
@@ -333,7 +340,7 @@ document.addEventListener('DOMContentLoaded', function() {
         updateCart();
     };
 
-    // Function to update cart display (use the structure from posdesign.js)
+    // Function to update cart display with proper number formatting
     const updateCart = () => {
         const cartContainer = document.getElementById('cartItems');
         const checkoutBtn = document.getElementById('checkoutBtn');
@@ -360,7 +367,7 @@ document.addEventListener('DOMContentLoaded', function() {
             }
             checkoutBtn.disabled = true;
             
-            // Reset total to zero
+            // Reset total to zero with comma formatting
             const totalAmount = document.getElementById('totalAmount');
             if (totalAmount) {
                 totalAmount.textContent = '0.00';
@@ -401,8 +408,8 @@ document.addEventListener('DOMContentLoaded', function() {
             const tax = subtotal * 0.0012; // Changed from 0.5 to 0.0012 (0.12%);
             const total = subtotal + tax;
 
-            // Update only the total amount in the cart summary
-            document.getElementById('totalAmount').textContent = total.toFixed(2);
+            // Update only the total amount in the cart summary with comma formatting
+            document.getElementById('totalAmount').textContent = total.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
 
             // Update cart counter badge
             const totalItemsCount = cartItems.reduce((count, item) => count + item.quantity, 0);
@@ -491,14 +498,14 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     };
 
-    // Function to show product details
+    // Function to show product details with formatted numbers
     const showProductDetails = (productId) => {
         const product = allProducts.find(p => p.id === productId);
         if (!product) return;
         
         const modalContent = document.querySelector('.item-details-content');
         const stockStatus = product.stock > 10 ? 'normal' : (product.stock > 0 ? 'low' : 'out-of-stock');
-        const stockText = product.stock > 0 ? `${product.stock} in stock` : 'Out of stock';
+        const stockText = product.stock > 0 ? `${product.stock.toLocaleString()} in stock` : 'Out of stock';
         const disabledStatus = product.stock <= 0 ? 'disabled' : '';
         
         modalContent.innerHTML = `
@@ -519,7 +526,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 </div>
                 <div class="item-details-row">
                     <span class="item-details-label">Price:</span>
-                    <span class="item-price-large">₱${product.price.toFixed(2)}</span>
+                    <span class="item-price-large">₱${product.price.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span>
                 </div>
                 <div class="item-details-row">
                     <span class="item-details-label">Stock:</span>
@@ -556,7 +563,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     };
     
-    // Function to update checkout modal
+    // Function to update checkout modal with formatted numbers
     const updateCheckoutModal = () => {
         const checkoutItems = document.getElementById('checkoutItems');
         let checkoutHTML = '';
@@ -569,28 +576,24 @@ document.addEventListener('DOMContentLoaded', function() {
             checkoutHTML += `
                 <tr>
                     <td>${item.name}</td>
-                    <td>₱${item.price.toFixed(2)}</td>
-                    <td>${item.quantity}</td>
-                    <td>₱${itemTotal.toFixed(2)}</td>
+                    <td>₱${item.price.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
+                    <td>${item.quantity.toLocaleString()}</td>
+                    <td>₱${itemTotal.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
                 </tr>
             `;
         });
         
         checkoutItems.innerHTML = checkoutHTML;
         
-        // Update summary values
-        const tax = subtotal * 0.5;;
+        // Update summary values with formatted numbers
+        const tax = subtotal * 0.0012;
         const total = subtotal + tax;
         
-        document.getElementById('checkout-subtotal').textContent = subtotal.toFixed(2);
-        document.getElementById('checkout-tax').textContent = tax.toFixed(2);
-        document.getElementById('amountDue').textContent = total.toFixed(2);
+        document.getElementById('checkout-subtotal').textContent = subtotal.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
+        document.getElementById('checkout-tax').textContent = tax.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
+        document.getElementById('amountDue').textContent = total.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
         
-        // Reset discount
-        document.querySelectorAll('.discount-option input[type="checkbox"]').forEach(checkbox => {
-            checkbox.checked = false;
-        });
-        document.getElementById('discountIdContainer').style.display = 'none';
+        // Reset discount-related elements - hide them
         document.getElementById('discount-row').style.display = 'none';
         document.getElementById('checkout-discount').textContent = '0.00';
         
@@ -627,11 +630,23 @@ document.addEventListener('DOMContentLoaded', function() {
             const amountTendered = parseFloat(document.getElementById('amountTendered').value);
             const change = amountTendered - total;
             
+            // Get payment method details
+            const paymentMethodSelect = document.getElementById('paymentMethodSelect');
+            let paymentMethod = paymentMethodSelect ? paymentMethodSelect.value : 'cash';
+            
+            // Get e-payment type if applicable
+            if (paymentMethod === 'epayment') {
+                const epaymentTypeSelect = document.getElementById('epaymentTypeSelect');
+                if (epaymentTypeSelect) {
+                    paymentMethod = epaymentTypeSelect.value;
+                }
+            }
+            
             // Build transaction object
             const transaction = {
                 user_id: localStorage.getItem('userId'),
                 total_amount: total,
-                payment_method: 'cash', // Default to cash for now
+                payment_method: paymentMethod,
                 items: cartItems.map(item => ({
                     item_id: item.id,
                     quantity: item.quantity,
@@ -657,7 +672,7 @@ document.addEventListener('DOMContentLoaded', function() {
             // Show success message
             Swal.fire({
                 title: 'Transaction Complete!',
-                text: `Total: ₱${total.toFixed(2)}, Change: ₱${change.toFixed(2)}`,
+                text: `Total: ₱${total.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}, Change: ₱${change.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}`,
                 icon: 'success',
                 confirmButtonColor: '#3498db',
                 background: '#141414',
@@ -752,7 +767,7 @@ document.addEventListener('DOMContentLoaded', function() {
                                 <span class="transaction-id">#${transaction.transaction_id}</span>
                                 <span class="transaction-date">${formattedDate}</span>
                             </div>
-                            <div class="transaction-amount">₱${parseFloat(transaction.total_amount).toFixed(2)}</div>
+                            <div class="transaction-amount">₱${parseFloat(transaction.total_amount).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</div>
                         </div>
                         <button class="btn-view-transaction" data-id="${transaction.transaction_id}">
                             View Details
@@ -785,7 +800,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     };
     
-    // Function to view transaction details
+    // Function to view transaction details with formatted numbers
     const viewTransactionDetails = async (transactionId) => {
         try {
             // Fetch transaction details from server
@@ -807,7 +822,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 minute: '2-digit'
             });
             
-            // Show transaction details in a SweetAlert
+            // Show transaction details in a SweetAlert with formatted numbers
             Swal.fire({
                 title: `Transaction #${transaction.transaction_id}`,
                 html: `
@@ -830,9 +845,9 @@ document.addEventListener('DOMContentLoaded', function() {
                             ${transaction.items.map(item => `
                                 <tr>
                                     <td>${item.item_name}</td>
-                                    <td>₱${parseFloat(item.price).toFixed(2)}</td>
-                                    <td>${item.quantity}</td>
-                                    <td>₱${(item.price * item.quantity).toFixed(2)}</td>
+                                    <td>₱${parseFloat(item.price).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
+                                    <td>${item.quantity.toLocaleString()}</td>
+                                    <td>₱${(item.price * item.quantity).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
                                 </tr>
                             `).join('')}
                         </tbody>
@@ -841,7 +856,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     <div class="transaction-details-summary">
                         <div class="summary-row">
                             <span>Total:</span>
-                            <span>₱${transaction.total_amount.toFixed(2)}</span>
+                            <span>₱${transaction.total_amount.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span>
                         </div>
                     </div>
                 </div>
@@ -885,13 +900,15 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     };
     
-    // Function to calculate change
+    // Function to calculate change with formatted numbers
     const calculateChange = () => {
-        const amountDue = parseFloat(document.getElementById('amountDue').textContent);
+        const amountDue = parseFloat(document.getElementById('amountDue').textContent.replace(/,/g, ''));
         const amountTendered = parseFloat(document.getElementById('amountTendered').value) || 0;
         
         const change = amountTendered - amountDue;
-        document.getElementById('change').value = change >= 0 ? `₱${change.toFixed(2)}` : '₱0.00';
+        document.getElementById('change').value = change >= 0 ? 
+            `₱${change.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}` : 
+            '₱0.00';
         
         // Enable/disable confirm button based on whether enough money was tendered
         const confirmBtn = document.getElementById('confirmPaymentBtn');
@@ -1012,29 +1029,6 @@ document.addEventListener('DOMContentLoaded', function() {
                     </tbody>
                 </table>
                 
-                <!-- Discount Options -->
-                <div class="discount-options">
-                    <h3>Apply Discount</h3>
-                    <div class="discount-types">
-                        <div class="discount-option">
-                            <input type="checkbox" id="seniorDiscount" class="discount-checkbox">
-                            <label for="seniorDiscount">Senior Discount (20%)</label>
-                        </div>
-                        <div class="discount-option">
-                            <input type="checkbox" id="pwdDiscount" class="discount-checkbox">
-                            <label for="pwdDiscount">PWD Discount (20%)</label>
-                        </div>
-                        <div class="discount-option">
-                            <input type="checkbox" id="promoDiscount" class="discount-checkbox">
-                            <label for="promoDiscount">Promo Code (10%)</label>
-                        </div>
-                    </div>
-                    <div id="discountIdContainer" style="display:none">
-                        <label for="discountId">ID Number:</label>
-                        <input type="text" id="discountId" placeholder="Enter ID Number">
-                    </div>
-                </div>
-                
                 <!-- Payment Summary -->
                 <div class="payment-summary">
                     <div class="summary-row">
@@ -1045,7 +1039,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         <span>Tax (12%):</span>
                         <span>₱<span id="checkout-tax">0.00</span></span>
                     </div>
-                    <div class="summary-row" id="discount-row" style="display:none">
+                    <div class="summary-row" id="discount-row" style="display: none;">
                         <span>Discount:</span>
                         <span>₱<span id="checkout-discount">0.00</span></span>
                     </div>
@@ -1055,72 +1049,27 @@ document.addEventListener('DOMContentLoaded', function() {
                     </div>
                 </div>
                 
-                <!-- Payment Form -->
+                <!-- Payment Form - Improved UI -->
                 <div class="payment-form">
                     <div class="form-group">
-                        <label for="amountTendered">Amount Tendered:</label>
+                        <label for="amountTendered"><i class="fas fa-money-bill-wave"></i> Amount Tendered:</label>
                         <input type="number" id="amountTendered" min="0" step="0.01" placeholder="Enter amount">
                     </div>
                     <div class="form-group">
-                        <label for="change">Change:</label>
-                        <input type="text" id="change" value="₱0.00" readonly>
+                        <label for="change"><i class="fas fa-coins"></i> Change:</label>
+                        <input type="text" id="change" value="₱0.00" readonly disabled>
                     </div>
                 </div>
                 
                 <div class="modal-actions">
-                    <button id="confirmPaymentBtn" class="btn-primary" disabled>Confirm Payment</button>
-                    <button id="cancelPaymentBtn" class="btn-secondary">Cancel</button>
+                    <button id="confirmPaymentBtn" class="btn-primary" disabled>
+                        <i class="fas fa-check-circle"></i> Confirm Payment
+                    </button>
+                    <button id="cancelPaymentBtn" class="btn-secondary">
+                        <i class="fas fa-times-circle"></i> Cancel
+                    </button>
                 </div>
             `;
-            
-            // Add event listeners for discount checkboxes
-            document.querySelectorAll('.discount-checkbox').forEach(checkbox => {
-                checkbox.addEventListener('change', function() {
-                    // Uncheck other checkboxes
-                    document.querySelectorAll('.discount-checkbox').forEach(cb => {
-                        if (cb !== this) cb.checked = false;
-                    });
-                    
-                    // Show/hide ID container
-                    const discountIdContainer = document.getElementById('discountIdContainer');
-                    const discountRow = document.getElementById('discount-row');
-                    
-                    if (this.checked && (this.id === 'seniorDiscount' || this.id === 'pwdDiscount')) {
-                        discountIdContainer.style.display = 'block';
-                    } else {
-                        discountIdContainer.style.display = 'none';
-                    }
-                    
-                    // Calculate discount
-                    const subtotal = parseFloat(document.getElementById('checkout-subtotal').textContent);
-                    let discountRate = 0;
-                    
-                    if (this.checked) {
-                        if (this.id === 'seniorDiscount' || this.id === 'pwdDiscount') {
-                            discountRate = 0.2; // 20% discount
-                        } else if (this.id === 'promoDiscount') {
-                            discountRate = 0.1; // 10% discount
-                        }
-                        
-                        discountRow.style.display = 'flex';
-                    } else {
-                        discountRow.style.display = 'none';
-                    }
-                    
-                    const discountAmount = subtotal * discountRate;
-                    document.getElementById('checkout-discount').textContent = discountAmount.toFixed(2);
-                    
-                    // Update amount due
-                    const tax = parseFloat(document.getElementById('checkout-tax').textContent);
-                    const amountDue = subtotal + tax - discountAmount;
-                    document.getElementById('amountDue').textContent = amountDue.toFixed(2);
-                    
-                    // Reset change calculation
-                    document.getElementById('amountTendered').value = '';
-                    document.getElementById('change').value = '₱0.00';
-                    document.getElementById('confirmPaymentBtn').disabled = true;
-                });
-            });
             
             // Add event listener for amount tendered input
             const amountTenderedInput = document.getElementById('amountTendered');
@@ -1244,19 +1193,19 @@ document.addEventListener('DOMContentLoaded', function() {
                 </button>
                 <div class="cart-item-header">
                     <div class="cart-item-name">${item.name}</div>
-                    <div class="cart-item-price">₱${parseFloat(item.price).toFixed(2)}</div>
+                    <div class="cart-item-price">₱${parseFloat(item.price).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</div>
                 </div>
                 <div class="cart-item-footer">
                     <div class="cart-item-quantity">
                         <button class="quantity-btn" onclick="updateQuantity(${item.id}, -1)">
                             <i class="fas fa-minus"></i>
                         </button>
-                        <div class="quantity-value">${item.quantity}</div>
+                        <div class="quantity-value">${item.quantity.toLocaleString()}</div>
                         <button class="quantity-btn" onclick="updateQuantity(${item.id}, 1)">
                             <i class="fas fa-plus"></i>
                         </button>
                     </div>
-                    <div class="cart-item-subtotal">₱${(item.price * item.quantity).toFixed(2)}</div>
+                    <div class="cart-item-subtotal">₱${(item.price * item.quantity).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</div>
                 </div>
             </div>
         `;
@@ -1324,24 +1273,24 @@ document.addEventListener('DOMContentLoaded', function() {
                         <div class="receipt-item">
                             <div class="receipt-item-details">
                                 <span class="receipt-item-name">${item.name}</span>
-                                <span class="receipt-item-quantity">x${item.quantity}</span>
+                                <span class="receipt-item-quantity">x${item.quantity.toLocaleString()}</span>
                             </div>
-                            <span class="receipt-item-price">₱${(item.price * item.quantity).toFixed(2)}</span>
+                            <span class="receipt-item-price">₱${(item.price * item.quantity).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span>
                         </div>
                     `).join('')}
                 </div>
                 <div class="receipt-summary">
                     <div class="receipt-summary-row">
                         <span>Subtotal:</span>
-                        <span>₱${calculateSubtotal().toFixed(2)}</span>
+                        <span>₱${calculateSubtotal().toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span>
                     </div>
                     <div class="receipt-summary-row">
                         <span>Tax (12%):</span>n>
-                        <span>₱${calculateTax().toFixed(2)}</span>
+                        <span>₱${calculateTax().toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span>
                     </div>
                     <div class="receipt-summary-row total">
                         <span>Total:</span>
-                        <span>₱${calculateTotal().toFixed(2)}</span>
+                        <span>₱${calculateTotal().toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span>
                     </div>
                 </div>
                 <div class="receipt-payment">
@@ -1352,11 +1301,11 @@ document.addEventListener('DOMContentLoaded', function() {
                     ${paymentDetails.method === 'cash' ? `
                         <div class="receipt-payment-detail">
                             <span>Amount Received:</span>
-                            <span>₱${paymentDetails.cashAmount.toFixed(2)}</span>
+                            <span>₱${paymentDetails.cashAmount.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span>
                         </div>
                         <div class="receipt-payment-detail">
                             <span>Change:</span>
-                            <span>₱${paymentDetails.changeAmount.toFixed(2)}</span>
+                            <span>₱${paymentDetails.changeAmount.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span>
                         </div>
                     ` : ''}
                 </div>
@@ -1513,18 +1462,18 @@ function updateCartItemUI(item) {
         // Update quantity display
         const quantityElement = cartItemElement.querySelector('.quantity-value');
         if (quantityElement) {
-            quantityElement.textContent = item.quantity;
+            quantityElement.textContent = item.quantity.toLocaleString();
         }
         
         // Update subtotal if it exists in the UI
         const subtotalElement = cartItemElement.querySelector('.cart-item-subtotal');
         if (subtotalElement) {
-            subtotalElement.textContent = `₱${(item.price * item.quantity).toFixed(2)}`;
+            subtotalElement.textContent = `₱${(item.price * item.quantity).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
         }
     }
 }
 
-// Function to add a new cart item to the UI
+// Function to add a new cart item to the UI with formatted numbers
 function addCartItemToUI(item) {
     const cartItems = document.getElementById('cartItems');
     const emptyCart = document.querySelector('.empty-cart');
@@ -1539,21 +1488,21 @@ function addCartItemToUI(item) {
     cartItemElement.className = 'cart-item';
     cartItemElement.dataset.id = item.id;
     
-    // Calculate subtotal for this item
-    const subtotal = (item.price * item.quantity).toFixed(2);
+    // Calculate subtotal for this item with formatted numbers
+    const subtotal = (item.price * item.quantity).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
     
-    // New layout based on standard POS design like in the image
+    // New layout based on standard POS design with formatted numbers
     cartItemElement.innerHTML = `
         <div class="cart-item-details">
             <div class="cart-item-name">${item.name}</div>
-            <div class="cart-item-price">₱${parseFloat(item.price).toFixed(2)}</div>
+            <div class="cart-item-price">₱${parseFloat(item.price).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</div>
         </div>
         <div class="cart-item-controls">
             <div class="quantity-control">
                 <button class="quantity-btn minus-btn" onclick="updateQuantity(${item.id}, -1)">
                     <i class="fas fa-minus"></i>
                 </button>
-                <input type="text" class="quantity-value" value="${item.quantity}" readonly>
+                <input type="text" class="quantity-value" value="${item.quantity.toLocaleString()}" readonly>
                 <button class="quantity-btn plus-btn" onclick="updateQuantity(${item.id}, 1)">
                     <i class="fas fa-plus"></i>
                 </button>
@@ -1571,20 +1520,20 @@ function addCartItemToUI(item) {
     document.getElementById('checkoutBtn').disabled = false;
 }
 
-// Function to update the UI for a specific cart item
+// Function to update the UI for a specific cart item with formatted numbers
 function updateCartItemUI(item) {
     const cartItemElement = document.querySelector(`.cart-item[data-id="${item.id}"]`);
     if (cartItemElement) {
         // Update quantity display
         const quantityInput = cartItemElement.querySelector('.quantity-value');
         if (quantityInput) {
-            quantityInput.value = item.quantity;
+            quantityInput.value = item.quantity.toLocaleString();
         }
         
-        // Update subtotal display
+        // Update subtotal display with formatted numbers
         const subtotalElement = cartItemElement.querySelector('.cart-item-subtotal');
         if (subtotalElement) {
-            subtotalElement.textContent = `₱${(item.price * item.quantity).toFixed(2)}`;
+            subtotalElement.textContent = `₱${(item.price * item.quantity).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
         }
     }
 }
@@ -1663,7 +1612,7 @@ function removeFromCart(itemId) {
     }
 }
 
-// New function to explicitly reset cart totals to zero
+// New function to explicitly reset cart totals to zero with formatted numbers
 function resetCartTotals() {
     // Reset total in cart summary
     const totalAmount = document.getElementById('totalAmount');
@@ -1688,7 +1637,7 @@ function resetCartTotals() {
     if (modalTotal) modalTotal.textContent = '0.00';
 }
 
-// Update the existing updateCartTotals function to check for empty cart first
+// Update the existing updateCartTotals function to format numbers with commas
 function updateCartTotals() {
     // If cart is empty, reset totals to zero and exit
     if (cart.length === 0) {
@@ -1709,20 +1658,20 @@ function updateCartTotals() {
         cartCountElement.style.display = totalItems > 0 ? 'flex' : 'none';
     }
     
-    // Update the total amount in the cart summary
+    // Update the total amount in the cart summary with formatted numbers
     const totalAmount = document.getElementById('totalAmount');
     if (totalAmount) {
-        totalAmount.textContent = total.toFixed(2);
+        totalAmount.textContent = total.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
     }
     
-    // Also update checkout modal totals if it exists and is open
+    // Also update checkout modal totals if it exists and is open with formatted numbers
     const modalSubtotal = document.getElementById('modalSubtotal');
     const modalTax = document.getElementById('modalTax'); 
     const modalTotal = document.getElementById('modalTotal');
     
-    if (modalSubtotal) modalSubtotal.textContent = subtotal.toFixed(2);
-    if (modalTax) modalTax.textContent = tax.toFixed(2);
-    if (modalTotal) modalTotal.textContent = total.toFixed(2);
+    if (modalSubtotal) modalSubtotal.textContent = subtotal.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
+    if (modalTax) modalTax.textContent = tax.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
+    if (modalTotal) modalTotal.textContent = total.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
 }
 
 // Animation for adding item to cart
@@ -1810,14 +1759,14 @@ function openItemDetailsModal(itemId) {
         .then(item => {
             console.log('Item details:', item);
             
-            // Populate modal with item details
+            // Populate modal with item details and formatted numbers
             modalItemName.textContent = item.item_name || 'Unknown Item';
             modalItemCategory.textContent = item.category || 'Uncategorized';
-            modalItemPrice.textContent = `₱${parseFloat(item.price).toFixed(2)}`;
+            modalItemPrice.textContent = `₱${parseFloat(item.price).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
             modalItemDescription.textContent = item.description || 'No description available for this product.';
             modalItemId.textContent = item.item_id || '-';
             
-            // Handle stock status display
+            // Handle stock status display with formatted numbers
             const stockQty = parseInt(item.stock_quantity);
             if (stockQty <= 0) {
                 modalItemStock.textContent = 'Out of Stock';
@@ -1825,11 +1774,11 @@ function openItemDetailsModal(itemId) {
                 modalAddToCartBtn.disabled = true;
                 notAvailableOverlay.style.display = 'flex';
             } else if (stockQty < 10) {
-                modalItemStock.textContent = `Low Stock (${stockQty})`;
+                modalItemStock.textContent = `Low Stock (${stockQty.toLocaleString()})`;
                 modalItemStock.className = 'meta-value low-stock';
                 modalAddToCartBtn.disabled = false;
             } else {
-                modalItemStock.textContent = `In Stock (${stockQty})`;
+                modalItemStock.textContent = `In Stock (${stockQty.toLocaleString()})`;
                 modalItemStock.className = 'meta-value stock';
                 modalAddToCartBtn.disabled = false;
             }
@@ -1938,17 +1887,17 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 });
 
-// Function to create cart item HTML - fixed layout with product info and centered controls
+// Function to create cart item HTML with formatted numbers
 function createCartItemHTML(item) {
   return `
     <div class="cart-item" data-id="${item.id}">
       <div class="cart-item-info">
         <div class="cart-item-name">${item.name}</div>
-        <div class="cart-item-price">₱${item.price.toFixed(2)}</div>
+        <div class="cart-item-price">₱${item.price.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</div>
       </div>
       <div class="quantity-wrapper">
         <button class="quantity-btn minus-btn" data-id="${item.id}">-</button>
-        <span class="quantity-value">${item.quantity}</span>
+        <span class="quantity-value">${item.quantity.toLocaleString()}</span>
         <button class="quantity-btn plus-btn" data-id="${item.id}">+</button>
       </div>
       <button class="cart-item-delete" data-id="${item.id}">
