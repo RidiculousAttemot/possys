@@ -7,6 +7,19 @@ let isSubmitting = false;
 const API_URL = 'http://localhost:5000/api';
 
 document.addEventListener('DOMContentLoaded', function() {
+    // FIRST: Check for last active section before doing anything else
+    // This ensures that after a page reload (e.g., from form submission with image)
+    // we return to the correct section (e.g., inventory)
+    const lastSection = localStorage.getItem('lastActiveSection');
+    if (lastSection) {
+        // Navigate to that section
+        showSection(lastSection);
+        console.log('Navigated to previously active section:', lastSection);
+        
+        // Clear the stored section to avoid unexpected redirects in the future
+        localStorage.removeItem('lastActiveSection');
+    }
+
     // Check if user is logged in immediately
     if (!localStorage.getItem('authToken')) {
         console.log('No auth token found. Redirecting to login...');
@@ -238,7 +251,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     };
     
-    // Display inventory function with fix for duplicates
+    // Display inventory function with fixed image path handling
     function displayInventory(items) {
         const inventoryTable = document.getElementById('inventoryTable');
         
@@ -257,12 +270,34 @@ document.addEventListener('DOMContentLoaded', function() {
         // Build the HTML string
         let html = '';
         items.forEach(item => {
+            // Log the image path for debugging
+            console.log(`Item ${item.item_id} (${item.item_name}) image path:`, item.image);
+            
+            // Fix image path with correct URL construction
+            let imagePath = '';
+            let imageHtml = '';
+            
+            if (item.image && item.image !== 'null' && item.image !== 'undefined') {
+                // For working with Live Server which serves from /public
+                // When using Live Server, adjust the path to include /public
+                if (window.location.href.includes(':5500') || window.location.href.includes('localhost')) {
+                    imagePath = window.location.origin + '/public' + item.image;
+                } else {
+                    // For production deployment
+                    imagePath = item.image;
+                }
+                
+                imageHtml = `<img src="${imagePath}" alt="${item.item_name}" onerror="this.onerror=null; this.src='${window.location.origin}/public/assets/images/no-image.png'; console.log('Using fallback for item ${item.item_id}');">`;
+            } else {
+                imageHtml = '<i class="fas fa-image no-image"></i>';
+            }
+            
             html += `
                 <tr>
                     <td>${item.item_id}</td>
                     <td>
                         <div class="item-image">
-                            ${item.image ? `<img src="${item.image}" alt="${item.item_name}">` : '<i class="fas fa-image no-image"></i>'}
+                            ${imageHtml}
                         </div>
                     </td>
                     <td>${item.item_name}</td>
@@ -772,9 +807,11 @@ document.addEventListener('DOMContentLoaded', function() {
                     showConfirmButton: false
                 });
                 
-                // Reload users and dashboard
+                // Reload users without switching to dashboard
                 loadUsers();
-                loadDashboard();
+                
+                // Update dashboard counters without switching
+                updateDashboardCounters();
                 
             } catch (error) {
                 console.error('Error deleting user:', error);
@@ -915,12 +952,17 @@ document.addEventListener('DOMContentLoaded', function() {
         // Re-assign the form reference after cloning
         const newAddItemForm = document.getElementById('addItemForm');
         
-        // Add the event listener to the fresh form element
-        newAddItemForm.addEventListener('submit', async function(e) {
+        // Set a direct onsubmit handler on the form element itself
+        newAddItemForm.onsubmit = function(e) {
+            // Immediate prevention of default form behavior
             e.preventDefault();
+            e.stopPropagation();
+            
+            // Store current section before form submission
+            localStorage.setItem('lastActiveSection', 'inventory');
             
             // Prevent double submission
-            if (isSubmitting) return;
+            if (isSubmitting) return false;
             isSubmitting = true;
             
             // Disable form to prevent double submission
@@ -932,126 +974,162 @@ document.addEventListener('DOMContentLoaded', function() {
             const originalBtnText = submitBtn.textContent;
             submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Adding...';
             
-            try {
-                // Get form values directly - this fixes the null values issue
-                const itemName = document.getElementById('itemName').value;
-                const description = document.getElementById('itemDescription').value || '';
-                const category = document.getElementById('itemCategory').value;
-                const priceValue = document.getElementById('itemPrice').value;
-                const stockValue = document.getElementById('itemStock').value;
-                
-                // Parse numeric values with validation
-                const price = priceValue ? parseFloat(priceValue) : 0;
-                const stockQuantity = stockValue ? parseInt(stockValue) : 0;
-                
-                // Check for required fields
-                if (!itemName || !category) {
-                    throw new Error('Please fill all required fields');
-                }
-                
-                // Create item data object with direct values
-                const itemData = {
-                    item_name: itemName,
-                    description: description,
-                    category: category,
-                    price: price,
-                    stock_quantity: stockQuantity,
-                    image: null // Will be updated if image is uploaded
-                };
-                
-                console.log('Sending item data:', itemData);
-                
-                let imagePath = null;
-                
-                // Handle image file upload if provided
-                const imageFile = document.getElementById('itemImage').files[0];
-                if (imageFile) {
-                    // Create a FormData object for the image
-                    const imageFormData = new FormData();
-                    imageFormData.append('image', imageFile);
+            // Create a function to handle the form submission
+            const processForm = async () => {
+                try {
+                    // Get form values directly
+                    const itemName = document.getElementById('itemName').value;
+                    const description = document.getElementById('itemDescription').value || '';
+                    const category = document.getElementById('itemCategory').value;
+                    const priceValue = document.getElementById('itemPrice').value;
+                    const stockValue = document.getElementById('itemStock').value;
                     
-                    try {
-                        // Upload the image first
-                        const imageUploadResponse = await fetch(`${API_URL}/upload-image`, {
-                            method: 'POST',
-                            body: imageFormData
-                        });
-                        
-                        if (imageUploadResponse.ok) {
-                            const imageResult = await imageUploadResponse.json();
-                            imagePath = imageResult.imagePath;
-                            itemData.image = imagePath;
-                            console.log('Image uploaded:', itemData.image);
-                        } else {
-                            console.warn('Image upload failed, continuing without image');
-                        }
-                    } catch (imageError) {
-                        console.error('Image upload error:', imageError);
-                        // Continue with item creation without image
+                    // Parse numeric values with validation
+                    const price = priceValue ? parseFloat(priceValue) : 0;
+                    const stockQuantity = stockValue ? parseInt(stockValue) : 0;
+                    
+                    // Check for required fields
+                    if (!itemName || !category) {
+                        throw new Error('Please fill all required fields');
                     }
+                    
+                    // Create item data object with direct values
+                    const itemData = {
+                        item_name: itemName,
+                        description: description,
+                        category: category,
+                        price: price,
+                        stock_quantity: stockQuantity,
+                        image: null // Will be updated if image is uploaded
+                    };
+                    
+                    console.log('Processing item data:', itemData);
+                    
+                    // Handle image file upload if provided
+                    const imageFile = document.getElementById('itemImage').files[0];
+                    if (imageFile) {
+                        console.log('Image file detected, uploading:', imageFile.name);
+                        
+                        // Create a FormData object for the image
+                        const imageFormData = new FormData();
+                        imageFormData.append('image', imageFile);
+                        
+                        try {
+                            console.log('Uploading image...');
+                            // Upload the image first
+                            const imageUploadResponse = await fetch(`${API_URL}/upload-image`, {
+                                method: 'POST',
+                                body: imageFormData
+                            });
+                            
+                            if (!imageUploadResponse.ok) {
+                                console.error('Image upload failed:', await imageUploadResponse.text());
+                                throw new Error('Failed to upload image');
+                            }
+                            
+                            const imageResult = await imageUploadResponse.json();
+                            console.log('Image uploaded successfully:', imageResult);
+                            
+                            // Set the image path in the item data
+                            itemData.image = imageResult.imagePath;
+                            console.log('Updated item data with image:', itemData);
+                        } catch (imageError) {
+                            console.error('Error during image upload:', imageError);
+                            // We'll continue with item creation even if image upload fails
+                            // but show a warning to the user
+                            await Swal.fire({
+                                title: 'Warning',
+                                text: 'Image upload failed, but we can still add the item without an image.',
+                                icon: 'warning',
+                                confirmButtonColor: '#3498db',
+                                background: '#141414',
+                                color: '#f5f5f5'
+                            });
+                        }
+                    }
+                    
+                    console.log('Sending final item data to API:', itemData);
+                    
+                    // Send API request to add item
+                    const response = await fetch(`${API_URL}/inventory`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${localStorage.getItem('authToken')}`
+                        },
+                        body: JSON.stringify(itemData)
+                    });
+                    
+                    if (!response.ok) {
+                        const responseData = await response.json();
+                        console.error('API returned error:', responseData);
+                        throw new Error(responseData.error || 'Failed to add item');
+                    }
+                    
+                    const responseData = await response.json();
+                    console.log('Item added successfully:', responseData);
+                    
+                    // First close modal and reset form
+                    closeModal('addItemModal');
+                    newAddItemForm.reset();
+                    
+                    // Show success message with auto-dismiss
+                    Swal.fire({
+                        title: 'Success!',
+                        text: 'Item added successfully!',
+                        icon: 'success',
+                        confirmButtonColor: '#3498db',
+                        background: '#141414',
+                        color: '#f5f5f5',
+                        timer: 1500,
+                        showConfirmButton: false
+                    });
+                    
+                    // Make sure we stay in the inventory section
+                    showSection('inventory');
+                    
+                    // Reload inventory data only
+                    loadInventory();
+                    
+                    // Update dashboard counters without changing section
+                    updateDashboardCounters();
+                    
+                } catch (error) {
+                    console.error('Error adding item:', error);
+                    
+                    Swal.fire({
+                        title: 'Error!',
+                        text: error.message || 'Failed to add item. Please try again.',
+                        icon: 'error',
+                        confirmButtonColor: '#3498db',
+                        background: '#141414',
+                        color: '#f5f5f5'
+                    });
+                } finally {
+                    // Re-enable form inputs
+                    allInputs.forEach(input => input.disabled = false);
+                    
+                    // Reset button state
+                    document.getElementById('addItemSubmitButton').innerHTML = originalBtnText;
+                    
+                    // Reset submission flag
+                    isSubmitting = false;
                 }
-                
-                // Send API request to add item
-                const response = await fetch(`${API_URL}/inventory`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify(itemData)
-                });
-                
-                const responseData = await response.json();
-                
-                if (!response.ok) {
-                    throw new Error(responseData.error || 'Failed to add item');
-                }
-                
-                // Close modal and reset form
-                closeModal('addItemModal');
-                this.reset();
-                
-                // Show success message with auto-dismiss
-                Swal.fire({
-                    title: 'Success!',
-                    text: 'Item added successfully!',
-                    icon: 'success',
-                    confirmButtonColor: '#3498db',
-                    background: '#141414',
-                    color: '#f5f5f5',
-                    timer: 1500,
-                    showConfirmButton: false
-                });
-                
-                // Immediately reload inventory data without waiting for user confirmation
-                loadInventory();
-                loadDashboard();
-                
-            } catch (error) {
-                console.error('Error adding item:', error);
-                
-                Swal.fire({
-                    title: 'Error!',
-                    text: error.message || 'Failed to add item. Please try again.',
-                    icon: 'error',
-                    confirmButtonColor: '#3498db',
-                    background: '#141414',
-                    color: '#f5f5f5'
-                });
-            } finally {
-                // Re-enable form inputs
-                allInputs.forEach(input => input.disabled = false);
-                
-                // Reset button state
-                document.getElementById('addItemSubmitButton').innerHTML = originalBtnText;
-                
-                // Reset submission flag
-                isSubmitting = false;
-            }
-        });
+            };
+            
+            // Execute the form processing
+            processForm();
+            
+            // Ensure the form doesn't submit normally
+            return false;
+        };
     }
     
     // Function to open edit item modal and populate with item data
     const openEditItemModal = async (itemId) => {
+        // Store current section before opening modal
+        localStorage.setItem('lastActiveSection', 'inventory');
+        
         try {
             // Fetch item details
             const response = await fetch(`${API_URL}/inventory/${itemId}`);
@@ -1061,6 +1139,9 @@ document.addEventListener('DOMContentLoaded', function() {
             
             const item = await response.json();
             
+            // Log item data to debug image paths
+            console.log("Item data for editing:", item);
+            
             // Populate form fields
             document.getElementById('editItemId').value = item.item_id;
             document.getElementById('editItemName').value = item.item_name;
@@ -1069,11 +1150,23 @@ document.addEventListener('DOMContentLoaded', function() {
             document.getElementById('editItemStock').value = item.stock_quantity;
             document.getElementById('editItemDescription').value = item.description || '';
             
-            // Show current image if it exists
+            // Show current image if it exists - with fixed path handling
             const currentImagePreview = document.getElementById('currentItemImage');
             if (item.image) {
+                // Fix image path using similar logic as in displayInventory
+                let imagePath = '';
+                
+                // For working with Live Server which serves from /public
+                if (window.location.href.includes(':5500') || window.location.href.includes('localhost')) {
+                    imagePath = window.location.origin + '/public' + item.image;
+                } else {
+                    // For production deployment
+                    imagePath = item.image;
+                }
+                
                 currentImagePreview.innerHTML = `
-                    <img src="${item.image}" alt="${item.item_name}" style="max-width: 100px; margin-bottom: 10px;">
+                    <img src="${imagePath}" alt="${item.item_name}" style="max-width: 100px; margin-bottom: 10px;" 
+                         onerror="this.onerror=null; this.src='${window.location.origin}/public/assets/images/no-image.png'; console.log('Using fallback in preview');">
                     <p class="current-filename">Current: ${item.image.split('/').pop()}</p>
                 `;
                 currentImagePreview.style.display = 'block';
@@ -1103,6 +1196,9 @@ document.addEventListener('DOMContentLoaded', function() {
     const editItemForm = document.getElementById('editItemForm');
     if (editItemForm) {
         editItemForm.addEventListener('submit', async function(e) {
+            // Store current section before form submission
+            localStorage.setItem('lastActiveSection', 'inventory');
+            
             e.preventDefault();
             
             const itemId = document.getElementById('editItemId').value;
@@ -1111,9 +1207,6 @@ document.addEventListener('DOMContentLoaded', function() {
             const submitBtn = editItemForm.querySelector('button[type="submit"]');
             submitBtn.disabled = true;
             submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Updating...';
-            
-            // Create FormData object to handle file uploads
-            const formData = new FormData(this);
             
             try {
                 // Initialize item data
@@ -1129,14 +1222,11 @@ document.addEventListener('DOMContentLoaded', function() {
                 const imageFile = document.getElementById('editItemImage').files[0];
                 
                 if (imageFile) {
-                    // Generate a unique filename (using timestamp)
-                    const timestamp = new Date().getTime();
-                    const fileExt = imageFile.name.split('.').pop();
-                    const newFilename = `item_${timestamp}.${fileExt}`;
+                    console.log('New image selected for upload:', imageFile.name);
                     
                     // Create a new FormData just for the image upload
                     const imageFormData = new FormData();
-                    imageFormData.append('image', imageFile, newFilename);
+                    imageFormData.append('image', imageFile);
                     
                     // Upload the image first
                     const imageUploadResponse = await fetch(`${API_URL}/upload-image`, {
@@ -1152,10 +1242,15 @@ document.addEventListener('DOMContentLoaded', function() {
                     }
                     
                     const imageResult = await imageUploadResponse.json();
+                    console.log('Image upload successful, new path:', imageResult.imagePath);
                     
                     // Set the image path for the item
                     itemData.image = imageResult.imagePath;
+                } else {
+                    console.log('No new image uploaded, keeping existing image');
                 }
+                
+                console.log('Sending updated item data:', itemData);
                 
                 // Send API request to update item
                 const response = await fetch(`${API_URL}/inventory/${itemId}`, {
@@ -1207,7 +1302,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
     
-    // Function to open delete item modal
+    // Function to open delete item modal - with improved styling
     const openDeleteItemModal = async (itemId) => {
         try {
             // Fetch item details
@@ -1219,14 +1314,23 @@ document.addEventListener('DOMContentLoaded', function() {
             const item = await response.json();
             
             // Set item details in modal
-            document.getElementById('deleteItemName').textContent = item.item_name;
+            document.getElementById('deleteItemName').textContent = item.item_name || 'Unknown Item';
             document.getElementById('deleteItemCategory').textContent = item.category || 'N/A';
             
             // Set item id for delete button
             document.getElementById('confirmDeleteBtn').setAttribute('data-id', item.item_id);
             
-            // Open modal
-            openModal('deleteItemModal');
+            // Open modal with specific styling
+            const modal = document.getElementById('deleteItemModal');
+            if (modal) {
+                modal.style.display = 'flex';
+                document.body.style.overflow = 'hidden';
+                
+                // Ensure all buttons are enabled
+                modal.querySelectorAll('button').forEach(button => {
+                    button.disabled = false;
+                });
+            }
             
         } catch (error) {
             console.error('Error opening delete modal:', error);
@@ -1277,14 +1381,16 @@ document.addEventListener('DOMContentLoaded', function() {
                     icon: 'success',
                     confirmButtonColor: '#3498db',
                     background: '#141414',
-                    color: '#f5f5f5'
+                    color: '#f5f5f5',
+                    timer: 1500,
+                    showConfirmButton: false
                 });
                 
-                // Reload inventory
+                // Reload inventory only, without changing section
                 loadInventory();
                 
-                // Reload dashboard to update count
-                loadDashboard();
+                // Update dashboard counters only
+                updateDashboardCounters();
                 
             } catch (error) {
                 console.error('Error deleting item:', error);
@@ -1379,6 +1485,8 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // Add fresh event listener
         newBtn.addEventListener('click', function() {
+            // Store current section before opening modal
+            localStorage.setItem('lastActiveSection', 'inventory');
             openModal('addItemModal');
             
             // Reset form when opening modal
@@ -1389,6 +1497,16 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Initialize the page
     const init = async () => {
+        // Check if we're coming back after a page reload (e.g., from form submission)
+        const lastSection = localStorage.getItem('lastActiveSection');
+        if (lastSection) {
+            // Navigate to that section
+            showSection(lastSection);
+            // Remove the stored section to avoid unexpected redirects in the future
+            localStorage.removeItem('lastActiveSection');
+            console.log('Navigated to previously active section:', lastSection);
+        }
+
         // Load dashboard data first
         await loadDashboard();
         
@@ -1582,3 +1700,45 @@ window.loadDashboard = async function() {
         `;
     }
 };
+
+// New function to update dashboard counters without switching to dashboard section
+async function updateDashboardCounters() {
+    try {
+        // Get item count (inventory count)
+        const itemsResponse = await fetch(`${API_URL}/inventory?timestamp=${Date.now()}`);
+        const items = await itemsResponse.json();
+        document.getElementById('itemCount').textContent = items.length;
+        
+        // Only update other counters if needed
+        const statsResponse = await fetch(`${API_URL}/transaction-stats?timestamp=${Date.now()}`);
+        const stats = await statsResponse.json();
+        
+        document.getElementById('transactionCount').textContent = stats.transactionCount;
+    } catch (error) {
+        console.error('Error updating dashboard counters:', error);
+    }
+}
+
+// Helper function to show a specific section
+function showSection(sectionId) {
+    // Hide all sections
+    document.querySelectorAll('.section').forEach(section => {
+        section.classList.remove('active');
+    });
+    
+    // Show the requested section
+    const section = document.getElementById(sectionId);
+    if (section) {
+        section.classList.add('active');
+    }
+    
+    // Update sidebar menu active state
+    document.querySelectorAll('.menu li').forEach(item => {
+        item.classList.remove('active');
+    });
+    
+    const menuItem = document.querySelector(`.menu li a[href="#${sectionId}"]`);
+    if (menuItem) {
+        menuItem.parentElement.classList.add('active');
+    }
+}
