@@ -923,9 +923,16 @@ document.addEventListener('DOMContentLoaded', function() {
         const amountTendered = parseFloat(document.getElementById('amountTendered').value) || 0;
         
         const change = amountTendered - amountDue;
-        document.getElementById('change').value = change >= 0 ? 
+        const changeElement = document.getElementById('change');
+        
+        changeElement.value = change >= 0 ? 
             `₱${change.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}` : 
             '₱0.00';
+        
+        // Add highlight animation when change value updates
+        changeElement.classList.remove('highlight-change');
+        void changeElement.offsetWidth; // Trigger reflow to restart animation
+        changeElement.classList.add('highlight-change');
         
         // Enable/disable confirm button based on whether enough money was tendered
         const confirmBtn = document.getElementById('confirmPaymentBtn');
@@ -1120,12 +1127,27 @@ document.addEventListener('DOMContentLoaded', function() {
                 
                 <!-- Cash Payment Fields (only shown for cash payment) -->
                 <div id="cashPaymentFields" class="payment-input">
-                    <div>
-                        <label for="amountTendered">Amount Tendered:</label>
-                        <input type="number" id="amountTendered" placeholder="Enter amount" step="0.01" min="0">
+                    <div class="cash-payment-header">
+                        <div class="cash-payment-title">
+                            <i class="fas fa-money-bill-wave"></i> Cash Payment
+                        </div>
                     </div>
-                    <div>
-                        <label for="change">Change:</label>
+                    <div class="cash-payment-subtitle">
+                        Enter the amount received from customer
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="amountTendered">
+                            <i class="fas fa-hand-holding-usd"></i> Amount Tendered:
+                        </label>
+                        <div class="currency-input-wrapper">
+                            <input type="number" id="amountTendered" class="currency-input" placeholder="0.00" step="0.01" min="0">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="change">
+                            <i class="fas fa-coins"></i> Change:
+                        </label>
                         <input type="text" id="change" value="₱0.00" readonly>
                     </div>
                 </div>

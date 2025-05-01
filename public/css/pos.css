@@ -4056,3 +4056,126 @@ main {
     grid-template-columns: 1fr;
   }
 }
+
+/* Enhanced Cash Payment Fields Styling */
+#cashPaymentFields {
+  background-color: var(--dark-color);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  padding: 20px;
+  margin: 20px 0;
+  box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.2);
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+#cashPaymentFields .form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+#cashPaymentFields label {
+  font-size: 16px;
+  font-weight: 500;
+  color: var(--text-color);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+#cashPaymentFields label i {
+  color: var(--primary-color);
+  font-size: 18px;
+}
+
+#cashAmount, #changeAmount {
+  width: 100%;
+  height: 50px;
+  padding: 10px 15px;
+  font-size: 20px;
+  font-weight: 600;
+  background-color: var(--dark-secondary);
+  border: 2px solid var(--border-color);
+  border-radius: 10px;
+  color: var(--text-color);
+  text-align: right;
+  letter-spacing: 1px;
+  font-feature-settings: "tnum";
+  font-variant-numeric: tabular-nums;
+  transition: all 0.2s ease;
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+#cashAmount:focus {
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.25), inset 0 1px 3px rgba(0, 0, 0, 0.1);
+  outline: none;
+}
+
+#changeAmount {
+  background-color: rgba(52, 152, 219, 0.1);
+  border-color: rgba(52, 152, 219, 0.3);
+  color: var(--primary-color);
+  font-weight: 700;
+  box-shadow: inset 0 1px 3px rgba(52, 152, 219, 0.1);
+}
+
+/* Add improved visuals for the cash payment section */
+.cash-payment-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 5px;
+}
+
+.cash-payment-title {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--text-color);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.cash-payment-title i {
+  color: var(--primary-color);
+}
+
+.cash-payment-subtitle {
+  font-size: 14px;
+  color: var(--text-dark);
+  margin-top: 5px;
+}
+
+/* Add currency symbol inside input */
+.currency-input-wrapper {
+  position: relative;
+}
+
+.currency-input-wrapper::before {
+  content: "₱";
+  position: absolute;
+  left: 15px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 20px;
+  color: var(--text-dark);
+  z-index: 1;
+}
+
+.currency-input {
+  padding-left: 35px !important;
+}
+
+/* Add pulsing effect for change field when updated */
+@keyframes highlightChange {
+  0% { background-color: rgba(52, 152, 219, 0.1); }
+  50% { background-color: rgba(52, 152, 219, 0.3); }
+  100% { background-color: rgba(52, 152, 219, 0.1); }
+}
+
+.highlight-change {
+  animation: highlightChange 0.6s ease;
+}

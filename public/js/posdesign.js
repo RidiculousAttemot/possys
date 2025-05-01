@@ -754,12 +754,28 @@ styleElement.textContent = `
                     </div>
                     
                     <div id="cashPaymentFields" class="payment-details-section">
-                        <div class="form-group">
-                            <label for="cashAmount"><i class="fas fa-money-bill-wave"></i> Amount Received</label>
-                            <input type="number" id="cashAmount" placeholder="Enter amount" min="0" step="0.01">
+                        <div class="cash-payment-header">
+                            <div class="cash-payment-title">
+                                <i class="fas fa-money-bill-wave"></i> Cash Payment
+                            </div>
                         </div>
+                        <div class="cash-payment-subtitle">
+                            Enter the amount received from customer
+                        </div>
+                        
                         <div class="form-group">
-                            <label><i class="fas fa-coins"></i> Change</label>
+                            <label for="cashAmount">
+                                <i class="fas fa-hand-holding-usd"></i> Amount Received
+                            </label>
+                            <div class="currency-input-wrapper">
+                                <input type="number" id="cashAmount" class="currency-input" placeholder="0.00" min="0" step="0.01">
+                            </div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="changeAmount">
+                                <i class="fas fa-coins"></i> Change
+                            </label>
                             <input type="text" id="changeAmount" class="change-display" value="₱0.00" readonly disabled>
                         </div>
                     </div>
@@ -828,8 +844,15 @@ styleElement.textContent = `
             const totalAmount = parseFloat(document.getElementById('totalAmount').textContent.replace('₱', '').replace(/,/g, '')) || 0;
             const changeAmount = cashAmount - totalAmount;
             
-            document.getElementById('changeAmount').textContent = changeAmount >= 0 ? 
+            const changeElement = document.getElementById('changeAmount');
+            
+            changeElement.value = changeAmount >= 0 ? 
                 `₱${changeAmount.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}` : '₱0.00';
+            
+            // Add highlight animation when change value updates
+            changeElement.classList.remove('highlight-change');
+            void changeElement.offsetWidth; // Trigger reflow to restart animation
+            changeElement.classList.add('highlight-change');
             
             // Enable/disable confirm button based on valid cash amount
             const confirmBtn = document.getElementById('confirmPaymentBtn');
@@ -1254,8 +1277,15 @@ if (cashAmountInput) {
         const totalAmount = parseFloat(document.getElementById('totalAmount').textContent.replace('₱', '').replace(/,/g, '')) || 0;
         const changeAmount = cashAmount - totalAmount;
         
-        document.getElementById('changeAmount').textContent = changeAmount >= 0 ? 
+        const changeElement = document.getElementById('changeAmount');
+        
+        changeElement.value = changeAmount >= 0 ? 
             `₱${changeAmount.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}` : '₱0.00';
+        
+        // Add highlight animation when change value updates
+        changeElement.classList.remove('highlight-change');
+        void changeElement.offsetWidth; // Trigger reflow to restart animation
+        changeElement.classList.add('highlight-change');
         
         // Enable/disable confirm button based on valid cash amount
         const confirmBtn = document.getElementById('confirmPaymentBtn');
@@ -1581,8 +1611,15 @@ if (cashAmountInput) {
         const totalAmount = parseFloat(document.getElementById('totalAmount').textContent.replace('₱', '').replace(/,/g, '')) || 0;
         const changeAmount = cashAmount - totalAmount;
         
-        document.getElementById('changeAmount').value = changeAmount >= 0 ? 
+        const changeElement = document.getElementById('changeAmount');
+        
+        changeElement.value = changeAmount >= 0 ? 
             `₱${changeAmount.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}` : '₱0.00';
+        
+        // Add highlight animation when change value updates
+        changeElement.classList.remove('highlight-change');
+        void changeElement.offsetWidth; // Trigger reflow to restart animation
+        changeElement.classList.add('highlight-change');
         
         // Enable/disable confirm button based on valid cash amount
         const confirmBtn = document.getElementById('confirmPaymentBtn');
