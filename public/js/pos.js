@@ -1708,7 +1708,7 @@ document.addEventListener('DOMContentLoaded', function() {
         // Collect payment details based on payment method
         if (paymentMethod === 'cash') {
             const cashAmount = parseFloat(document.getElementById('cashAmount').value) || 0;
-            const changeAmount = parseFloat(document.getElementById('changeAmount').value.replace('₱', '')) || 0;
+            const changeAmount = parseFloat(document.getElementById('changeAmount').value.replace('₱', '').replace(/,/g, '')) || 0;
             
             paymentDetails = {
                 method: 'cash',
@@ -1718,15 +1718,21 @@ document.addEventListener('DOMContentLoaded', function() {
         } else if (paymentMethod === 'card') {
             paymentDetails = {
                 method: 'card',
-                cardNumber: document.getElementById('cardNumber').value,
-                cardName: document.getElementById('cardName').value,
-                cardExpiry: document.getElementById('cardExpiry').value
+                cardNumber: document.getElementById('cardNumber')?.value || '',
+                cardName: document.getElementById('cardName')?.value || '',
+                cardExpiry: document.getElementById('cardExpiry')?.value || ''
             };
         } else if (paymentMethod === 'ewallet') {
             paymentDetails = {
                 method: 'ewallet',
-                ewalletNumber: document.getElementById('ewalletNumber').value,
-                referenceNumber: document.getElementById('ewalletReference').value
+                ewalletNumber: document.getElementById('ewalletNumber')?.value || '',
+                referenceNumber: document.getElementById('ewalletReference')?.value || ''
+            };
+        } else if (paymentMethod === 'banktransfer') {
+            paymentDetails = {
+                method: 'banktransfer',
+                bankAccount: document.getElementById('bankAccount')?.value || '',
+                referenceNumber: document.getElementById('bankReference')?.value || ''
             };
         }
         
@@ -1734,8 +1740,12 @@ document.addEventListener('DOMContentLoaded', function() {
         paymentDetails.printReceipt = printReceipt;
         paymentDetails.emailReceipt = emailReceipt;
         
-        // Process the transaction (existing logic)
-        // ...
+        // Use the correct cart data - retrieve from the cartItems global array, not "cart"
+        // This is the key fix - using cartItems instead of cart
+        paymentDetails.items = cartItems;
+        paymentDetails.subtotal = cartItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+        paymentDetails.tax = paymentDetails.subtotal * 0.12;
+        paymentDetails.total = paymentDetails.subtotal + paymentDetails.tax;
         
         // Generate and print receipt if needed
         if (printReceipt) {
@@ -1743,154 +1753,212 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
     
-    // Generate and print receipt function
+    // Generate and print receipt function with proper item handling
     function generateAndPrintReceipt(paymentDetails) {
-        // Create receipt HTML
-        const receiptHTML = `
-            <div class="receipt">
-                <div class="receipt-header">
-                    <h2>MotorTech</h2>
-                    <p>Motorcycle Parts & Accessories</p>
-                    <p>${new Date().toLocaleString()}</p>
-                    <p>Receipt #: ${generateReceiptNumber()}</p>
-                </div>
-                <div class="receipt-items">
-                    ${cart.map(item => `
-                        <div class="receipt-item">
-                            <div class="receipt-item-details">
-                                <span class="receipt-item-name">${item.name}</span>
-                                <span class="receipt-item-quantity">x${item.quantity.toLocaleString()}</span>
-                            </div>
-                            <span class="receipt-item-price">₱${(item.price * item.quantity).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span>
-                        </div>
-                    `).join('')}
-                </div>
-                <div class="receipt-summary">
-                    <div class="receipt-summary-row">
-                        <span>Subtotal:</span>
-                        <span>₱${calculateSubtotal().toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span>
-                    </div>
-                    <div class="receipt-summary-row">
-                        <span>Tax (12%):</span>n>
-                        <span>₱${calculateTax().toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span>
-                    </div>
-                    <div class="receipt-summary-row total">
-                        <span>Total:</span>
-                        <span>₱${calculateTotal().toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span>
-                    </div>
-                </div>
-                <div class="receipt-payment">
-                    <div class="receipt-payment-method">
-                        <span>Payment Method:</span>
-                        <span>${paymentDetails.method.toUpperCase()}</span>
-                    </div>
-                    ${paymentDetails.method === 'cash' ? `
-                        <div class="receipt-payment-detail">
-                            <span>Amount Received:</span>
-                            <span>₱${paymentDetails.cashAmount.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span>
-                        </div>
-                        <div class="receipt-payment-detail">
-                            <span>Change:</span>
-                            <span>₱${paymentDetails.changeAmount.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span>
-                        </div>
-                    ` : ''}
-                </div>
-                <div class="receipt-footer">
-                    <p>Thank you for your purchase!</p>
-                    <p>Please come again.</p>
-                </div>
-            </div>
-        `;
+        // Create the receipt window
+        const receiptWindow = window.open('', '_blank', 'width=400,height=600');
+
+        // Format items for receipt
+        const itemsHTML = paymentDetails.items.map(item => {
+            const itemTotal = (item.price * item.quantity);
+            return `
+                <tr>
+                    <td style="text-align: left; padding: 3px 5px;">${item.name}</td>
+                    <td style="text-align: center; padding: 3px 5px;">${item.quantity}</td>
+                    <td style="text-align: right; padding: 3px 5px;">₱${parseFloat(item.price).toFixed(2)}</td>
+                    <td style="text-align: right; padding: 3px 5px;">₱${itemTotal.toFixed(2)}</td>
+                </tr>
+            `;
+        }).join('');
         
-        // Open a new window and write the receipt HTML
-        const receiptWindow = window.open('', '_blank', 'width=300,height=600');
+        // Calculate totals
+        const subtotal = paymentDetails.subtotal;
+        const tax = paymentDetails.tax;
+        const total = paymentDetails.total;
+        
+        // Get payment method display name
+        const paymentMethodNames = {
+            'cash': 'Cash',
+            'card': 'Card',
+            'ewallet': 'E-Wallet',
+            'gcash': 'GCash',
+            'paymaya': 'PayMaya',
+            'banktransfer': 'Bank Transfer'
+        };
+        const paymentMethodName = paymentMethodNames[paymentDetails.method] || paymentDetails.method;
+        
+        // Debug output to ensure we have items
+        console.log("Receipt Items:", paymentDetails.items);
+        console.log("Generated HTML:", itemsHTML);
+        
+        // Generate receipt HTML
         receiptWindow.document.write(`
             <html>
-            <head>
-                <title>Receipt</title>
-                <style>
-                    body {
-                        font-family: 'Courier New', monospace;
-                        font-size: 12px;
-                        line-height: 1.4;
-                        padding: 10px;
-                    }
-                    .receipt {
-                        width: 270px;
-                        margin: 0 auto;
-                    }
-                    .receipt-header {
-                        text-align: center;
-                        margin-bottom: 10px;
-                    }
-                    .receipt-header h2 {
-                        margin: 0;
-                        font-size: 16px;
-                    }
-                    .receipt-header p {
-                        margin: 5px 0;
-                    }
-                    .receipt-items {
-                        border-top: 1px dashed #000;
-                        border-bottom: 1px dashed #000;
-                        padding: 10px 0;
-                    }
-                    .receipt-item {
-                        display: flex;
-                        justify-content: space-between;
-                        margin-bottom: 5px;
-                    }
-                    .receipt-item-details {
-                        display: flex;
-                        flex-direction: column;
-                    }
-                    .receipt-summary {
-                        margin: 10px 0;
-                    }
-                    .receipt-summary-row {
-                        display: flex;
-                        justify-content: space-between;
-                    }
-                    .total {
-                        font-weight: bold;
-                        margin-top: 5px;
-                    }
-                    .receipt-payment {
-                        margin: 10px 0;
-                    }
-                    .receipt-payment-method, .receipt-payment-detail {
-                        display: flex;
-                        justify-content: space-between;
-                    }
-                    .receipt-footer {
-                        text-align: center;
-                        margin-top: 10px;
-                        border-top: 1px dashed #000;
-                        padding-top: 10px;
-                    }
-                    @media print {
+                <head>
+                    <title>Receipt</title>
+                    <style>
                         body {
+                            font-family: 'Courier New', monospace;
+                            font-size: 12px;
                             margin: 0;
-                            padding: 0;
+                            padding: 20px;
+                            color: #000;
+                            max-width: 350px;
+                            margin: 0 auto;
                         }
-                        .receipt {
+                        .receipt-header {
+                            text-align: center;
+                            margin-bottom: 10px;
+                            padding-bottom: 10px;
+                            border-bottom: 1px dashed #000;
+                        }
+                        .receipt-header h1 {
+                            font-size: 18px;
+                            margin: 0;
+                        }
+                        .receipt-header p {
+                            margin: 4px 0;
+                            font-size: 12px;
+                        }
+                        .transaction-info {
+                            margin-bottom: 10px;
+                            font-size: 12px;
+                        }
+                        .transaction-info p {
+                            margin: 3px 0;
+                        }
+                        .receipt-items {
                             width: 100%;
+                            border-collapse: collapse;
+                            margin: 10px 0;
+                            font-size: 11px;
                         }
-                    }
-                </style>
-            </head>
-            <body>
-                ${receiptHTML}
+                        .receipt-items th {
+                            text-align: left;
+                            padding: 3px 5px;
+                            border-bottom: 1px solid #000;
+                            font-weight: bold;
+                        }
+                        .receipt-items td {
+                            padding: 3px 5px;
+                        }
+                        .receipt-totals {
+                            margin-top: 10px;
+                            text-align: right;
+                            font-size: 12px;
+                            border-top: 1px dashed #000;
+                            padding-top: 10px;
+                        }
+                        .receipt-totals .row {
+                            display: flex;
+                            justify-content: space-between;
+                            margin: 3px 0;
+                        }
+                        .receipt-total {
+                            font-weight: bold;
+                            font-size: 13px;
+                            margin: 5px 0;
+                        }
+                        .payment-info {
+                            margin-top: 10px;
+                            text-align: left;
+                            font-size: 12px;
+                        }
+                        .payment-info .row {
+                            display: flex;
+                            justify-content: space-between;
+                            margin: 3px 0;
+                        }
+                        .receipt-footer {
+                            text-align: center;
+                            margin-top: 15px;
+                            border-top: 1px dashed #000;
+                            padding-top: 10px;
+                            font-size: 11px;
+                        }
+                        @media print {
+                            body {
+                                width: 80mm; /* Standard thermal receipt width */
+                                margin: 0;
+                                padding: 5px;
+                            }
+                        }
+                    </style>
+                </head>
+                <body>
+                    <div class="receipt-header">
+                        <h1>MotorTech Motorsport</h1>
+                        <p>Parts & Accessories Shop</p>
+                        <p>123 Main Street, Taguig City</p>
+                        <p>Tel: (02) 8123-4567</p>
+                        <p>VAT Reg #: 123-456-789-000</p>
+                    </div>
+                    
+                    <div class="transaction-info">
+                        <p><strong>Receipt #:</strong> ${generateReceiptNumber()}</p>
+                        <p><strong>Date:</strong> ${new Date().toLocaleString()}</p>
+                        <p><strong>Cashier:</strong> ${localStorage.getItem('userName') || 'Staff'}</p>
+                    </div>
+                    
+                    <table class="receipt-items">
+                        <thead>
+                            <tr>
+                                <th style="text-align: left; width: 40%;">Item</th>
+                                <th style="text-align: center; width: 15%;">Qty</th>
+                                <th style="text-align: right; width: 20%;">Price</th>
+                                <th style="text-align: right; width: 25%;">Total</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${itemsHTML}
+                        </tbody>
+                    </table>
+                    
+                    <div class="receipt-totals">
+                        <div class="row">
+                            <span>Subtotal:</span>
+                            <span>₱${subtotal.toFixed(2)}</span>
+                        </div>
+                        <div class="row">
+                            <span>VAT (12%):</span>
+                            <span>₱${tax.toFixed(2)}</span>
+                        </div>
+                        <div class="row receipt-total">
+                            <span>TOTAL:</span>
+                            <span>₱${total.toFixed(2)}</span>
+                        </div>
+                    </div>
+                    
+                    <div class="payment-info">
+                        <p><strong>Payment Method:</strong> ${paymentMethodName}</p>
+                        ${paymentDetails.method === 'cash' ? `
+                            <div class="row">
+                                <span>Amount Tendered:</span>
+                                <span>₱${paymentDetails.cashAmount.toFixed(2)}</span>
+                            </div>
+                            <div class="row">
+                                <span>Change:</span>
+                                <span>₱${paymentDetails.changeAmount.toFixed(2)}</span>
+                            </div>
+                        ` : ''}
+                    </div>
+                    
+                    <div class="receipt-footer">
+                        <p>Thank you for shopping at MotorTech Motorsport!</p>
+                        <p>Items purchased cannot be returned.</p>
+                        <p>This serves as your official receipt.</p>
+                        <p>Come back again!</p>
+                    </div>
+                </body>
                 <script>
                     window.onload = function() {
                         window.print();
-                        // Optional: Close the window after printing
-                        // setTimeout(function() { window.close(); }, 500);
                     }
                 </script>
-            </body>
             </html>
         `);
+        receiptWindow.document.close();
+        receiptWindow.focus();
     }
     
     // Generate a receipt number
