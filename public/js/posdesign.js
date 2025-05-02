@@ -842,12 +842,13 @@ styleElement.textContent = `
         cashAmountInput.addEventListener('input', function() {
             const cashAmount = parseFloat(this.value) || 0;
             const totalAmount = parseFloat(document.getElementById('totalAmount').textContent.replace('₱', '').replace(/,/g, '')) || 0;
-            const changeAmount = cashAmount - totalAmount;
+            
+            // Calculate change only if sufficient amount is provided
+            const changeAmount = cashAmount >= totalAmount ? (cashAmount - totalAmount) : 0;
             
             const changeElement = document.getElementById('changeAmount');
             
-            changeElement.value = changeAmount >= 0 ? 
-                `₱${changeAmount.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}` : '₱0.00';
+            changeElement.value = `₱${changeAmount.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
             
             // Add highlight animation when change value updates
             changeElement.classList.remove('highlight-change');
@@ -1609,12 +1610,13 @@ if (cashAmountInput) {
     cashAmountInput.addEventListener('input', function() {
         const cashAmount = parseFloat(this.value) || 0;
         const totalAmount = parseFloat(document.getElementById('totalAmount').textContent.replace('₱', '').replace(/,/g, '')) || 0;
-        const changeAmount = cashAmount - totalAmount;
+        
+        // Only calculate positive change if amount is sufficient
+        const changeAmount = cashAmount >= totalAmount ? (cashAmount - totalAmount) : 0;
         
         const changeElement = document.getElementById('changeAmount');
         
-        changeElement.value = changeAmount >= 0 ? 
-            `₱${changeAmount.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}` : '₱0.00';
+        changeElement.value = `₱${changeAmount.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
         
         // Add highlight animation when change value updates
         changeElement.classList.remove('highlight-change');

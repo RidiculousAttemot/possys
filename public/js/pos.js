@@ -714,69 +714,69 @@ document.addEventListener('DOMContentLoaded', function() {
                 `;
             }).join('');
             
-            // Create custom transaction complete modal
+            // Create custom transaction complete modal with improved UI
             Swal.fire({
                 title: '<div class="transaction-success-title"><i class="fas fa-check-circle success-icon pulse"></i>Transaction Complete!</div>',
                 html: `
                     <div class="transaction-success-container">
-                        <div class="transaction-success-header">
-                            <div class="transaction-id">Transaction #${transactionId}</div>
-                            <div class="transaction-date">${transactionDate}</div>
-                        </div>
-                        
-                        <div class="transaction-success-summary">
-                            <div class="payment-method">
-                                <i class="${getPaymentIcon(paymentMethod)}"></i>
-                                <span>${paymentMethodName}</span>
+                        <div class="transaction-receipt-card">
+                            <div class="transaction-header">
+                                <div class="transaction-id">Transaction #${transactionId}</div>
+                                <div class="transaction-date">${transactionDate}</div>
                             </div>
                             
-                            <div class="transaction-success-amount">
-                                <div class="amount-label">Total Paid</div>
-                                <div class="amount-value">₱${total.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</div>
-                            </div>
-                            
-                            ${paymentMethod === 'cash' ? `
-                                <div class="change-container">
-                                    <div>
-                                        <div class="change-label">Amount Tendered</div>
-                                        <div class="tendered-value">₱${amountTendered.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</div>
-                                    </div>
-                                    <div>
-                                        <div class="change-label">Change</div>
-                                        <div class="change-value">₱${change.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</div>
-                                    </div>
+                            <div class="transaction-payment-info">
+                                <div class="payment-method">
+                                    <i class="${getPaymentIcon(paymentMethod)}"></i>
+                                    <span>${paymentMethodName}</span>
                                 </div>
-                            ` : ''}
-                        </div>
-                        
-                        <div class="transaction-success-items">
-                            <div class="items-header">Items Purchased</div>
-                            <div class="items-table-container">
-                                <table class="items-table">
-                                    <thead>
-                                        <tr>
-                                            <th>Item</th>
-                                            <th class="text-right">Qty</th>
-                                            <th class="text-right">Price</th>
-                                            <th class="text-right">Subtotal</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        ${itemList}
-                                    </tbody>
-                                </table>
+                                
+                                <div class="transaction-amount">
+                                    <div class="amount-label">Total Paid</div>
+                                    <div class="amount-value">₱${total.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</div>
+                                </div>
+                                
+                                ${paymentMethod === 'cash' ? `
+                                    <div class="payment-details">
+                                        <div class="payment-detail">
+                                            <span>Amount Tendered:</span>
+                                            <span>₱${amountTendered.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span>
+                                        </div>
+                                        <div class="payment-detail">
+                                            <span>Change:</span>
+                                            <span>₱${change.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span>
+                                        </div>
+                                    </div>
+                                ` : ''}
+                            </div>
+                            
+                            <div class="transaction-items">
+                                <div class="items-header">Items Purchased</div>
+                                <div class="items-table-container">
+                                    <table class="items-table">
+                                        <thead>
+                                            <tr>
+                                                <th>Item</th>
+                                                <th class="text-right">Qty</th>
+                                                <th class="text-right">Price</th>
+                                                <th class="text-right">Subtotal</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            ${itemList}
+                                        </tbody>
+                                    </table>
+                                </div>
                             </div>
                         </div>
                         
-                        <div class="transaction-success-footer">
-                            <div class="receipt-buttons">
-                                <button class="btn-print-receipt">
-                                    <i class="fas fa-print"></i> Print Receipt
-                                </button>
-                                <button class="btn-email-receipt">
-                                    <i class="fas fa-envelope"></i> Email Receipt
-                                </button>
-                            </div>
+                        <div class="receipt-actions">
+                            <button class="btn-print-receipt">
+                                <i class="fas fa-print"></i> Print Receipt
+                            </button>
+                            <button class="btn-email-receipt">
+                                <i class="fas fa-envelope"></i> Email Receipt
+                            </button>
                         </div>
                     </div>
                 `,
@@ -784,7 +784,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 confirmButtonText: 'Done',
                 confirmButtonColor: '#3498db',
                 background: '#141414',
-                width: '600px',
+                width: '500px',
+                padding: '1rem',
                 customClass: {
                     popup: 'transaction-success-popup',
                     title: 'transaction-success-title-container',
@@ -1268,12 +1269,11 @@ document.addEventListener('DOMContentLoaded', function() {
         const amountDue = parseFloat(document.getElementById('amountDue').textContent.replace(/,/g, ''));
         const amountTendered = parseFloat(document.getElementById('amountTendered').value) || 0;
         
-        const change = amountTendered - amountDue;
+        // Only calculate change if tendered amount is sufficient
+        const change = amountTendered >= amountDue ? (amountTendered - amountDue) : 0;
         const changeElement = document.getElementById('change');
         
-        changeElement.value = change >= 0 ? 
-            `₱${change.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}` : 
-            '₱0.00';
+        changeElement.value = `₱${change.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
         
         // Add highlight animation when change value updates
         changeElement.classList.remove('highlight-change');
@@ -1611,19 +1611,23 @@ document.addEventListener('DOMContentLoaded', function() {
         const amountTenderedInput = document.getElementById('amountTendered');
         if (amountTenderedInput) {
             amountTenderedInput.addEventListener('input', function() {
-                const amountDue = parseFloat(document.getElementById('amountDue').textContent);
+                const amountDue = parseFloat(document.getElementById('amountDue').textContent.replace(/,/g, ''));
                 const amountTendered = parseFloat(this.value) || 0;
                 
-                if (!isNaN(amountTendered) && amountTendered >= amountDue) {
-                    confirmPaymentBtn.disabled = false;
-                    
-                    // Calculate change
-                    const change = amountTendered - amountDue;
-                    document.getElementById('change').value = `₱${change.toFixed(2)}`;
-                } else {
-                    confirmPaymentBtn.disabled = true;
-                    document.getElementById('change').value = `₱0.00`;
-                }
+                // Calculate change only if sufficient funds provided
+                const change = amountTendered >= amountDue ? amountTendered - amountDue : 0;
+                
+                // Update change field
+                document.getElementById('change').value = `₱${change.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+                
+                // Add highlight animation
+                const changeElement = document.getElementById('change');
+                changeElement.classList.remove('highlight-change');
+                void changeElement.offsetWidth; // Trigger reflow to restart animation
+                changeElement.classList.add('highlight-change');
+                
+                // Enable/disable confirm button based on sufficient funds
+                confirmPaymentBtn.disabled = amountTendered < amountDue;
             });
         }
     };
