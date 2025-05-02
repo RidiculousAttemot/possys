@@ -840,47 +840,9 @@ document.addEventListener('DOMContentLoaded', function() {
             modal.classList.remove('show');
             document.body.style.overflow = 'auto';
             
-            // Clear cart properly
+            // Clear cart
             cartItems = [];
-            // Also clear localStorage to ensure complete reset
-            localStorage.removeItem('cartItems');
             updateCart();
-
-            // Ensure cart UI is properly reset
-            const cartContainer = document.getElementById('cartItems');
-            if (cartContainer) {
-                cartContainer.innerHTML = `
-                    <div class="empty-cart" id="emptyCart">
-                        <i class="fas fa-shopping-cart"></i>
-                        <p>Your cart is empty</p>
-                        <p>Add products to start billing</p>
-                    </div>
-                `;
-            }
-            
-            // Disable checkout button
-            const checkoutBtn = document.getElementById('checkoutBtn');
-            if (checkoutBtn) {
-                checkoutBtn.disabled = true;
-            }
-            
-            // Reset cart count badge if it exists
-            const cartCountElement = document.getElementById('cartCount');
-            if (cartCountElement) {
-                cartCountElement.textContent = '0';
-                cartCountElement.style.display = 'none';
-            }
-
-            // Reset total amount
-            const totalAmount = document.getElementById('totalAmount');
-            if (totalAmount) {
-                totalAmount.textContent = '0.00';
-            }
-            
-            // Also clear the global cart array if it exists
-            if (window.cart && Array.isArray(window.cart)) {
-                window.cart = [];
-            }
             
             // Refresh product list to update stock
             fetchProducts();
@@ -922,13 +884,21 @@ document.addEventListener('DOMContentLoaded', function() {
     // Function to print receipt
     function printReceipt(transaction, items, total, amountTendered, change, paymentMethodName) {
         const receiptDate = new Date().toLocaleString();
+        const receiptNumber = generateReceiptNumber();
+        
+        // Calculate subtotal and tax directly from items to ensure accuracy
+        const subtotal = items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+        const tax = subtotal * TAX_RATE; // 0.12% tax rate
+        
+        // Format items for receipt
         const receiptItems = items.map(item => {
+            const itemTotal = (item.price * item.quantity).toFixed(2);
             return `
                 <tr>
-                    <td>${item.name}</td>
-                    <td>${item.quantity}</td>
-                    <td>₱${item.price.toFixed(2)}</td>
-                    <td>₱${(item.price * item.quantity).toFixed(2)}</td>
+                    <td style="text-align: left; padding: 3px 5px;">${item.name}</td>
+                    <td style="text-align: center; padding: 3px 5px;">${item.quantity}</td>
+                    <td style="text-align: right; padding: 3px 5px;">₱${parseFloat(item.price).toFixed(2)}</td>
+                    <td style="text-align: right; padding: 3px 5px;">₱${itemTotal}</td>
                 </tr>
             `;
         }).join('');
@@ -937,7 +907,7 @@ document.addEventListener('DOMContentLoaded', function() {
         printWindow.document.write(`
             <html>
                 <head>
-                    <title>Receipt</title>
+                    <title>Receipt #${receiptNumber}</title>
                     <style>
                         body {
                             font-family: 'Courier New', monospace;
@@ -946,71 +916,110 @@ document.addEventListener('DOMContentLoaded', function() {
                             padding: 20px;
                             color: #000;
                             max-width: 300px;
+                            margin: 0 auto;
                         }
                         .receipt-header {
                             text-align: center;
-                            margin-bottom: 20px;
+                            margin-bottom: 10px;
+                            padding-bottom: 10px;
+                            border-bottom: 1px dashed #000;
                         }
                         .receipt-header h1 {
                             font-size: 18px;
                             margin: 0;
                         }
                         .receipt-header p {
-                            margin: 5px 0;
+                            margin: 4px 0;
+                            font-size: 12px;
+                        }
+                        .transaction-info {
+                            margin-bottom: 10px;
+                            font-size: 12px;
+                        }
+                        .transaction-info p {
+                            margin: 3px 0;
                         }
                         .receipt-items {
                             width: 100%;
                             border-collapse: collapse;
-                            margin: 20px 0;
-                        }
-                        .receipt-items th, .receipt-items td {
-                            text-align: left;
-                            padding: 5px;
+                            margin: 10px 0;
+                            font-size: 11px;
                         }
                         .receipt-items th {
+                            text-align: left;
+                            padding: 3px 5px;
                             border-bottom: 1px solid #000;
+                            font-weight: bold;
+                        }
+                        .receipt-items td {
+                            padding: 3px 5px;
                         }
                         .receipt-totals {
-                            margin-top: 15px;
+                            margin-top: 10px;
                             text-align: right;
+                            font-size: 12px;
+                            border-top: 1px dashed #000;
+                            padding-top: 10px;
+                        }
+                        .receipt-totals .row {
+                            display: flex;
+                            justify-content: space-between;
+                            margin: 3px 0;
                         }
                         .receipt-total {
                             font-weight: bold;
-                            border-top: 1px solid #000;
-                            padding-top: 5px;
+                            font-size: 13px;
+                            margin: 5px 0;
+                        }
+                        .payment-info {
+                            margin-top: 10px;
+                            text-align: left;
+                            font-size: 12px;
+                        }
+                        .payment-info .row {
+                            display: flex;
+                            justify-content: space-between;
+                            margin: 3px 0;
                         }
                         .receipt-footer {
                             text-align: center;
-                            margin-top: 20px;
-                            border-top: 1px dotted #000;
+                            margin-top: 15px;
+                            border-top: 1px dashed #000;
                             padding-top: 10px;
+                            font-size: 11px;
                         }
                         @media print {
                             body {
-                                width: 100%;
-                                max-width: 300px;
+                                width: 80mm; /* Standard thermal receipt width */
                                 margin: 0;
-                                padding: 0;
+                                padding: 5px;
                             }
                         }
                     </style>
                 </head>
                 <body>
                     <div class="receipt-header">
-                        <h1>MotorTech Parts & Accessories</h1>
-                        <p>123 Main Street, City</p>
-                        <p>Tel: (123) 456-7890</p>
-                        <p>${receiptDate}</p>
-                        <p>Transaction #: ${transaction.transaction_id || "N/A"}</p>
+                        <h1>MotorTech Motorsport</h1>
+                        <p>Parts & Accessories Shop</p>
+                        <p>123 Main Street, Taguig City</p>
+                        <p>Tel: (02) 8123-4567</p>
+                        <p>VAT Reg #: 123-456-789-000</p>
+                    </div>
+                    
+                    <div class="transaction-info">
+                        <p><strong>Receipt #:</strong> ${receiptNumber}</p>
+                        <p><strong>Date:</strong> ${receiptDate}</p>
+                        <p><strong>Transaction ID:</strong> ${transaction.transaction_id || "N/A"}</p>
+                        <p><strong>Cashier:</strong> ${localStorage.getItem('userName') || 'Staff'}</p>
                     </div>
                     
                     <table class="receipt-items">
                         <thead>
                             <tr>
-                                <th>Item</th>
-                                <th>Qty</th>
-                                <th>Price</th>
-                                <th>Total</th>
+                                <th style="text-align: left; width: 40%;">Item</th>
+                                <th style="text-align: center; width: 15%;">Qty</th>
+                                <th style="text-align: right; width: 20%;">Price</th>
+                                <th style="text-align: right; width: 25%;">Total</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -1019,25 +1028,50 @@ document.addEventListener('DOMContentLoaded', function() {
                     </table>
                     
                     <div class="receipt-totals">
+                        <div class="row">
+                            <span>Subtotal:</span>
+                            <span>₱${subtotal.toFixed(2)}</span>
+                        </div>
+                        <div class="row">
+                            <span>VAT (${(TAX_RATE * 100).toFixed(2)}%):</span>
+                            <span>₱${tax.toFixed(2)}</span>
+                        </div>
+                        <div class="row receipt-total">
+                            <span>TOTAL:</span>
+                            <span>₱${(subtotal + tax).toFixed(2)}</span>
+                        </div>
+                    </div>
+                    
+                    <div class="payment-info">
                         <p><strong>Payment Method:</strong> ${paymentMethodName}</p>
-                        <p><strong>Total:</strong> ₱${total.toFixed(2)}</p>
                         ${paymentMethodName === 'Cash' ? `
-                            <p><strong>Amount Tendered:</strong> ₱${amountTendered.toFixed(2)}</p>
-                            <p><strong>Change:</strong> ₱${change.toFixed(2)}</p>
+                            <div class="row">
+                                <span>Amount Tendered:</span>
+                                <span>₱${amountTendered.toFixed(2)}</span>
+                            </div>
+                            <div class="row">
+                                <span>Change:</span>
+                                <span>₱${change.toFixed(2)}</span>
+                            </div>
                         ` : ''}
-                        <p class="receipt-total">Thank you for your purchase!</p>
                     </div>
                     
                     <div class="receipt-footer">
-                        <p>Customer Copy</p>
-                        <p>Please keep this receipt for your records.</p>
+                        <p>Thank you for shopping at MotorTech Motorsport!</p>
+                        <p>Items purchased cannot be returned.</p>
+                        <p>This serves as your official receipt.</p>
+                        <p>Come back again!</p>
                     </div>
                 </body>
+                <script>
+                    window.onload = function() {
+                        window.print();
+                    }
+                </script>
             </html>
         `);
         printWindow.document.close();
         printWindow.focus();
-        printWindow.print();
     }
 
     // Function to show transaction history
@@ -1866,7 +1900,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
 // Cart functionality with real-time price updates
 let cart = [];
-const TAX_RATE = 0.12; // 12% tax raterate (changed from 12%)
+const TAX_RATE = 0.0012; // 0.12% tax raterate (changed from 12%)
 
 // Function to add item to cart with real-time price updates
 function addToCart(itemId, itemName, itemPrice) {
