@@ -1076,7 +1076,6 @@ document.addEventListener('DOMContentLoaded', function() {
                     
                     <div class="receipt-footer">
                         <p>Thank you for shopping at MotorTech Motorsport!</p>
-                        <p>Items purchased cannot be returned.</p>
                         <p>This serves as your official receipt.</p>
                         <p>Come back again!</p>
                     </div>
