@@ -1429,7 +1429,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 </div>
                 
                 <button class="btn-checkout" id="checkoutBtn" disabled>Checkout</button>
-                <button class="btn-history" id="historyBtn">Transaction History</button>
+                <button class="btn-history" id="historyBtn" onclick="window.TransactionHistory?.showTransactionHistory()">Transaction History</button>
             `;
         }
         
@@ -1638,7 +1638,25 @@ document.addEventListener('DOMContentLoaded', function() {
         // History button
         const historyBtn = document.getElementById('historyBtn');
         if (historyBtn) {
-            historyBtn.addEventListener('click', showTransactionHistory);
+            historyBtn.addEventListener('click', function(e) {
+                e.preventDefault();
+                console.log('History button clicked from pos.js handler');
+                if (window.TransactionHistory && window.TransactionHistory.showTransactionHistory) {
+                    window.TransactionHistory.showTransactionHistory();
+                } else {
+                    console.error('TransactionHistory module not loaded');
+                    // Try to load and initialize it on the fly
+                    const script = document.createElement('script');
+                    script.src = 'js/transactionHistory.js';
+                    script.onload = function() {
+                        if (window.TransactionHistory) {
+                            window.TransactionHistory.init();
+                            window.TransactionHistory.showTransactionHistory();
+                        }
+                    };
+                    document.body.appendChild(script);
+                }
+            });
         }
 
         // Payment method radio buttons - improve handling to focus the input field
