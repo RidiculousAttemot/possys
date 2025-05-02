@@ -586,7 +586,7 @@ document.addEventListener('DOMContentLoaded', function() {
         checkoutItems.innerHTML = checkoutHTML;
         
         // Update summary values with formatted numbers
-        const tax = subtotal * 0.0012;
+        const tax = subtotal * TAX_RATE;
         const total = subtotal + tax;
         
         document.getElementById('checkout-subtotal').textContent = subtotal.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
@@ -596,9 +596,30 @@ document.addEventListener('DOMContentLoaded', function() {
         // Reset discount-related elements - hide them
         document.getElementById('discount-row').style.display = 'none';
         document.getElementById('checkout-discount').textContent = '0.00';
+
+        // Reset payment fields - create a new input element to avoid any lingering issues
+        const amountTenderedContainer = document.querySelector('.currency-input-wrapper');
+        if (amountTenderedContainer) {
+            const oldInput = document.getElementById('amountTendered');
+            const newInput = document.createElement('input');
+            
+            // Copy all attributes from the old input
+            newInput.type = "number";
+            newInput.id = "amountTendered";
+            newInput.className = "currency-input";
+            newInput.placeholder = "0.00";
+            newInput.step = "0.01";
+            newInput.min = "0";
+            
+            // Replace the old input with the new one
+            if (oldInput && oldInput.parentNode) {
+                oldInput.parentNode.replaceChild(newInput, oldInput);
+            }
+            
+            // Add event listener to the new input element
+            newInput.addEventListener('input', calculateChange);
+        }
         
-        // Reset payment fields
-        document.getElementById('amountTendered').value = '';
         document.getElementById('change').value = '₱0.00';
         document.getElementById('confirmPaymentBtn').disabled = true;
 
@@ -614,10 +635,12 @@ document.addEventListener('DOMContentLoaded', function() {
             cashPaymentFields.style.display = 'flex';
         }
         
-        // Reset payment fields
-        document.getElementById('amountTendered').value = '';
-        document.getElementById('change').value = '₱0.00';
-        document.getElementById('confirmPaymentBtn').disabled = true;
+        // Reset button state
+        const confirmBtn = document.getElementById('confirmPaymentBtn');
+        if (confirmBtn) {
+            confirmBtn.disabled = true;
+            confirmBtn.innerHTML = '<i class="fas fa-check-circle"></i> Confirm Payment';
+        }
     };
     
     // Function to handle checkout
@@ -629,6 +652,15 @@ document.addEventListener('DOMContentLoaded', function() {
         const modal = document.getElementById('checkoutModal');
         modal.classList.add('show');
         document.body.style.overflow = 'hidden';
+        
+        // Focus on the amount tendered input after a short delay to ensure the modal is visible
+        setTimeout(() => {
+            const amountTenderedInput = document.getElementById('amountTendered');
+            if (amountTenderedInput) {
+                amountTenderedInput.value = '';  // Ensure it's clear
+                amountTenderedInput.focus();
+            }
+        }, 300);
     };
     
     // Function to complete transaction
@@ -666,6 +698,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 quantity: item.quantity,
                 price: item.price
             }));
+            
+            // Keep a copy of cart items for receipt printing before clearing the cart
+            const cartItemsForReceipt = JSON.parse(JSON.stringify(cartItems));
             
             // Build transaction object
             const transaction = {
@@ -713,8 +748,18 @@ document.addEventListener('DOMContentLoaded', function() {
             
             const paymentMethodName = paymentMethodNames[paymentMethod] || 'Other';
             
+            // Close checkout modal first to avoid UI issues
+            const modal = document.getElementById('checkoutModal');
+            modal.classList.remove('show');
+            document.body.style.overflow = 'auto';
+            
+            // Reset the button state even if we're going to show a success modal
+            // This prevents the button from staying in processing state if something interrupts the flow
+            confirmBtn.disabled = false;
+            confirmBtn.innerHTML = '<i class="fas fa-check-circle"></i> Confirm Payment';
+            
             // Format items for receipt
-            const itemList = cartItems.map(item => {
+            const itemList = cartItemsForReceipt.map(item => {
                 return `
                     <tr>
                         <td>${item.name}</td>
@@ -809,17 +854,11 @@ document.addEventListener('DOMContentLoaded', function() {
                 didOpen: () => {
                     // Add event listener for print receipt button
                     document.querySelector('.btn-print-receipt').addEventListener('click', function() {
-                        // Pass a copy of cartItems before clearing the cart for receipt printing
-                        const cartItemsForReceipt = JSON.parse(JSON.stringify(cartItems));
+                        // Use the saved copy of cart items for receipt printing
                         printReceipt(responseData, cartItemsForReceipt, total, amountTendered, change, paymentMethodName);
                     });
                 }
             });
-            
-            // Close modal
-            const modal = document.getElementById('checkoutModal');
-            modal.classList.remove('show');
-            document.body.style.overflow = 'auto';
             
             // Clear cart - make sure to reset the array AND localStorage
             cartItems = [];
@@ -1017,7 +1056,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 </head>
                 <body>
                     <div class="receipt-header">
-                        <h1>MotorTech Motorsport</h1>
+                        <h1>MotorTech</h1>
                         <p>Parts & Accessories Shop</p>
                         <p>123 Main Street, Taguig City</p>
                         <p>Tel: (02) 8123-4567</p>
@@ -1520,22 +1559,30 @@ document.addEventListener('DOMContentLoaded', function() {
             // Add event listener for amount tendered input
             const amountTenderedInput = document.getElementById('amountTendered');
             if (amountTenderedInput) {
-                amountTenderedInput.addEventListener('input', calculateChange);
+                // Remove any existing listeners first to prevent duplicates
+                const newAmountTenderedInput = amountTenderedInput.cloneNode(true);
+                amountTenderedInput.parentNode.replaceChild(newAmountTenderedInput, amountTenderedInput);
+                
+                // Add the new event listener
+                newAmountTenderedInput.addEventListener('input', calculateChange);
+                
+                // Add focus event to help with mobile devices
+                newAmountTenderedInput.addEventListener('focus', function() {
+                    // On some mobile devices, this helps ensure the keyboard appears
+                    this.blur();
+                    this.focus();
+                });
             }
             
             // Add event listener for confirm payment button
             const confirmPaymentBtn = document.getElementById('confirmPaymentBtn');
             if (confirmPaymentBtn) {
-                confirmPaymentBtn.addEventListener('click', completeTransaction);
-            }
-            
-            // Add event listener for cancel payment button
-            const cancelPaymentBtn = document.getElementById('cancelPaymentBtn');
-            if (cancelPaymentBtn) {
-                cancelPaymentBtn.addEventListener('click', function() {
-                    checkoutModal.classList.remove('show');
-                    document.body.style.overflow = 'auto';
-                });
+                // Remove any existing listeners first to prevent duplicates
+                const newConfirmPaymentBtn = confirmPaymentBtn.cloneNode(true);
+                confirmPaymentBtn.parentNode.replaceChild(newConfirmPaymentBtn, confirmPaymentBtn);
+                
+                // Add the new event listener
+                newConfirmPaymentBtn.addEventListener('click', completeTransaction);
             }
         }
         
@@ -1594,11 +1641,17 @@ document.addEventListener('DOMContentLoaded', function() {
             historyBtn.addEventListener('click', showTransactionHistory);
         }
 
-        // Payment method radio buttons
+        // Payment method radio buttons - improve handling to focus the input field
         document.querySelectorAll('input[name="payment"]').forEach(radio => {
-            radio.addEventListener('change', function() {
+            // Remove existing listeners to prevent duplicates
+            const newRadio = radio.cloneNode(true);
+            radio.parentNode.replaceChild(newRadio, radio);
+            
+            // Add new listener with improved functionality
+            newRadio.addEventListener('change', function() {
                 const cashPaymentFields = document.getElementById('cashPaymentFields');
                 const confirmPaymentBtn = document.getElementById('confirmPaymentBtn');
+                const amountTenderedInput = document.getElementById('amountTendered');
                 
                 if (this.value === 'cash') {
                     // Show cash payment fields
@@ -1608,11 +1661,18 @@ document.addEventListener('DOMContentLoaded', function() {
                     confirmPaymentBtn.disabled = true;
                     
                     // Check if there's already a valid amount
-                    const amountTendered = parseFloat(document.getElementById('amountTendered').value) || 0;
-                    const amountDue = parseFloat(document.getElementById('amountDue').textContent) || 0;
+                    const amountTendered = parseFloat(amountTenderedInput.value) || 0;
+                    const amountDue = parseFloat(document.getElementById('amountDue').textContent.replace(/,/g, ''));
                     
                     // Enable button if amount is valid
                     confirmPaymentBtn.disabled = amountTendered < amountDue;
+                    
+                    // Focus the input field after a short delay to ensure UI is updated
+                    setTimeout(() => {
+                        if (amountTenderedInput) {
+                            amountTenderedInput.focus();
+                        }
+                    }, 100);
                 } else {
                     // Hide cash payment fields for non-cash methods
                     cashPaymentFields.style.display = 'none';
@@ -1622,30 +1682,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             });
         });
-        
-        // Amount tendered input
-        const amountTenderedInput = document.getElementById('amountTendered');
-        if (amountTenderedInput) {
-            amountTenderedInput.addEventListener('input', function() {
-                const amountDue = parseFloat(document.getElementById('amountDue').textContent.replace(/,/g, ''));
-                const amountTendered = parseFloat(this.value) || 0;
-                
-                // Calculate change only if sufficient funds provided
-                const change = amountTendered >= amountDue ? amountTendered - amountDue : 0;
-                
-                // Update change field
-                document.getElementById('change').value = `₱${change.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
-                
-                // Add highlight animation
-                const changeElement = document.getElementById('change');
-                changeElement.classList.remove('highlight-change');
-                void changeElement.offsetWidth; // Trigger reflow to restart animation
-                changeElement.classList.add('highlight-change');
-                
-                // Enable/disable confirm button based on sufficient funds
-                confirmPaymentBtn.disabled = amountTendered < amountDue;
-            });
-        }
     };
     
     // Initialize the page
