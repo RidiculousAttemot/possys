@@ -659,17 +659,23 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             }
             
+            // Create a deep copy of cartItems to ensure data integrity
+            const itemsForTransaction = cartItems.map(item => ({
+                item_id: item.id,
+                name: item.name, // Add name for receipt
+                quantity: item.quantity,
+                price: item.price
+            }));
+            
             // Build transaction object
             const transaction = {
                 user_id: localStorage.getItem('userId'),
                 total_amount: total,
                 payment_method: paymentMethod,
-                items: cartItems.map(item => ({
-                    item_id: item.id,
-                    quantity: item.quantity,
-                    price: item.price
-                }))
+                items: itemsForTransaction
             };
+            
+            console.log('Sending transaction to server:', transaction);
             
             // Send transaction to server
             const response = await fetch(`${API_URL}/transactions`, {
@@ -687,6 +693,11 @@ document.addEventListener('DOMContentLoaded', function() {
             }
             
             const responseData = await response.json();
+            console.log('Transaction response:', responseData);
+            
+            // Add item information to response data for receipt
+            responseData.items = itemsForTransaction;
+            
             const transactionId = responseData.transaction_id || 'N/A';
             const transactionDate = new Date().toLocaleString();
             
@@ -798,7 +809,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 didOpen: () => {
                     // Add event listener for print receipt button
                     document.querySelector('.btn-print-receipt').addEventListener('click', function() {
-                        printReceipt(responseData, cartItems, total, amountTendered, change, paymentMethodName);
+                        // Pass a copy of cartItems before clearing the cart for receipt printing
+                        const cartItemsForReceipt = JSON.parse(JSON.stringify(cartItems));
+                        printReceipt(responseData, cartItemsForReceipt, total, amountTendered, change, paymentMethodName);
                     });
                 }
             });
@@ -857,19 +870,53 @@ document.addEventListener('DOMContentLoaded', function() {
         const receiptDate = new Date().toLocaleString();
         const receiptNumber = generateReceiptNumber();
         
-        // Calculate subtotal and tax directly from items to ensure accuracy
-        const subtotal = items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-        const tax = subtotal * TAX_RATE; // 0.12% tax rate
+        // If items array is empty or undefined, try to extract it from the transaction data
+        if (!items || items.length === 0) {
+            console.log('No items provided to printReceipt, attempting to extract from transaction data');
+            console.log('Transaction data:', transaction);
+            
+            if (transaction && transaction.items && Array.isArray(transaction.items)) {
+                items = transaction.items;
+                console.log('Using items from transaction data:', items);
+            } else {
+                console.error('No items available for receipt');
+                items = [];
+            }
+        }
+        
+        // Calculate subtotal directly from items to ensure accuracy
+        const subtotal = items.reduce((sum, item) => {
+            const price = parseFloat(item.price);
+            const quantity = parseInt(item.quantity);
+            const itemTotal = price * quantity;
+            console.log(`Item: ${item.name}, Price: ${price}, Qty: ${quantity}, Total: ${itemTotal}`);
+            return sum + itemTotal;
+        }, 0);
+        
+        console.log('Calculated subtotal:', subtotal);
+        
+        // Calculate tax
+        const tax = subtotal * TAX_RATE;
+        console.log('Calculated tax:', tax);
+        
+        // Calculate total if not provided
+        if (!total || total === 0) {
+            total = subtotal + tax;
+        }
+        console.log('Final total:', total);
         
         // Format items for receipt
         const receiptItems = items.map(item => {
-            const itemTotal = (item.price * item.quantity).toFixed(2);
+            const price = parseFloat(item.price);
+            const quantity = parseInt(item.quantity);
+            const itemTotal = price * quantity;
+            
             return `
                 <tr>
-                    <td style="text-align: left; padding: 3px 5px;">${item.name}</td>
-                    <td style="text-align: center; padding: 3px 5px;">${item.quantity}</td>
-                    <td style="text-align: right; padding: 3px 5px;">₱${parseFloat(item.price).toFixed(2)}</td>
-                    <td style="text-align: right; padding: 3px 5px;">₱${itemTotal}</td>
+                    <td style="text-align: left; padding: 3px 5px;">${item.name || 'Unknown Item'}</td>
+                    <td style="text-align: center; padding: 3px 5px;">${quantity}</td>
+                    <td style="text-align: right; padding: 3px 5px;">₱${price.toFixed(2)}</td>
+                    <td style="text-align: right; padding: 3px 5px;">₱${itemTotal.toFixed(2)}</td>
                 </tr>
             `;
         }).join('');
@@ -1004,12 +1051,12 @@ document.addEventListener('DOMContentLoaded', function() {
                             <span>₱${subtotal.toFixed(2)}</span>
                         </div>
                         <div class="row">
-                            <span>VAT (${(TAX_RATE * 100).toFixed(2)}%):</span>
+                            <span>VAT (${(TAX_RATE * 100).toFixed(0)}%):</span>
                             <span>₱${tax.toFixed(2)}</span>
                         </div>
                         <div class="row receipt-total">
                             <span>TOTAL:</span>
-                            <span>₱${(subtotal + tax).toFixed(2)}</span>
+                            <span>₱${total.toFixed(2)}</span>
                         </div>
                     </div>
                     
@@ -1044,7 +1091,7 @@ document.addEventListener('DOMContentLoaded', function() {
         printWindow.document.close();
         printWindow.focus();
     }
-
+    
     // Function to show transaction history
     const showTransactionHistory = async () => {
         try {
@@ -1972,7 +2019,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
 // Cart functionality with real-time price updates
 let cart = [];
-const TAX_RATE = 0.0012; // 0.12% tax raterate (changed from 12%)
+const TAX_RATE = 0.12; // 12% tax rate (corrected from 0.0012)
 
 // Function to add item to cart with real-time price updates
 function addToCart(itemId, itemName, itemPrice) {
