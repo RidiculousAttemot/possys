@@ -774,9 +774,6 @@ document.addEventListener('DOMContentLoaded', function() {
                             <button class="btn-print-receipt">
                                 <i class="fas fa-print"></i> Print Receipt
                             </button>
-                            <button class="btn-email-receipt">
-                                <i class="fas fa-envelope"></i> Email Receipt
-                            </button>
                         </div>
                     </div>
                 `,
@@ -802,36 +799,6 @@ document.addEventListener('DOMContentLoaded', function() {
                     // Add event listener for print receipt button
                     document.querySelector('.btn-print-receipt').addEventListener('click', function() {
                         printReceipt(responseData, cartItems, total, amountTendered, change, paymentMethodName);
-                    });
-                    
-                    // Add event listener for email receipt button
-                    document.querySelector('.btn-email-receipt').addEventListener('click', function() {
-                        Swal.fire({
-                            title: 'Enter Email',
-                            input: 'email',
-                            inputPlaceholder: 'customer@example.com',
-                            showCancelButton: true,
-                            confirmButtonText: 'Send',
-                            confirmButtonColor: '#3498db',
-                            background: '#141414',
-                            color: '#f5f5f5',
-                            inputValidator: (value) => {
-                                if (!value) {
-                                    return 'Please enter an email address';
-                                }
-                            }
-                        }).then((result) => {
-                            if (result.isConfirmed) {
-                                Swal.fire({
-                                    title: 'Receipt Sent!',
-                                    text: `Receipt has been sent to ${result.value}`,
-                                    icon: 'success',
-                                    confirmButtonColor: '#3498db',
-                                    background: '#141414',
-                                    color: '#f5f5f5'
-                                });
-                            }
-                        });
                     });
                 }
             });
@@ -1740,12 +1707,36 @@ document.addEventListener('DOMContentLoaded', function() {
         paymentDetails.printReceipt = printReceipt;
         paymentDetails.emailReceipt = emailReceipt;
         
-        // Use the correct cart data - retrieve from the cartItems global array, not "cart"
-        // This is the key fix - using cartItems instead of cart
-        paymentDetails.items = cartItems;
-        paymentDetails.subtotal = cartItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-        paymentDetails.tax = paymentDetails.subtotal * 0.12;
-        paymentDetails.total = paymentDetails.subtotal + paymentDetails.tax;
+        // Use the correct cart data
+        // Important fix - use cartItems (global array) instead of cart
+        // First, try to use the cartItems global array if it exists and has items
+        if (window.cartItems && window.cartItems.length > 0) {
+            paymentDetails.items = [...window.cartItems]; // Make a copy to avoid reference issues
+        } 
+        // If cartItems isn't available, fall back to the cart array
+        else if (cart && cart.length > 0) {
+            paymentDetails.items = [...cart]; // Make a copy to avoid reference issues
+        }
+        // If both are empty, check localStorage
+        else {
+            const storedCart = JSON.parse(localStorage.getItem('cartItems')) || [];
+            paymentDetails.items = storedCart;
+        }
+        
+        console.log("Items for receipt:", paymentDetails.items);
+        
+        // Calculate receipt totals from items to ensure consistency
+        if (paymentDetails.items && paymentDetails.items.length > 0) {
+            paymentDetails.subtotal = paymentDetails.items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+            paymentDetails.tax = paymentDetails.subtotal * 0.12;
+            paymentDetails.total = paymentDetails.subtotal + paymentDetails.tax;
+        } else {
+            console.error("No items found for receipt");
+            // Fallback to values from the UI if available
+            paymentDetails.subtotal = parseFloat(document.getElementById('subtotalAmount')?.textContent?.replace('₱', '')?.replace(/,/g, '') || '0');
+            paymentDetails.tax = parseFloat(document.getElementById('checkout-tax')?.textContent?.replace(/,/g, '') || '0');
+            paymentDetails.total = parseFloat(document.getElementById('totalAmount')?.textContent?.replace('₱', '')?.replace(/,/g, '') || '0');
+        }
         
         // Generate and print receipt if needed
         if (printReceipt) {
@@ -1757,6 +1748,16 @@ document.addEventListener('DOMContentLoaded', function() {
     function generateAndPrintReceipt(paymentDetails) {
         // Create the receipt window
         const receiptWindow = window.open('', '_blank', 'width=400,height=600');
+        
+        // Debug logging to verify we have items
+        console.log("Receipt generation - Items:", paymentDetails.items);
+        console.log("Receipt generation - Subtotal:", paymentDetails.subtotal);
+        
+        // Ensure we have items
+        if (!paymentDetails.items || paymentDetails.items.length === 0) {
+            console.error("No items available for receipt");
+            paymentDetails.items = [];
+        }
 
         // Format items for receipt
         const itemsHTML = paymentDetails.items.map(item => {
@@ -1772,9 +1773,9 @@ document.addEventListener('DOMContentLoaded', function() {
         }).join('');
         
         // Calculate totals
-        const subtotal = paymentDetails.subtotal;
-        const tax = paymentDetails.tax;
-        const total = paymentDetails.total;
+        const subtotal = paymentDetails.subtotal || 0;
+        const tax = paymentDetails.tax || 0;
+        const total = paymentDetails.total || 0;
         
         // Get payment method display name
         const paymentMethodNames = {
@@ -1786,10 +1787,6 @@ document.addEventListener('DOMContentLoaded', function() {
             'banktransfer': 'Bank Transfer'
         };
         const paymentMethodName = paymentMethodNames[paymentDetails.method] || paymentDetails.method;
-        
-        // Debug output to ensure we have items
-        console.log("Receipt Items:", paymentDetails.items);
-        console.log("Generated HTML:", itemsHTML);
         
         // Generate receipt HTML
         receiptWindow.document.write(`
