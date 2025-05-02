@@ -1697,7 +1697,7 @@ window.openCheckoutModal = function() {
     document.body.style.overflow = 'hidden'; // Prevent scrolling behind modal
 };
 
-// Update processPayment function to handle different payment methods
+// Function to process payment
 function processPayment() {
     // Show loading state
     const confirmBtn = document.getElementById('confirmPaymentBtn');
@@ -1728,9 +1728,39 @@ function processPayment() {
         document.getElementById('checkoutModal').classList.remove('show');
         document.body.style.overflow = 'auto';
         
-        // Clear cart
+        // Clear cart completely
         if (window.clearCart) {
             window.clearCart();
+        } else {
+            // Fallback if clearCart function isn't available
+            if (window.cartItems) {
+                window.cartItems = [];
+            }
+            localStorage.removeItem('cartItems');
+            
+            // Update display - basic fallback approach
+            const cartContainer = document.getElementById('cartItems');
+            if (cartContainer) {
+                cartContainer.innerHTML = `
+                    <div class="empty-cart" id="emptyCart">
+                        <i class="fas fa-shopping-cart"></i>
+                        <p>Your cart is empty</p>
+                        <p>Add products to start billing</p>
+                    </div>
+                `;
+            }
+            
+            // Disable checkout button
+            const checkoutBtn = document.getElementById('checkoutBtn');
+            if (checkoutBtn) {
+                checkoutBtn.disabled = true;
+            }
+            
+            // Reset total amount
+            const totalElement = document.getElementById('totalAmount');
+            if (totalElement) {
+                totalElement.textContent = '0.00';
+            }
         }
         
         // Get payment method name for success message

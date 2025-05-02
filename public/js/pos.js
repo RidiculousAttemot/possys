@@ -841,8 +841,11 @@ document.addEventListener('DOMContentLoaded', function() {
             modal.classList.remove('show');
             document.body.style.overflow = 'auto';
             
-            // Clear cart
+            // Clear cart - make sure to reset the array AND localStorage
             cartItems = [];
+            localStorage.removeItem('cartItems');
+            
+            // Reset UI elements
             updateCart();
             
             // Refresh product list to update stock
