@@ -11,60 +11,97 @@ const TransactionHistory = (() => {
             /* Transaction History Modal */
             .transaction-history-popup {
                 max-width: 900px !important;
-                max-height: 80vh;
+                max-height: 85vh;
+                border-radius: 12px !important;
+                box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5) !important;
+                overflow: hidden;
             }
             
             .transaction-history-container {
-                max-height: 60vh;
+                max-height: 65vh;
                 overflow-y: auto;
                 padding: 0;
                 border-radius: 10px;
                 color: #f5f5f5;
+                scrollbar-width: thin;
+                scrollbar-color: #3498db #1a1a1a;
+            }
+            
+            .transaction-history-container::-webkit-scrollbar {
+                width: 8px;
+            }
+            
+            .transaction-history-container::-webkit-scrollbar-track {
+                background: #1a1a1a;
+                border-radius: 8px;
+            }
+            
+            .transaction-history-container::-webkit-scrollbar-thumb {
+                background: #3498db;
+                border-radius: 8px;
+                transition: background 0.3s;
+            }
+            
+            .transaction-history-container::-webkit-scrollbar-thumb:hover {
+                background: #2980b9;
             }
             
             .transaction-history-header {
                 display: grid;
                 grid-template-columns: 2fr 1fr 1fr 0.8fr;
-                padding: 12px;
-                background-color: #1c1c1c;
+                padding: 14px 16px;
+                background: linear-gradient(to right, #1c1c1c, #2c2c2c);
                 border-bottom: 1px solid #333;
                 position: sticky;
                 top: 0;
                 font-weight: bold;
                 z-index: 10;
+                box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
             }
             
             .transaction-header-item {
                 padding: 5px;
                 text-align: left;
                 color: #3498db;
+                font-size: 14px;
+                letter-spacing: 0.5px;
+                text-transform: uppercase;
             }
             
             .transaction-history-list {
                 overflow-y: auto;
+                padding: 5px;
             }
             
             .transaction-history-item {
                 display: grid;
                 grid-template-columns: 2fr 1fr 1fr 0.8fr;
-                padding: 15px 12px;
+                padding: 16px;
                 border-bottom: 1px solid #333;
                 align-items: center;
-                transition: background-color 0.2s;
+                background: linear-gradient(to right, #1e1e1e, #252525);
+                margin-bottom: 8px;
+                border-radius: 8px;
+                transition: all 0.2s ease;
+                box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
             }
             
             .transaction-history-item:hover {
-                background-color: #1a1a1a;
+                background: linear-gradient(to right, #2a2a2a, #303030);
+                transform: translateY(-2px);
+                box-shadow: 0 4px 6px rgba(0, 0, 0, 0.15);
             }
             
             .transaction-date {
                 display: flex;
                 flex-direction: column;
-                gap: 4px;
+                gap: 6px;
             }
             
             .transaction-date-value {
                 font-weight: 500;
+                font-size: 15px;
+                color: #f0f0f0;
             }
             
             .transaction-payment-method {
@@ -72,17 +109,29 @@ const TransactionHistory = (() => {
                 color: #999;
                 display: flex;
                 align-items: center;
-                gap: 5px;
+                gap: 6px;
+                background-color: rgba(52, 152, 219, 0.1);
+                padding: 4px 8px;
+                border-radius: 12px;
+                width: fit-content;
+                border: 1px solid rgba(52, 152, 219, 0.2);
             }
             
             .transaction-id {
-                font-family: monospace;
+                font-family: 'Courier New', monospace;
                 color: #999;
+                font-size: 14px;
+                letter-spacing: 0.5px;
+                padding: 4px 0;
             }
             
             .transaction-amount {
                 font-weight: 600;
                 color: #3498db;
+                font-size: 16px;
+                background: linear-gradient(to right, #3498db, #2980b9);
+                -webkit-background-clip: text;
+                -webkit-text-fill-color: transparent;
             }
             
             .transaction-actions {
@@ -90,18 +139,29 @@ const TransactionHistory = (() => {
             }
             
             .btn-view-transaction {
-                background-color: transparent;
-                border: 1px solid #3498db;
-                color: #3498db;
-                padding: 6px 12px;
-                border-radius: 4px;
+                background: linear-gradient(to right, #2c3e50, #3498db);
+                border: none;
+                color: white;
+                padding: 8px 14px;
+                border-radius: 6px;
                 cursor: pointer;
                 transition: all 0.2s;
+                display: flex;
+                align-items: center;
+                gap: 8px;
+                font-weight: 500;
+                box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+                margin-left: auto;
             }
             
             .btn-view-transaction:hover {
-                background-color: #3498db;
-                color: white;
+                background: linear-gradient(to right, #3498db, #2980b9);
+                transform: translateY(-2px);
+                box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+            }
+            
+            .btn-view-transaction i {
+                font-size: 14px;
             }
             
             /* Empty State */
@@ -110,15 +170,21 @@ const TransactionHistory = (() => {
                 flex-direction: column;
                 align-items: center;
                 justify-content: center;
-                padding: 40px 20px;
+                padding: 60px 20px;
                 color: #999;
                 text-align: center;
+                background: linear-gradient(to bottom, #1a1a1a, #222222);
+                border-radius: 10px;
+                box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.2);
             }
             
             .no-transactions i {
-                font-size: 48px;
-                margin-bottom: 15px;
+                font-size: 64px;
+                margin-bottom: 20px;
                 color: #333;
+                background: linear-gradient(to bottom, #444, #333);
+                -webkit-background-clip: text;
+                -webkit-text-fill-color: transparent;
             }
             
             /* Error State */
@@ -130,27 +196,61 @@ const TransactionHistory = (() => {
                 padding: 40px 20px;
                 color: #e74c3c;
                 text-align: center;
+                background: linear-gradient(to bottom, #1a1a1a, #222222);
+                border-radius: 10px;
+                box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.2);
             }
             
             .error-history i {
                 font-size: 48px;
                 margin-bottom: 15px;
+                background: linear-gradient(to bottom, #e74c3c, #c0392b);
+                -webkit-background-clip: text;
+                -webkit-text-fill-color: transparent;
             }
             
             .btn-retry {
-                background-color: #3498db;
+                background: linear-gradient(to right, #3498db, #2980b9);
                 color: white;
                 border: none;
-                border-radius: 4px;
-                padding: 8px 16px;
-                margin-top: 15px;
+                border-radius: 6px;
+                padding: 10px 20px;
+                margin-top: 18px;
                 cursor: pointer;
-                transition: all 0.2s;
+                transition: all 0.3s;
+                font-weight: 500;
+                display: flex;
+                align-items: center;
+                gap: 8px;
+                box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
             }
             
             .btn-retry:hover {
-                background-color: #2980b9;
+                background: linear-gradient(to right, #2980b9, #3498db);
                 transform: translateY(-2px);
+                box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+            }
+            
+            .btn-secondary {
+                background: linear-gradient(to right, #2c3e50, #34495e);
+                color: white;
+                border: none;
+                border-radius: 6px;
+                padding: 10px 20px;
+                cursor: pointer;
+                transition: all 0.2s;
+                font-weight: 500;
+                display: flex;
+                align-items: center;
+                gap: 8px;
+                margin: 10px auto 0;
+                box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+            }
+            
+            .btn-secondary:hover {
+                background: linear-gradient(to right, #34495e, #2c3e50);
+                transform: translateY(-2px);
+                box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
             }
             
             /* Loading State */
@@ -159,18 +259,36 @@ const TransactionHistory = (() => {
                 flex-direction: column;
                 align-items: center;
                 justify-content: center;
-                padding: 40px 20px;
+                padding: 60px 20px;
                 color: #999;
                 text-align: center;
+                background: linear-gradient(to bottom, #1a1a1a, #222222);
+                border-radius: 10px;
+                box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.2);
             }
             
             .loading-history i {
-                font-size: 36px;
-                margin-bottom: 15px;
+                font-size: 40px;
+                margin-bottom: 20px;
                 color: #3498db;
+                animation: pulse 1.5s infinite;
+            }
+            
+            @keyframes pulse {
+                0% { transform: scale(0.95); opacity: 0.7; }
+                50% { transform: scale(1.05); opacity: 1; }
+                100% { transform: scale(0.95); opacity: 0.7; }
             }
             
             /* Transaction Details Modal */
+            .transaction-details-popup {
+                max-width: 750px !important;
+                min-width: 650px !important;
+                border-radius: 12px !important;
+                box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5) !important;
+                overflow: hidden !important;
+            }
+            
             .transaction-details-container {
                 display: flex;
                 flex-direction: column;
@@ -178,60 +296,108 @@ const TransactionHistory = (() => {
                 max-height: 70vh;
                 overflow-y: auto;
                 padding: 0;
+                scrollbar-width: thin;
+                scrollbar-color: #3498db #1a1a1a;
+            }
+            
+            .transaction-details-container::-webkit-scrollbar {
+                width: 8px;
+            }
+            
+            .transaction-details-container::-webkit-scrollbar-track {
+                background: #1a1a1a;
+                border-radius: 8px;
+            }
+            
+            .transaction-details-container::-webkit-scrollbar-thumb {
+                background: #3498db;
+                border-radius: 8px;
+            }
+            
+            .transaction-details-container::-webkit-scrollbar-thumb:hover {
+                background: #2980b9;
             }
             
             .transaction-details-header {
-                background-color: #1c1c1c;
-                padding: 15px;
-                border-radius: 8px;
+                background: linear-gradient(to right, #1c1c1c, #2c2c2c);
+                padding: 20px;
+                border-radius: 10px;
+                box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
             }
             
             .transaction-details-info {
                 display: flex;
                 flex-wrap: wrap;
-                gap: 15px;
+                gap: 20px;
             }
             
             .transaction-info-item {
                 display: flex;
                 flex-direction: column;
                 flex: 1;
-                min-width: 150px;
+                min-width: 170px;
+                background-color: rgba(255, 255, 255, 0.05);
+                padding: 12px;
+                border-radius: 8px;
+                border: 1px solid rgba(255, 255, 255, 0.1);
             }
             
             .info-label {
                 color: #999;
                 font-size: 12px;
+                text-transform: uppercase;
+                letter-spacing: 0.5px;
+                margin-bottom: 4px;
             }
             
             .info-value {
                 font-weight: 500;
                 margin-top: 4px;
+                font-size: 15px;
+                display: flex;
+                align-items: center;
+                gap: 8px;
             }
             
             .transaction-details-content {
-                background-color: #1c1c1c;
-                padding: 15px;
-                border-radius: 8px;
+                background: linear-gradient(to right, #1c1c1c, #2c2c2c);
+                padding: 20px;
+                border-radius: 10px;
+                box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
             }
             
             .transaction-items-table {
                 width: 100%;
                 border-collapse: collapse;
-                margin-bottom: 15px;
+                margin-bottom: 20px;
+                background-color: rgba(0, 0, 0, 0.2);
+                border-radius: 8px;
+                overflow: hidden;
+                box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
             }
             
             .transaction-items-table th, 
             .transaction-items-table td {
-                padding: 10px;
+                padding: 12px 16px;
                 text-align: left;
                 border-bottom: 1px solid #333;
             }
             
             .transaction-items-table th {
                 color: #3498db;
-                font-weight: normal;
-                font-size: 13px;
+                font-weight: 500;
+                font-size: 14px;
+                text-transform: uppercase;
+                background-color: rgba(0, 0, 0, 0.3);
+                letter-spacing: 0.5px;
+            }
+            
+            .transaction-items-table tr:last-child td {
+                border-bottom: none;
+            }
+            
+            .transaction-items-table tr:hover td {
+                background-color: rgba(52, 152, 219, 0.05);
             }
             
             .text-right {
@@ -245,25 +411,32 @@ const TransactionHistory = (() => {
             .transaction-details-summary {
                 display: flex;
                 flex-direction: column;
-                gap: 8px;
-                padding-top: 15px;
+                gap: 10px;
+                padding-top: 18px;
                 border-top: 1px solid #333;
                 margin-top: 10px;
+                background-color: rgba(0, 0, 0, 0.2);
+                padding: 16px;
+                border-radius: 8px;
             }
             
             .summary-row {
                 display: flex;
                 justify-content: space-between;
                 font-size: 14px;
+                padding: 4px 0;
             }
             
             .total-row {
                 font-weight: bold;
-                font-size: 16px;
+                font-size: 18px;
                 color: #3498db;
-                padding-top: 5px;
-                margin-top: 5px;
+                padding-top: 8px;
+                margin-top: 8px;
                 border-top: 1px solid #333;
+                background: linear-gradient(to right, #3498db, #2980b9);
+                -webkit-background-clip: text;
+                -webkit-text-fill-color: transparent;
             }
             
             .transaction-details-actions {
@@ -273,21 +446,69 @@ const TransactionHistory = (() => {
             }
             
             .btn-print-transaction {
-                background-color: #27ae60;
+                background: linear-gradient(to right, #27ae60, #2ecc71);
                 border: none;
                 color: white;
-                padding: 8px 16px;
-                border-radius: 4px;
+                padding: 10px 18px;
+                border-radius: 8px;
                 cursor: pointer;
                 display: flex;
                 align-items: center;
-                gap: 8px;
+                gap: 10px;
                 transition: all 0.2s;
+                font-weight: 500;
+                box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+                font-size: 15px;
             }
             
             .btn-print-transaction:hover {
-                background-color: #2ecc71;
+                background: linear-gradient(to right, #2ecc71, #27ae60);
                 transform: translateY(-2px);
+                box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+            }
+            
+            /* SweetAlert override styles for transaction history */
+            .swal2-title {
+                font-size: 24px !important;
+                color: #f5f5f5 !important;
+                padding: 25px 0 !important;
+                border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
+                margin-bottom: 0 !important;
+                background: linear-gradient(to right, #1c1c1c, #2c2c2c) !important;
+                text-transform: uppercase;
+                letter-spacing: 1px;
+            }
+            
+            .transaction-history-button {
+                background: linear-gradient(to right, #3498db, #2980b9) !important;
+                border: none !important;
+                padding: 12px 30px !important;
+                border-radius: 8px !important;
+                box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2) !important;
+                transition: all 0.3s !important;
+                font-weight: 500 !important;
+            }
+            
+            .transaction-history-button:hover {
+                background: linear-gradient(to right, #2980b9, #3498db) !important;
+                transform: translateY(-2px) !important;
+                box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3) !important;
+            }
+            
+            .transaction-details-button {
+                background: linear-gradient(to right, #3498db, #2980b9) !important;
+                border: none !important;
+                padding: 12px 30px !important;
+                border-radius: 8px !important;
+                box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2) !important;
+                transition: all 0.3s !important;
+                font-weight: 500 !important;
+            }
+            
+            .transaction-details-button:hover {
+                background: linear-gradient(to right, #2980b9, #3498db) !important;
+                transform: translateY(-2px) !important;
+                box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3) !important;
             }
         `;
         document.head.appendChild(style);
@@ -319,10 +540,10 @@ const TransactionHistory = (() => {
         }
         
         try {
-            // Show loading state in SweetAlert
+            // Show loading state in SweetAlert with improved animation
             Swal.fire({
-                title: 'Loading Transaction History',
-                html: '<div class="loading-history"><i class="fas fa-spinner fa-spin"></i><p>Loading your transaction history...</p></div>',
+                title: 'Transaction History',
+                html: '<div class="loading-history"><i class="fas fa-receipt fa-spin"></i><p>Loading your transaction history...</p></div>',
                 showConfirmButton: false,
                 allowOutsideClick: false,
                 background: '#141414',
@@ -466,7 +687,11 @@ const TransactionHistory = (() => {
                 `;
             });
             
+            // Add a timestamp at the bottom of the transaction history
             historyHTML += `
+                    </div>
+                    <div style="padding: 10px; text-align: center; font-size: 11px; color: #666; margin-top: 10px;">
+                        Last updated: ${new Date().toLocaleString()}
                     </div>
                 </div>
             `;
@@ -476,7 +701,7 @@ const TransactionHistory = (() => {
                 title: 'Transaction History',
                 html: historyHTML,
                 showConfirmButton: true,
-                confirmButtonText: 'Close',
+                confirmButtonText: '<i class="fas fa-times"></i> Close',
                 confirmButtonColor: '#3498db',
                 background: '#141414',
                 color: '#f5f5f5',
@@ -660,14 +885,17 @@ const TransactionHistory = (() => {
     // Function to view transaction details
     const viewTransactionDetails = async (transactionId) => {
         try {
-            // Show loading state
+            // Show loading state with improved animation
             Swal.fire({
-                title: 'Loading Transaction Details',
-                html: '<div class="loading-history"><i class="fas fa-spinner fa-spin"></i><p>Loading transaction details...</p></div>',
+                title: 'Transaction Details',
+                html: '<div class="loading-history"><i class="fas fa-file-invoice-dollar fa-spin"></i><p>Loading transaction details...</p></div>',
                 showConfirmButton: false,
                 allowOutsideClick: false,
                 background: '#141414',
-                color: '#f5f5f5'
+                color: '#f5f5f5',
+                customClass: {
+                    popup: 'transaction-details-popup'
+                }
             });
             
             // Fetch transaction details from server
@@ -729,7 +957,7 @@ const TransactionHistory = (() => {
             // Calculate tax
             const tax = subtotal * TAX_RATE;
             
-            // Show transaction details in a SweetAlert with formatted numbers
+            // Show transaction details in an enhanced SweetAlert with formatted numbers
             Swal.fire({
                 title: `Transaction #${transaction.transaction_id}`,
                 html: `
@@ -738,11 +966,11 @@ const TransactionHistory = (() => {
                             <div class="transaction-details-info">
                                 <div class="transaction-info-item">
                                     <span class="info-label">Date & Time</span>
-                                    <span class="info-value">${formattedDate}</span>
+                                    <span class="info-value"><i class="far fa-calendar-alt"></i> ${formattedDate}</span>
                                 </div>
                                 <div class="transaction-info-item">
                                     <span class="info-label">Cashier</span>
-                                    <span class="info-value">${transaction.cashier_name || 'N/A'}</span>
+                                    <span class="info-value"><i class="far fa-user"></i> ${transaction.cashier_name || 'N/A'}</span>
                                 </div>
                                 <div class="transaction-info-item">
                                     <span class="info-label">Payment Method</span>
@@ -800,7 +1028,7 @@ const TransactionHistory = (() => {
                 `,
                 showCloseButton: true,
                 showConfirmButton: true,
-                confirmButtonText: 'Close',
+                confirmButtonText: '<i class="fas fa-arrow-left"></i> Back to History',
                 confirmButtonColor: '#3498db',
                 background: '#141414',
                 color: '#f5f5f5',
