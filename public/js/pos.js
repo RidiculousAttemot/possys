@@ -278,14 +278,32 @@ document.addEventListener('DOMContentLoaded', function() {
                         this.classList.remove('item-added-animation');
                     }, 500);
                 } else if (product) {
-                    // Alert for out-of-stock items without showing details modal afterward
+                    // Enhanced out-of-stock alert with gradient styling and proper close functionality
                     Swal.fire({
-                        title: 'Out of Stock',
-                        text: `${product.name} is currently out of stock.`,
-                        icon: 'warning',
+                        title: '<div class="out-of-stock-title"><i class="fas fa-times-circle"></i> Out of Stock</div>',
+                        html: `
+                            <div class="out-of-stock-content">
+                                <p>${product.name} is currently out of stock.</p>
+                                <div class="item-status-info">
+                                    <i class="fas fa-exclamation-circle"></i>
+                                    <span>This item is temporarily unavailable</span>
+                                </div>
+                            </div>
+                        `,
+                        icon: null,
                         confirmButtonColor: '#3498db',
                         background: '#141414',
-                        color: '#f5f5f5'
+                        color: '#f5f5f5',
+                        showCloseButton: true,
+                        allowOutsideClick: true,
+                        customClass: {
+                            popup: 'out-of-stock-popup',
+                            title: 'out-of-stock-title',
+                            htmlContainer: 'out-of-stock-content',
+                            confirmButton: 'out-of-stock-button',
+                            closeButton: 'out-of-stock-close-button'
+                        },
+                        buttonsStyling: true
                     });
                 }
             });
@@ -313,12 +331,26 @@ document.addEventListener('DOMContentLoaded', function() {
                 existingItem.quantity += 1;
             } else {
                 Swal.fire({
-                    title: 'Stock Limit Reached',
-                    text: `You've reached the maximum available stock for ${product.name}.`,
-                    icon: 'warning',
+                    title: '<div class="stock-limit-title"><i class="fas fa-exclamation-triangle"></i> Stock Limit Reached</div>',
+                    html: `
+                        <div class="stock-limit-content">
+                            <p>You've reached the maximum available stock for this item.</p>
+                            <div class="item-stock-info">
+                                <div class="item-name">${product.name}</div>
+                                <div class="stock-quantity">Available: ${product.stock} units</div>
+                            </div>
+                        </div>
+                    `,
+                    icon: null,
                     confirmButtonColor: '#3498db',
                     background: '#141414',
-                    color: '#f5f5f5'
+                    color: '#f5f5f5',
+                    customClass: {
+                        popup: 'stock-limit-popup',
+                        title: 'stock-limit-title',
+                        htmlContainer: 'stock-limit-content',
+                        confirmButton: 'stock-limit-button'
+                    }
                 });
                 return;
             }
@@ -444,14 +476,32 @@ document.addEventListener('DOMContentLoaded', function() {
                 // Remove item if quantity is 0 or less
                 removeFromCart(productId);
             } else if (newQuantity > product.stock) {
-                // Prevent exceeding stock
+                // Prevent exceeding stock with improved modal
                 Swal.fire({
-                    title: 'Stock Limit Reached',
-                    text: `Only ${product.stock} available for ${cartItems[itemIndex].name}.`,
-                    icon: 'warning',
+                    title: '<div class="stock-limit-title"><i class="fas fa-exclamation-triangle"></i> Stock Limit Reached</div>',
+                    html: `
+                        <div class="stock-limit-content">
+                            <p>You've reached the maximum available stock for this item.</p>
+                            <div class="item-stock-info">
+                                <div class="item-name">${cartItems[itemIndex].name}</div>
+                                <div class="stock-quantity">Available: ${product.stock} units</div>
+                            </div>
+                        </div>
+                    `,
+                    icon: null,
                     confirmButtonColor: '#3498db',
                     background: '#141414',
-                    color: '#f5f5f5'
+                    color: '#f5f5f5',
+                    showCloseButton: true,
+                    allowOutsideClick: true,
+                    customClass: {
+                        popup: 'stock-limit-popup',
+                        title: 'stock-limit-title',
+                        htmlContainer: 'stock-limit-content',
+                        confirmButton: 'stock-limit-button',
+                        closeButton: 'stock-limit-close-button'
+                    },
+                    buttonsStyling: true
                 });
             } else {
                 // Update quantity
@@ -517,6 +567,15 @@ document.addEventListener('DOMContentLoaded', function() {
                         <p>No image available</p>
                     </div>`
                 }
+                ${product.stock <= 0 ? 
+                    `<div class="out-of-stock-overlay">
+                        <div class="out-of-stock-badge">
+                            <i class="fas fa-times-circle"></i>
+                            <span>OUT OF STOCK</span>
+                        </div>
+                    </div>` : 
+                    ''
+                }
             </div>
             <h2>${product.name}</h2>
             <div class="item-details-info">
@@ -537,9 +596,14 @@ document.addEventListener('DOMContentLoaded', function() {
                     <span class="item-details-value">${product.description || 'No description available.'}</span>
                 </div>
             </div>
-            <button class="btn-add-to-cart-large" data-id="${product.id}" ${disabledStatus}>
-                <i class="fas fa-shopping-cart"></i> Add to Cart
-            </button>
+            ${product.stock <= 0 ?
+                `<button class="btn-out-of-stock" disabled>
+                    <i class="fas fa-exclamation-circle"></i> Out of Stock
+                </button>` :
+                `<button class="btn-add-to-cart-large" data-id="${product.id}">
+                    <i class="fas fa-shopping-cart"></i> Add to Cart
+                </button>`
+            }
         `;
         
         // Open the modal
@@ -1340,32 +1404,59 @@ document.addEventListener('DOMContentLoaded', function() {
         confirmBtn.disabled = amountTendered < amountDue;
     };
     
-    // Function to handle logout with fixed-size modal
+    // Function to handle logout with enhanced modal
     const handleLogout = () => {
         Swal.fire({
-            title: 'Logout Confirmation',
-            text: 'Are you sure you want to log out?',
-            icon: 'question',
+            title: '<div class="logout-title"><i class="fas fa-sign-out-alt"></i> Logout Confirmation</div>',
+            html: `
+                <div class="logout-content">
+                    <p>Are you sure you want to log out from the system?</p>
+                    <div class="logout-user-info">
+                        <i class="fas fa-user-circle"></i>
+                        <span>${localStorage.getItem('userName') || 'User'}</span>
+                    </div>
+                </div>
+            `,
+            icon: null,
             showCancelButton: true,
-            confirmButtonText: 'Yes, Logout',
-            cancelButtonText: 'Cancel',
+            confirmButtonText: '<i class="fas fa-sign-out-alt"></i> Yes, Logout',
+            cancelButtonText: '<i class="fas fa-times"></i> Cancel',
             confirmButtonColor: '#3498db',
+            cancelButtonColor: '#2c3e50',
             background: '#141414',
             color: '#f5f5f5',
             width: '400px', // Fixed width for logout modal
             customClass: {
-                container: 'fixed-size-modal'
-            }
+                container: 'fixed-size-modal',
+                title: 'logout-modal-title',
+                htmlContainer: 'logout-modal-content',
+                confirmButton: 'logout-confirm-button',
+                cancelButton: 'logout-cancel-button',
+                popup: 'logout-modal-popup'
+            },
+            buttonsStyling: true
         }).then((result) => {
             if (result.isConfirmed) {
-                // Clear all authentication data
-                localStorage.removeItem('authToken');
-                localStorage.removeItem('userName');
-                localStorage.removeItem('userRole');
-                localStorage.removeItem('userId');
-                
-                // Redirect to login page
-                window.location.href = 'login.html';
+                // Show a brief loading state
+                Swal.fire({
+                    title: 'Logging Out',
+                    html: '<i class="fas fa-circle-notch fa-spin"></i>',
+                    showConfirmButton: false,
+                    allowOutsideClick: false,
+                    timer: 800,
+                    background: '#141414',
+                    color: '#f5f5f5',
+                    didOpen: () => {
+                        // Clear all authentication data
+                        localStorage.removeItem('authToken');
+                        localStorage.removeItem('userName');
+                        localStorage.removeItem('userRole');
+                        localStorage.removeItem('userId');
+                    }
+                }).then(() => {
+                    // Redirect to login page
+                    window.location.href = 'login.html';
+                });
             }
         });
     };

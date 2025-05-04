@@ -1,5 +1,10 @@
 // Transaction History Module
 const TransactionHistory = (() => {
+    // Internal state variables
+    let initialized = false;
+    let transactionHistory = [];
+    let activeModal = null;
+    
     // API base URL
     const API_URL = 'http://localhost:5000/api';
     const TAX_RATE = 0.12; // 12% tax rate
@@ -10,21 +15,58 @@ const TransactionHistory = (() => {
         style.textContent = `
             /* Transaction History Modal */
             .transaction-history-popup {
-                max-width: 900px !important;
+                max-width: 850px !important;
+                width: 90% !important;
                 max-height: 85vh;
                 border-radius: 12px !important;
                 box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5) !important;
                 overflow: hidden;
+                padding: 0 !important;
+                animation: modal-appear 0.3s ease-out;
             }
             
+            @keyframes modal-appear {
+                from { opacity: 0; transform: translateY(-20px); }
+                to { opacity: 1; transform: translateY(0); }
+            }
+            
+            /* Transaction Details Modal */
+            .transaction-details-popup {
+                max-width: 700px !important;
+                min-width: 600px !important;
+                width: 90% !important;
+                border-radius: 12px !important;
+                box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5) !important;
+                overflow: hidden !important;
+                padding: 0 !important;
+                animation: modal-appear 0.3s ease-out;
+            }
+            
+            /* Standardized header styling for both modals */
+            .swal2-title {
+                font-size: 22px !important;
+                color: #f5f5f5 !important;
+                padding: 20px 25px !important;
+                border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
+                margin: 0 !important;
+                background: linear-gradient(to right, #1c1c1c, #2c2c2c) !important;
+                text-transform: uppercase;
+                letter-spacing: 1px;
+                text-align: left !important;
+            }
+            
+            /* Transaction history container improvements */
             .transaction-history-container {
                 max-height: 65vh;
                 overflow-y: auto;
                 padding: 0;
-                border-radius: 10px;
+                border-radius: 0;
                 color: #f5f5f5;
                 scrollbar-width: thin;
                 scrollbar-color: #3498db #1a1a1a;
+                width: 100%;
+                margin: 0;
+                background-color: #141414;
             }
             
             .transaction-history-container::-webkit-scrollbar {
@@ -48,8 +90,8 @@ const TransactionHistory = (() => {
             
             .transaction-history-header {
                 display: grid;
-                grid-template-columns: 2fr 1fr 1fr 0.8fr;
-                padding: 14px 16px;
+                grid-template-columns: 1fr 1fr 2fr 0.8fr;
+                padding: 14px 20px;
                 background: linear-gradient(to right, #1c1c1c, #2c2c2c);
                 border-bottom: 1px solid #333;
                 position: sticky;
@@ -57,51 +99,65 @@ const TransactionHistory = (() => {
                 font-weight: bold;
                 z-index: 10;
                 box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+                width: 100%;
+                box-sizing: border-box;
+                margin: 0;
             }
             
             .transaction-header-item {
                 padding: 5px;
-                text-align: left;
+                text-align: center; /* Center all headers */
                 color: #3498db;
                 font-size: 14px;
                 letter-spacing: 0.5px;
                 text-transform: uppercase;
+                white-space: nowrap; /* Prevent wrapping for better alignment */
+                overflow: hidden;
+                text-overflow: ellipsis;
             }
             
             .transaction-history-list {
                 overflow-y: auto;
                 padding: 5px;
+                width: 100%; /* Ensure full width */
+                box-sizing: border-box; /* Include padding in width calculation */
             }
             
             .transaction-history-item {
                 display: grid;
-                grid-template-columns: 2fr 1fr 1fr 0.8fr;
-                padding: 16px;
+                grid-template-columns: 1fr 1fr 2fr 0.8fr; /* Match header columns - reordered */
+                padding: 16px 20px;
                 border-bottom: 1px solid #333;
                 align-items: center;
                 background: linear-gradient(to right, #1e1e1e, #252525);
-                margin-bottom: 8px;
-                border-radius: 8px;
+                margin: 0;
                 transition: all 0.2s ease;
                 box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+                width: 100%; /* Ensure full width */
+                box-sizing: border-box; /* Include padding in width calculation */
             }
             
             .transaction-history-item:hover {
                 background: linear-gradient(to right, #2a2a2a, #303030);
                 transform: translateY(-2px);
                 box-shadow: 0 4px 6px rgba(0, 0, 0, 0.15);
+                z-index: 5;
             }
             
             .transaction-date {
                 display: flex;
                 flex-direction: column;
                 gap: 6px;
+                justify-content: center;
+                align-items: center; /* Center content */
+                text-align: center; /* Center text */
             }
             
             .transaction-date-value {
                 font-weight: 500;
                 font-size: 15px;
                 color: #f0f0f0;
+                text-align: center;
             }
             
             .transaction-payment-method {
@@ -109,11 +165,13 @@ const TransactionHistory = (() => {
                 color: #999;
                 display: flex;
                 align-items: center;
+                justify-content: center; /* Center content */
                 gap: 6px;
                 background-color: rgba(52, 152, 219, 0.1);
                 padding: 4px 8px;
                 border-radius: 12px;
                 width: fit-content;
+                margin: 0 auto; /* Center block */
                 border: 1px solid rgba(52, 152, 219, 0.2);
             }
             
@@ -123,6 +181,7 @@ const TransactionHistory = (() => {
                 font-size: 14px;
                 letter-spacing: 0.5px;
                 padding: 4px 0;
+                text-align: center; /* Center text */
             }
             
             .transaction-amount {
@@ -132,10 +191,17 @@ const TransactionHistory = (() => {
                 background: linear-gradient(to right, #3498db, #2980b9);
                 -webkit-background-clip: text;
                 -webkit-text-fill-color: transparent;
+                text-align: center; /* Center text */
+                display: flex; /* Use flexbox for perfect centering */
+                justify-content: center; /* Center horizontally */
+                align-items: center; /* Center vertically */
+                width: 100%; /* Ensure it takes full column width */
+                padding: 0; /* Remove padding that might affect centering */
+                height: 100%; /* Ensure it takes full height for vertical alignment */
             }
             
             .transaction-actions {
-                text-align: right;
+                text-align: center; /* Center actions */
             }
             
             .btn-view-transaction {
@@ -148,10 +214,11 @@ const TransactionHistory = (() => {
                 transition: all 0.2s;
                 display: flex;
                 align-items: center;
+                justify-content: center; /* Center content */
                 gap: 8px;
                 font-weight: 500;
                 box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
-                margin-left: auto;
+                margin: 0 auto; /* Center button */
             }
             
             .btn-view-transaction:hover {
@@ -282,22 +349,27 @@ const TransactionHistory = (() => {
             
             /* Transaction Details Modal */
             .transaction-details-popup {
-                max-width: 750px !important;
-                min-width: 650px !important;
+                max-width: 700px !important;
+                min-width: 600px !important;
+                width: 90% !important;
                 border-radius: 12px !important;
                 box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5) !important;
                 overflow: hidden !important;
+                padding: 0 !important; /* Remove padding for better alignment */
+                animation: modal-appear 0.3s ease-out;
             }
             
+            /* Transaction details container improvements */
             .transaction-details-container {
                 display: flex;
                 flex-direction: column;
-                gap: 20px;
+                gap: 15px;
                 max-height: 70vh;
                 overflow-y: auto;
-                padding: 0;
+                padding: 20px;
                 scrollbar-width: thin;
                 scrollbar-color: #3498db #1a1a1a;
+                background-color: #141414;
             }
             
             .transaction-details-container::-webkit-scrollbar {
@@ -323,12 +395,13 @@ const TransactionHistory = (() => {
                 padding: 20px;
                 border-radius: 10px;
                 box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+                margin-bottom: 5px;
             }
             
             .transaction-details-info {
                 display: flex;
                 flex-wrap: wrap;
-                gap: 20px;
+                gap: 15px;
             }
             
             .transaction-info-item {
@@ -337,9 +410,16 @@ const TransactionHistory = (() => {
                 flex: 1;
                 min-width: 170px;
                 background-color: rgba(255, 255, 255, 0.05);
-                padding: 12px;
+                padding: 15px;
                 border-radius: 8px;
                 border: 1px solid rgba(255, 255, 255, 0.1);
+                transition: all 0.2s ease;
+                align-items: center;
+            }
+            
+            .transaction-info-item:hover {
+                background-color: rgba(255, 255, 255, 0.08);
+                border-color: rgba(52, 152, 219, 0.3);
             }
             
             .info-label {
@@ -374,6 +454,7 @@ const TransactionHistory = (() => {
                 border-radius: 8px;
                 overflow: hidden;
                 box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+                border: 1px solid #333;
             }
             
             .transaction-items-table th, 
@@ -449,16 +530,18 @@ const TransactionHistory = (() => {
                 background: linear-gradient(to right, #27ae60, #2ecc71);
                 border: none;
                 color: white;
-                padding: 10px 18px;
+                padding: 10px 20px;
                 border-radius: 8px;
                 cursor: pointer;
                 display: flex;
                 align-items: center;
+                justify-content: center;
                 gap: 10px;
                 transition: all 0.2s;
                 font-weight: 500;
                 box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
                 font-size: 15px;
+                margin-left: auto;
             }
             
             .btn-print-transaction:hover {
@@ -469,24 +552,27 @@ const TransactionHistory = (() => {
             
             /* SweetAlert override styles for transaction history */
             .swal2-title {
-                font-size: 24px !important;
+                font-size: 22px !important;
                 color: #f5f5f5 !important;
-                padding: 25px 0 !important;
+                padding: 20px 25px !important;
                 border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
-                margin-bottom: 0 !important;
+                margin: 0 !important;
                 background: linear-gradient(to right, #1c1c1c, #2c2c2c) !important;
                 text-transform: uppercase;
                 letter-spacing: 1px;
+                text-align: left !important;
             }
             
             .transaction-history-button {
                 background: linear-gradient(to right, #3498db, #2980b9) !important;
                 border: none !important;
-                padding: 12px 30px !important;
+                padding: 12px 25px !important;
                 border-radius: 8px !important;
                 box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2) !important;
                 transition: all 0.3s !important;
                 font-weight: 500 !important;
+                letter-spacing: 0.5px !important;
+                margin: 15px !important;
             }
             
             .transaction-history-button:hover {
@@ -498,11 +584,13 @@ const TransactionHistory = (() => {
             .transaction-details-button {
                 background: linear-gradient(to right, #3498db, #2980b9) !important;
                 border: none !important;
-                padding: 12px 30px !important;
+                padding: 12px 25px !important;
                 border-radius: 8px !important;
                 box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2) !important;
                 transition: all 0.3s !important;
                 font-weight: 500 !important;
+                letter-spacing: 0.5px !important;
+                margin: 15px !important;
             }
             
             .transaction-details-button:hover {
@@ -510,10 +598,106 @@ const TransactionHistory = (() => {
                 transform: translateY(-2px) !important;
                 box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3) !important;
             }
+            
+            /* SweetAlert specific styling improvements */
+            .swal2-popup.transaction-history-popup .swal2-html-container,
+            .swal2-popup.transaction-details-popup .swal2-html-container {
+                margin: 0 !important;
+                padding: 0 !important;
+                overflow: hidden !important;
+                color: #f5f5f5 !important;
+            }
+            
+            .swal2-popup.transaction-history-popup .swal2-actions,
+            .swal2-popup.transaction-details-popup .swal2-actions {
+                margin: 0 !important;
+                padding: 10px !important;
+                background-color: #141414 !important;
+                border-top: 1px solid #333 !important;
+                width: 100% !important;
+                justify-content: flex-end !important;
+            }
+            
+            /* Fix for last-updated timestamp */
+            .transaction-timestamp {
+                padding: 12px; 
+                text-align: center; 
+                font-size: 12px; 
+                color: #666;
+                background-color: #141414;
+                border-top: 1px solid #333;
+                width: 100%;
+                box-sizing: border-box;
+            }
+            
+            /* Enhanced styling for close button */
+            .swal2-close {
+                position: absolute !important;
+                top: 16px !important;
+                right: 16px !important;
+                font-size: 24px !important;
+                color: #999 !important;
+                background: rgba(0, 0, 0, 0.2) !important;
+                border-radius: 50% !important;
+                width: 32px !important;
+                height: 32px !important;
+                display: flex !important;
+                align-items: center !important;
+                justify-content: center !important;
+                transition: all 0.2s !important;
+                z-index: 9999 !important; /* Increased z-index to ensure it's always on top */
+                cursor: pointer !important;
+                box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2) !important;
+                opacity: 1 !important; /* Ensure it's always visible */
+            }
+            
+            .swal2-close:hover {
+                background: rgba(255, 0, 0, 0.2) !important; /* Red background for clear close indication */
+                color: white !important;
+                transform: rotate(90deg) !important;
+            }
         `;
         document.head.appendChild(style);
     };
 
+    // Store the current transaction history HTML for returning from detail view
+    let currentTransactionHistoryHTML = '';
+    let currentTransactionHistoryTitle = 'Transaction History';
+
+    // Helper function to close modals consistently (same as in pos.js)
+    const closeModal = (modalId) => {
+        const modal = document.getElementById(modalId);
+        if (modal) {
+            modal.classList.remove('show');
+            document.body.style.overflow = 'auto';
+        }
+    };
+
+    // Universal modal close function (for SweetAlert modals)
+    const closeSwalModal = () => {
+        if (window.Swal) {
+            Swal.close();
+            // Ensure body scrolling is restored
+            document.body.style.overflow = 'auto';
+            
+            // Clear transaction content from the DOM to prevent leftover HTML
+            const transactionContainers = document.querySelectorAll('.transaction-details, .transaction-history-container, .transaction-details-popup');
+            transactionContainers.forEach(container => {
+                if (container && container.parentNode) {
+                    container.innerHTML = '';
+                }
+            });
+            
+            // Remove any lingering SweetAlert containers
+            const swalContainers = document.querySelectorAll('.swal2-container');
+            swalContainers.forEach(container => {
+                if (container && container.parentNode) {
+                    container.parentNode.removeChild(container);
+                }
+            });
+        }
+    };
+    
     // Helper function to get payment icon based on payment method
     const getPaymentIcon = (paymentMethod) => {
         const iconMap = {
@@ -529,13 +713,73 @@ const TransactionHistory = (() => {
     };
 
     // Function to show transaction history
-    const showTransactionHistory = async () => {
-        console.log("TransactionHistory.showTransactionHistory called");
+    const showTransactionHistory = async (preserveHistoryHTML = false) => {
+        console.log("TransactionHistory.showTransactionHistory called, preserveHistory:", preserveHistoryHTML);
         
         // Check if SweetAlert is defined
         if (typeof Swal === 'undefined') {
             console.error("SweetAlert is not defined. Make sure to include SweetAlert2 library.");
             alert("Error loading transaction history. Check console for details.");
+            return;
+        }
+        
+        // If we have stored history and were asked to preserve it, use that instead of fetching again
+        if (preserveHistoryHTML && currentTransactionHistoryHTML) {
+            console.log("Using preserved transaction history HTML");
+            Swal.fire({
+                title: currentTransactionHistoryTitle,
+                html: currentTransactionHistoryHTML,
+                showConfirmButton: false,
+                showCloseButton: true, // Explicitly enable close button
+                allowOutsideClick: true, // Allow clicking outside to close
+                allowEscapeKey: true, // Allow ESC key to close
+                background: '#141414',
+                color: '#f5f5f5',
+                width: 'auto', // Let the max-width setting control the size
+                heightAuto: false,
+                customClass: {
+                    popup: 'transaction-history-popup',
+                    confirmButton: 'transaction-history-button',
+                    title: 'transaction-history-title',
+                    htmlContainer: 'transaction-history-html-container',
+                    actions: 'transaction-history-actions',
+                    closeButton: 'history-close-button'
+                },
+                didOpen: (popup) => {
+                    // Re-attach event listeners to view buttons
+                    document.querySelectorAll('.btn-view-transaction').forEach(button => {
+                        button.addEventListener('click', function() {
+                            const transactionId = this.getAttribute('data-id');
+                            viewTransactionDetails(transactionId);
+                        });
+                    });
+                    
+                    // Fix the close button using the same approach as pos.js
+                    // First, handle the x button
+                    const closeButton = popup.querySelector('.swal2-close');
+                    if (closeButton) {
+                        closeButton.onclick = () => {
+                            console.log("Close button clicked");
+                            closeSwalModal();
+                        };
+                    }
+                    
+                    // Handle ESC key
+                    document.addEventListener('keydown', function escHandler(e) {
+                        if (e.key === 'Escape') {
+                            closeSwalModal();
+                            document.removeEventListener('keydown', escHandler);
+                        }
+                    });
+                    
+                    // Handle outside click
+                    popup.addEventListener('click', function(e) {
+                        if (e.target === popup) {
+                            closeSwalModal();
+                        }
+                    });
+                }
+            });
             return;
         }
         
@@ -647,9 +891,9 @@ const TransactionHistory = (() => {
             let historyHTML = `
                 <div class="transaction-history-container">
                     <div class="transaction-history-header">
-                        <div class="transaction-header-item">Date & Payment Method</div>
                         <div class="transaction-header-item">Transaction ID</div>
                         <div class="transaction-header-item">Amount</div>
+                        <div class="transaction-header-item">Date & Payment Method</div>
                         <div class="transaction-header-item">Actions</div>
                     </div>
                     <div class="transaction-history-list">
@@ -670,14 +914,14 @@ const TransactionHistory = (() => {
                 
                 historyHTML += `
                     <div class="transaction-history-item">
+                        <div class="transaction-id">#${transaction.transaction_id}</div>
+                        <div class="transaction-amount">₱${parseFloat(transaction.total_amount).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</div>
                         <div class="transaction-date">
                             <div class="transaction-date-value">${formattedDate}</div>
                             <div class="transaction-payment-method">
                                 <i class="${paymentIcon}"></i> ${paymentMethod}
                             </div>
                         </div>
-                        <div class="transaction-id">#${transaction.transaction_id}</div>
-                        <div class="transaction-amount">₱${parseFloat(transaction.total_amount).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</div>
                         <div class="transaction-actions">
                             <button class="btn-view-transaction" data-id="${transaction.transaction_id}">
                                 <i class="fas fa-eye"></i> View
@@ -690,33 +934,76 @@ const TransactionHistory = (() => {
             // Add a timestamp at the bottom of the transaction history
             historyHTML += `
                     </div>
-                    <div style="padding: 10px; text-align: center; font-size: 11px; color: #666; margin-top: 10px;">
+                    <div class="transaction-timestamp">
                         Last updated: ${new Date().toLocaleString()}
                     </div>
                 </div>
             `;
             
+            // Store the history HTML for later use
+            currentTransactionHistoryHTML = historyHTML;
+            currentTransactionHistoryTitle = 'Transaction History';
+            
             // Show transaction history in SweetAlert
             Swal.fire({
                 title: 'Transaction History',
                 html: historyHTML,
-                showConfirmButton: true,
-                confirmButtonText: '<i class="fas fa-times"></i> Close',
-                confirmButtonColor: '#3498db',
+                showConfirmButton: false,
+                showCloseButton: true, // Explicitly enable close button
+                allowOutsideClick: true, // Allow clicking outside to close
+                allowEscapeKey: true, // Allow ESC key to close
                 background: '#141414',
                 color: '#f5f5f5',
-                width: '80%',
+                width: 'auto', // Let the max-width setting control the size
+                heightAuto: false,
                 customClass: {
                     popup: 'transaction-history-popup',
-                    confirmButton: 'transaction-history-button'
+                    confirmButton: 'transaction-history-button',
+                    title: 'transaction-history-title',
+                    htmlContainer: 'transaction-history-html-container',
+                    actions: 'transaction-history-actions',
+                    closeButton: 'history-close-button'
                 },
-                didOpen: () => {
-                    // Add event listeners to view buttons
+                didOpen: (popup) => {
+                    // Add event listeners to view buttons with proper cleanup
                     document.querySelectorAll('.btn-view-transaction').forEach(button => {
-                        button.addEventListener('click', function() {
+                        // Clone and replace the button to remove any previous event listeners
+                        const newButton = button.cloneNode(true);
+                        button.parentNode.replaceChild(newButton, button);
+                        
+                        newButton.addEventListener('click', function() {
                             const transactionId = this.getAttribute('data-id');
                             viewTransactionDetails(transactionId);
                         });
+                    });
+                    
+                    // Fix the close button using the same approach as pos.js
+                    const closeButton = popup.querySelector('.swal2-close');
+                    if (closeButton) {
+                        // Clone and replace to remove any previous event listeners
+                        const newCloseButton = closeButton.cloneNode(true);
+                        closeButton.parentNode.replaceChild(newCloseButton, closeButton);
+                        
+                        newCloseButton.onclick = () => {
+                            console.log("Close button clicked");
+                            closeSwalModal();
+                        };
+                    }
+                    
+                    // Handle ESC key with proper cleanup
+                    document.addEventListener('keydown', function escHandler(e) {
+                        if (e.key === 'Escape') {
+                            closeSwalModal();
+                            document.removeEventListener('keydown', escHandler);
+                        }
+                    });
+                    
+                    // Handle outside click with proper cleanup
+                    popup.addEventListener('click', function outsideClickHandler(e) {
+                        if (e.target === popup) {
+                            closeSwalModal();
+                            popup.removeEventListener('click', outsideClickHandler);
+                        }
                     });
                 }
             });
@@ -753,18 +1040,42 @@ const TransactionHistory = (() => {
                 confirmButtonColor: '#3498db',
                 background: '#141414',
                 color: '#f5f5f5',
-                didOpen: () => {
+                showCloseButton: true, // Explicitly enable close button
+                allowOutsideClick: true, // Allow clicking outside to close
+                allowEscapeKey: true, // Allow ESC key to close
+                didOpen: (popup) => {
                     // Add listener for mock data button
                     document.getElementById('useMockDataBtn').addEventListener('click', function() {
                         showMockTransactionHistory();
                         Swal.close();
                     });
+                    
+                    // Fix close button
+                    const closeButton = popup.querySelector('.swal2-close');
+                    if (closeButton) {
+                        // Create new button to remove any existing listeners
+                        const newCloseButton = closeButton.cloneNode(true);
+                        closeButton.parentNode.replaceChild(newCloseButton, closeButton);
+                        
+                        // Add new click handler
+                        newCloseButton.addEventListener('click', () => {
+                            Swal.close();
+                        });
+                    }
                 }
             }).then((result) => {
                 if (result.isConfirmed) {
                     showTransactionHistory();
                 }
             });
+        }
+    };
+    
+    // Function to handle Escape key press
+    const closeOnEscape = (e) => {
+        if (e.key === 'Escape') {
+            console.log('Escape key pressed, closing modal');
+            Swal.close();
         }
     };
 
@@ -811,9 +1122,9 @@ const TransactionHistory = (() => {
         let historyHTML = `
             <div class="transaction-history-container">
                 <div class="transaction-history-header">
-                    <div class="transaction-header-item">Date & Payment Method</div>
                     <div class="transaction-header-item">Transaction ID</div>
                     <div class="transaction-header-item">Amount</div>
+                    <div class="transaction-header-item">Date & Payment Method</div>
                     <div class="transaction-header-item">Actions</div>
                 </div>
                 <div class="transaction-history-list">
@@ -834,14 +1145,14 @@ const TransactionHistory = (() => {
             
             historyHTML += `
                 <div class="transaction-history-item">
+                    <div class="transaction-id">#${transaction.transaction_id}</div>
+                    <div class="transaction-amount">₱${parseFloat(transaction.total_amount).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</div>
                     <div class="transaction-date">
                         <div class="transaction-date-value">${formattedDate}</div>
                         <div class="transaction-payment-method">
                             <i class="${paymentIcon}"></i> ${paymentMethod}
                         </div>
                     </div>
-                    <div class="transaction-id">#${transaction.transaction_id}</div>
-                    <div class="transaction-amount">₱${parseFloat(transaction.total_amount).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</div>
                     <div class="transaction-actions">
                         <button class="btn-view-transaction" data-id="${transaction.transaction_id}">
                             <i class="fas fa-eye"></i> View
@@ -856,27 +1167,61 @@ const TransactionHistory = (() => {
             </div>
         `;
         
+        // Store the mock history HTML for later use
+        currentTransactionHistoryHTML = historyHTML;
+        currentTransactionHistoryTitle = 'Transaction History (Mock Data)';
+        
         // Show transaction history in SweetAlert
         Swal.fire({
             title: 'Transaction History (Mock Data)',
             html: historyHTML,
-            showConfirmButton: true,
-            confirmButtonText: 'Close',
-            confirmButtonColor: '#3498db',
+            showConfirmButton: false,
+            showCloseButton: true, // Explicitly enable close button
+            allowOutsideClick: true, // Allow clicking outside to close
+            allowEscapeKey: true, // Allow ESC key to close
             background: '#141414',
             color: '#f5f5f5',
-            width: '80%',
+            width: 'auto', // Let the max-width setting control the size
+            heightAuto: false,
             customClass: {
                 popup: 'transaction-history-popup',
-                confirmButton: 'transaction-history-button'
+                confirmButton: 'transaction-history-button',
+                title: 'transaction-history-title',
+                htmlContainer: 'transaction-history-html-container',
+                actions: 'transaction-history-actions',
+                closeButton: 'history-close-button'
             },
-            didOpen: () => {
+            didOpen: (popup) => {
                 // Add event listeners to view buttons
                 document.querySelectorAll('.btn-view-transaction').forEach(button => {
                     button.addEventListener('click', function() {
                         const transactionId = this.getAttribute('data-id');
                         viewMockTransactionDetails(transactionId);
                     });
+                });
+                
+                // Fix the close button using the same approach as pos.js
+                const closeButton = popup.querySelector('.swal2-close');
+                if (closeButton) {
+                    closeButton.onclick = () => {
+                        console.log("Close button clicked");
+                        closeSwalModal();
+                    };
+                }
+                
+                // Handle ESC key
+                document.addEventListener('keydown', function escHandler(e) {
+                    if (e.key === 'Escape') {
+                        closeSwalModal();
+                        document.removeEventListener('keydown', escHandler);
+                    }
+                });
+                
+                // Handle outside click
+                popup.addEventListener('click', function(e) {
+                    if (e.target === popup) {
+                        closeSwalModal();
+                    }
                 });
             }
         });
@@ -1026,26 +1371,88 @@ const TransactionHistory = (() => {
                         </div>
                     </div>
                 `,
-                showCloseButton: true,
+                showCloseButton: true, // Explicitly enable close button
                 showConfirmButton: true,
+                allowOutsideClick: true, // Allow clicking outside to close
+                allowEscapeKey: true, // Allow ESC key to close
                 confirmButtonText: '<i class="fas fa-arrow-left"></i> Back to History',
                 confirmButtonColor: '#3498db',
                 background: '#141414',
                 color: '#f5f5f5',
-                width: '700px',
+                width: 'auto', // Let the max-width setting control the size
+                heightAuto: false,
                 customClass: {
                     popup: 'transaction-details-popup',
-                    confirmButton: 'transaction-details-button'
+                    confirmButton: 'transaction-details-button',
+                    title: 'transaction-details-title',
+                    htmlContainer: 'transaction-details-html-container',
+                    actions: 'transaction-details-actions',
+                    closeButton: 'details-close-button'
                 },
-                didOpen: () => {
+                didOpen: (popup) => {
                     // Add event listener for print receipt button
                     const printButton = document.getElementById('printTransactionReceipt');
                     if (printButton) {
-                        printButton.addEventListener('click', function() {
+                        // Clone and replace to remove any previous event listeners
+                        const newPrintButton = printButton.cloneNode(true);
+                        printButton.parentNode.replaceChild(newPrintButton, printButton);
+                        
+                        newPrintButton.addEventListener('click', function() {
                             // This will print the receipt for the current transaction
                             printTransactionReceipt(transaction);
                         });
                     }
+                    
+                    // Fix the close button using the same approach as pos.js
+                    const closeButton = popup.querySelector('.swal2-close');
+                    if (closeButton) {
+                        // Clone and replace to remove any previous event listeners
+                        const newCloseButton = closeButton.cloneNode(true);
+                        closeButton.parentNode.replaceChild(newCloseButton, closeButton);
+                        
+                        newCloseButton.onclick = () => {
+                            console.log("Close button clicked");
+                            closeSwalModal();
+                        };
+                    }
+                    
+                    // Handle ESC key with proper cleanup
+                    document.addEventListener('keydown', function escHandler(e) {
+                        if (e.key === 'Escape') {
+                            closeSwalModal();
+                            document.removeEventListener('keydown', escHandler);
+                        }
+                    });
+                    
+                    // Handle outside click with proper cleanup
+                    popup.addEventListener('click', function outsideClickHandler(e) {
+                        if (e.target === popup) {
+                            closeSwalModal();
+                            popup.removeEventListener('click', outsideClickHandler);
+                        }
+                    });
+                },
+                willClose: () => {
+                    // Ensure we clean up any leftover content on modal close
+                    const transactionDetailsContainers = document.querySelectorAll('.transaction-details');
+                    transactionDetailsContainers.forEach(container => {
+                        if (container && container.parentNode) {
+                            container.innerHTML = '';
+                        }
+                    });
+                }
+            }).then((result) => {
+                // If confirmed (Back to History button clicked), return to transaction history
+                if (result.isConfirmed) {
+                    showTransactionHistory(true); // Use the cached history
+                } else {
+                    // Also clean up when modal is dismissed via other means
+                    const transactionDetailsContainers = document.querySelectorAll('.transaction-details');
+                    transactionDetailsContainers.forEach(container => {
+                        if (container && container.parentNode) {
+                            container.innerHTML = '';
+                        }
+                    });
                 }
             });
             
@@ -1075,16 +1482,37 @@ const TransactionHistory = (() => {
                         </button>
                     </div>
                 `,
-                confirmButtonText: 'OK',
+                showCloseButton: true, // Explicitly enable close button
+                allowOutsideClick: true, // Allow clicking outside to close
+                allowEscapeKey: true, // Allow ESC key to close
+                confirmButtonText: '<i class="fas fa-arrow-left"></i> Back to History',
                 confirmButtonColor: '#3498db',
                 background: '#141414',
                 color: '#f5f5f5',
-                didOpen: () => {
+                didOpen: (popup) => {
                     // Add listener for mock data button
                     document.getElementById('viewMockDetailsBtn')?.addEventListener('click', function() {
                         viewMockTransactionDetails(transactionId);
                         Swal.close();
                     });
+                    
+                    // Fix close button
+                    const closeButton = popup.querySelector('.swal2-close');
+                    if (closeButton) {
+                        // Create new button to remove any existing listeners
+                        const newCloseButton = closeButton.cloneNode(true);
+                        closeButton.parentNode.replaceChild(newCloseButton, closeButton);
+                        
+                        // Add new click handler
+                        newCloseButton.addEventListener('click', () => {
+                            Swal.close();
+                        });
+                    }
+                }
+            }).then((result) => {
+                // If confirmed (Back to History button clicked), return to transaction history
+                if (result.isConfirmed) {
+                    showTransactionHistory(true); // Use the cached history
                 }
             });
         }
@@ -1233,18 +1661,25 @@ const TransactionHistory = (() => {
                     </div>
                 </div>
             `,
-            showCloseButton: true,
+            showCloseButton: true, // Explicitly enable close button
             showConfirmButton: true,
-            confirmButtonText: 'Close',
+            allowOutsideClick: true, // Allow clicking outside to close
+            allowEscapeKey: true, // Allow ESC key to close
+            confirmButtonText: '<i class="fas fa-arrow-left"></i> Back to History',
             confirmButtonColor: '#3498db',
             background: '#141414',
             color: '#f5f5f5',
-            width: '700px',
+            width: 'auto', // Let the max-width setting control the size
+            heightAuto: false,
             customClass: {
                 popup: 'transaction-details-popup',
-                confirmButton: 'transaction-details-button'
+                confirmButton: 'transaction-details-button',
+                title: 'transaction-details-title',
+                htmlContainer: 'transaction-details-html-container',
+                actions: 'transaction-details-actions',
+                closeButton: 'details-close-button'
             },
-            didOpen: () => {
+            didOpen: (popup) => {
                 // Add event listener for print receipt button
                 const printButton = document.getElementById('printTransactionReceipt');
                 if (printButton) {
@@ -1253,6 +1688,56 @@ const TransactionHistory = (() => {
                         printTransactionReceipt(transaction);
                     });
                 }
+                
+                // Fix the close button using the same approach as pos.js
+                const closeButton = popup.querySelector('.swal2-close');
+                if (closeButton) {
+                    // Clone and replace to remove any previous event listeners
+                    const newCloseButton = closeButton.cloneNode(true);
+                    closeButton.parentNode.replaceChild(newCloseButton, closeButton);
+                    
+                    newCloseButton.onclick = () => {
+                        closeSwalModal();
+                    };
+                }
+                
+                // Handle ESC key with proper cleanup
+                document.addEventListener('keydown', function escHandler(e) {
+                    if (e.key === 'Escape') {
+                        closeSwalModal();
+                        document.removeEventListener('keydown', escHandler);
+                    }
+                });
+                
+                // Handle outside click with proper cleanup
+                popup.addEventListener('click', function outsideClickHandler(e) {
+                    if (e.target === popup) {
+                        closeSwalModal();
+                        popup.removeEventListener('click', outsideClickHandler);
+                    }
+                });
+            },
+            willClose: () => {
+                // Ensure we clean up any leftover content on modal close
+                const transactionDetailsContainers = document.querySelectorAll('.transaction-details');
+                transactionDetailsContainers.forEach(container => {
+                    if (container && container.parentNode) {
+                        container.innerHTML = '';
+                    }
+                });
+            }
+        }).then((result) => {
+            // If confirmed (Back to History button clicked), return to transaction history
+            if (result.isConfirmed) {
+                showMockTransactionHistory(); // Return to mock history
+            } else {
+                // Also clean up when modal is dismissed via other means
+                const transactionDetailsContainers = document.querySelectorAll('.transaction-details');
+                transactionDetailsContainers.forEach(container => {
+                    if (container && container.parentNode) {
+                        container.innerHTML = '';
+                    }
+                });
             }
         });
     };
@@ -1478,47 +1963,77 @@ const TransactionHistory = (() => {
 
     // Initialize the module - specifically target the history button
     const init = () => {
-        console.log("TransactionHistory.init called");
+        if (initialized) {
+            console.log('TransactionHistory already initialized');
+            return;
+        }
         
-        // Add the CSS styles for the transaction history UI
+        console.log('Initializing TransactionHistory module');
+        
+        // Add styles
         addTransactionHistoryStyles();
         
-        // Add direct event listener to the historyBtn
-        const setupHistoryButton = () => {
-            const historyBtn = document.getElementById('historyBtn');
+        // Create the history modal
+        createHistoryModal();
+        
+        // Add event listener to the history button
+        const historyBtn = document.getElementById('historyBtn');
+        if (historyBtn) {
+            // Remove any existing event listeners to prevent duplicates
+            const newHistoryBtn = historyBtn.cloneNode(true);
+            historyBtn.parentNode.replaceChild(newHistoryBtn, historyBtn);
             
-            if (historyBtn) {
-                console.log("Found history button, attaching event listener");
-                
-                // Remove any existing click event listeners to prevent duplicates
-                historyBtn.removeEventListener('click', showTransactionHistory);
-                
-                // Add a new click event listener
-                historyBtn.addEventListener('click', function(e) {
-                    console.log("History button clicked");
-                    e.preventDefault();
-                    showTransactionHistory();
-                });
-                
-                // Also add onclick attribute directly to the button as a fallback
-                historyBtn.setAttribute('onclick', "TransactionHistory.showTransactionHistory()");
-                
-                console.log("History button should now be working");
-            } else {
-                console.log("History button not found yet, will try again in 1 second");
-                // Try again in 1 second - the button might not be in the DOM yet
-                setTimeout(setupHistoryButton, 1000);
-            }
-        };
+            newHistoryBtn.addEventListener('click', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                console.log('History button clicked');
+                showTransactionHistory();
+            });
+        }
         
-        // Start the process of setting up the history button
-        setupHistoryButton();
+        initialized = true;
+    };
+
+    // Function to create the history modal dynamically if it doesn't exist
+    const createHistoryModal = () => {
+        // Check if modal already exists
+        if (document.getElementById('historyModal')) {
+            return;
+        }
         
-        // Also add event listener to document for potential dynamic button creation
-        document.addEventListener('DOMNodeInserted', function(e) {
-            if (e.target.id === 'historyBtn' || (e.target.querySelector && e.target.querySelector('#historyBtn'))) {
-                console.log("History button was dynamically added to the DOM");
-                setupHistoryButton();
+        // Create the modal element
+        const historyModal = document.createElement('div');
+        historyModal.id = 'historyModal';
+        historyModal.className = 'modal';
+        
+        // Set modal content
+        historyModal.innerHTML = `
+            <div class="modal-content">
+                <span class="close">&times;</span>
+                <h2>Transaction History</h2>
+                <div class="history-list" id="historyList">
+                    <!-- Transaction history will be loaded here -->
+                </div>
+            </div>
+        `;
+        
+        // Append to document body
+        document.body.appendChild(historyModal);
+        
+        // Add event listeners for closing the modal
+        const closeBtn = historyModal.querySelector('.close');
+        if (closeBtn) {
+            closeBtn.addEventListener('click', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                closeModal('historyModal');
+            });
+        }
+        
+        // Close modal when clicking outside the content
+        historyModal.addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeModal('historyModal');
             }
         });
     };
@@ -1529,7 +2044,9 @@ const TransactionHistory = (() => {
         showTransactionHistory,
         viewTransactionDetails,
         showMockTransactionHistory, // New method for mock data
-        viewMockTransactionDetails  // New method for mock data
+        viewMockTransactionDetails,  // New method for mock data
+        closeModal, // Make closeModal available globally
+        closeSwalModal  // Make closeSwalModal available globally
     };
 })();
 
@@ -1537,6 +2054,25 @@ const TransactionHistory = (() => {
 document.addEventListener('DOMContentLoaded', function() {
     console.log("DOM loaded - initializing TransactionHistory module");
     TransactionHistory.init();
+    
+    // Add a global ESC key handler to close any open modals
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+            if (document.querySelector('.swal2-container')) {
+                if (window.Swal) Swal.close();
+            }
+            
+            const openModals = document.querySelectorAll('.modal.show');
+            openModals.forEach(modal => {
+                if (modal.id) {
+                    const closeFunc = window.closeModal || TransactionHistory.closeModal;
+                    if (closeFunc) closeFunc(modal.id);
+                } else {
+                    modal.classList.remove('show');
+                }
+            });
+        }
+    });
 });
 
 // Make the showTransactionHistory function globally accessible for direct HTML onclick calls
