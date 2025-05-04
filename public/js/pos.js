@@ -167,7 +167,7 @@ document.addEventListener('DOMContentLoaded', function() {
         filterAndDisplayProducts();
     };
     
-    // Function to display products with proper image paths
+    // Function to display products with proper image paths and number formatting
     function displayProducts(products, category = 'all') {
         const productGrid = document.getElementById('productGrid');
         
@@ -203,7 +203,7 @@ document.addEventListener('DOMContentLoaded', function() {
         
         filteredProducts.forEach(product => {
             const stockStatus = product.stock > 10 ? 'normal' : (product.stock > 0 ? 'low' : 'out-of-stock');
-            const stockText = product.stock > 0 ? `${product.stock} in stock` : 'Out of stock';
+            const stockText = product.stock > 0 ? `${product.stock.toLocaleString()} in stock` : 'Out of stock';
             
             // Debug the image path
             console.log(`Product ${product.name} image path:`, product.image);
@@ -242,14 +242,14 @@ document.addEventListener('DOMContentLoaded', function() {
                 `;
             }
             
-            // Create product card HTML - adding cursor:pointer style and removing action buttons
+            // Create product card HTML with formatted prices
             productsHTML += `
                 <div class="item-card" data-id="${product.id}" style="cursor: pointer;">
                     ${imageHtml}
                     <div class="item-details">
                         <h3 class="item-name">${product.name}</h3>
                         <p class="item-category">${product.category || 'Uncategorized'}</p>
-                        <p class="item-price">₱${product.price.toFixed(2)}</p>
+                        <p class="item-price">₱${product.price.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</p>
                         <p class="item-stock ${stockStatus}-stock">${stockText}</p>
                     </div>
                 </div>
@@ -278,8 +278,33 @@ document.addEventListener('DOMContentLoaded', function() {
                         this.classList.remove('item-added-animation');
                     }, 500);
                 } else if (product) {
-                    // For out of stock items, show product details instead
-                    showProductDetails(productId);
+                    // Enhanced out-of-stock alert with gradient styling and proper close functionality
+                    Swal.fire({
+                        title: '<div class="out-of-stock-title"><i class="fas fa-times-circle"></i> Out of Stock</div>',
+                        html: `
+                            <div class="out-of-stock-content">
+                                <p>${product.name} is currently out of stock.</p>
+                                <div class="item-status-info">
+                                    <i class="fas fa-exclamation-circle"></i>
+                                    <span>This item is temporarily unavailable</span>
+                                </div>
+                            </div>
+                        `,
+                        icon: null,
+                        confirmButtonColor: '#3498db',
+                        background: '#141414',
+                        color: '#f5f5f5',
+                        showCloseButton: true,
+                        allowOutsideClick: true,
+                        customClass: {
+                            popup: 'out-of-stock-popup',
+                            title: 'out-of-stock-title',
+                            htmlContainer: 'out-of-stock-content',
+                            confirmButton: 'out-of-stock-button',
+                            closeButton: 'out-of-stock-close-button'
+                        },
+                        buttonsStyling: true
+                    });
                 }
             });
             
@@ -306,12 +331,26 @@ document.addEventListener('DOMContentLoaded', function() {
                 existingItem.quantity += 1;
             } else {
                 Swal.fire({
-                    title: 'Stock Limit Reached',
-                    text: `You've reached the maximum available stock for ${product.name}.`,
-                    icon: 'warning',
+                    title: '<div class="stock-limit-title"><i class="fas fa-exclamation-triangle"></i> Stock Limit Reached</div>',
+                    html: `
+                        <div class="stock-limit-content">
+                            <p>You've reached the maximum available stock for this item.</p>
+                            <div class="item-stock-info">
+                                <div class="item-name">${product.name}</div>
+                                <div class="stock-quantity">Available: ${product.stock} units</div>
+                            </div>
+                        </div>
+                    `,
+                    icon: null,
                     confirmButtonColor: '#3498db',
                     background: '#141414',
-                    color: '#f5f5f5'
+                    color: '#f5f5f5',
+                    customClass: {
+                        popup: 'stock-limit-popup',
+                        title: 'stock-limit-title',
+                        htmlContainer: 'stock-limit-content',
+                        confirmButton: 'stock-limit-button'
+                    }
                 });
                 return;
             }
@@ -333,7 +372,7 @@ document.addEventListener('DOMContentLoaded', function() {
         updateCart();
     };
 
-    // Function to update cart display (use the structure from posdesign.js)
+    // Function to update cart display with proper number formatting
     const updateCart = () => {
         const cartContainer = document.getElementById('cartItems');
         const checkoutBtn = document.getElementById('checkoutBtn');
@@ -360,7 +399,7 @@ document.addEventListener('DOMContentLoaded', function() {
             }
             checkoutBtn.disabled = true;
             
-            // Reset total to zero
+            // Reset total to zero with comma formatting
             const totalAmount = document.getElementById('totalAmount');
             if (totalAmount) {
                 totalAmount.textContent = '0.00';
@@ -401,8 +440,8 @@ document.addEventListener('DOMContentLoaded', function() {
             const tax = subtotal * 0.0012; // Changed from 0.5 to 0.0012 (0.12%);
             const total = subtotal + tax;
 
-            // Update only the total amount in the cart summary
-            document.getElementById('totalAmount').textContent = total.toFixed(2);
+            // Update only the total amount in the cart summary with comma formatting
+            document.getElementById('totalAmount').textContent = total.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
 
             // Update cart counter badge
             const totalItemsCount = cartItems.reduce((count, item) => count + item.quantity, 0);
@@ -437,14 +476,32 @@ document.addEventListener('DOMContentLoaded', function() {
                 // Remove item if quantity is 0 or less
                 removeFromCart(productId);
             } else if (newQuantity > product.stock) {
-                // Prevent exceeding stock
+                // Prevent exceeding stock with improved modal
                 Swal.fire({
-                    title: 'Stock Limit Reached',
-                    text: `Only ${product.stock} available for ${cartItems[itemIndex].name}.`,
-                    icon: 'warning',
+                    title: '<div class="stock-limit-title"><i class="fas fa-exclamation-triangle"></i> Stock Limit Reached</div>',
+                    html: `
+                        <div class="stock-limit-content">
+                            <p>You've reached the maximum available stock for this item.</p>
+                            <div class="item-stock-info">
+                                <div class="item-name">${cartItems[itemIndex].name}</div>
+                                <div class="stock-quantity">Available: ${product.stock} units</div>
+                            </div>
+                        </div>
+                    `,
+                    icon: null,
                     confirmButtonColor: '#3498db',
                     background: '#141414',
-                    color: '#f5f5f5'
+                    color: '#f5f5f5',
+                    showCloseButton: true,
+                    allowOutsideClick: true,
+                    customClass: {
+                        popup: 'stock-limit-popup',
+                        title: 'stock-limit-title',
+                        htmlContainer: 'stock-limit-content',
+                        confirmButton: 'stock-limit-button',
+                        closeButton: 'stock-limit-close-button'
+                    },
+                    buttonsStyling: true
                 });
             } else {
                 // Update quantity
@@ -491,14 +548,14 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     };
 
-    // Function to show product details
+    // Function to show product details with formatted numbers
     const showProductDetails = (productId) => {
         const product = allProducts.find(p => p.id === productId);
         if (!product) return;
         
         const modalContent = document.querySelector('.item-details-content');
         const stockStatus = product.stock > 10 ? 'normal' : (product.stock > 0 ? 'low' : 'out-of-stock');
-        const stockText = product.stock > 0 ? `${product.stock} in stock` : 'Out of stock';
+        const stockText = product.stock > 0 ? `${product.stock.toLocaleString()} in stock` : 'Out of stock';
         const disabledStatus = product.stock <= 0 ? 'disabled' : '';
         
         modalContent.innerHTML = `
@@ -510,6 +567,15 @@ document.addEventListener('DOMContentLoaded', function() {
                         <p>No image available</p>
                     </div>`
                 }
+                ${product.stock <= 0 ? 
+                    `<div class="out-of-stock-overlay">
+                        <div class="out-of-stock-badge">
+                            <i class="fas fa-times-circle"></i>
+                            <span>OUT OF STOCK</span>
+                        </div>
+                    </div>` : 
+                    ''
+                }
             </div>
             <h2>${product.name}</h2>
             <div class="item-details-info">
@@ -519,7 +585,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 </div>
                 <div class="item-details-row">
                     <span class="item-details-label">Price:</span>
-                    <span class="item-price-large">₱${product.price.toFixed(2)}</span>
+                    <span class="item-price-large">₱${product.price.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span>
                 </div>
                 <div class="item-details-row">
                     <span class="item-details-label">Stock:</span>
@@ -530,9 +596,14 @@ document.addEventListener('DOMContentLoaded', function() {
                     <span class="item-details-value">${product.description || 'No description available.'}</span>
                 </div>
             </div>
-            <button class="btn-add-to-cart-large" data-id="${product.id}" ${disabledStatus}>
-                <i class="fas fa-shopping-cart"></i> Add to Cart
-            </button>
+            ${product.stock <= 0 ?
+                `<button class="btn-out-of-stock" disabled>
+                    <i class="fas fa-exclamation-circle"></i> Out of Stock
+                </button>` :
+                `<button class="btn-add-to-cart-large" data-id="${product.id}">
+                    <i class="fas fa-shopping-cart"></i> Add to Cart
+                </button>`
+            }
         `;
         
         // Open the modal
@@ -556,7 +627,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     };
     
-    // Function to update checkout modal
+    // Function to update checkout modal with formatted numbers
     const updateCheckoutModal = () => {
         const checkoutItems = document.getElementById('checkoutItems');
         let checkoutHTML = '';
@@ -569,35 +640,71 @@ document.addEventListener('DOMContentLoaded', function() {
             checkoutHTML += `
                 <tr>
                     <td>${item.name}</td>
-                    <td>₱${item.price.toFixed(2)}</td>
-                    <td>${item.quantity}</td>
-                    <td>₱${itemTotal.toFixed(2)}</td>
+                    <td>₱${item.price.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
+                    <td>${item.quantity.toLocaleString()}</td>
+                    <td>₱${itemTotal.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
                 </tr>
             `;
         });
         
         checkoutItems.innerHTML = checkoutHTML;
         
-        // Update summary values
-        const tax = subtotal * 0.5;;
+        // Update summary values with formatted numbers
+        const tax = subtotal * TAX_RATE;
         const total = subtotal + tax;
         
-        document.getElementById('checkout-subtotal').textContent = subtotal.toFixed(2);
-        document.getElementById('checkout-tax').textContent = tax.toFixed(2);
-        document.getElementById('amountDue').textContent = total.toFixed(2);
+        document.getElementById('checkout-subtotal').textContent = subtotal.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
+        document.getElementById('checkout-tax').textContent = tax.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
+        document.getElementById('amountDue').textContent = total.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
         
-        // Reset discount
-        document.querySelectorAll('.discount-option input[type="checkbox"]').forEach(checkbox => {
-            checkbox.checked = false;
-        });
-        document.getElementById('discountIdContainer').style.display = 'none';
+        // Reset discount-related elements - hide them
         document.getElementById('discount-row').style.display = 'none';
         document.getElementById('checkout-discount').textContent = '0.00';
+
+        // Reset payment fields - create a new input element to avoid any lingering issues
+        const amountTenderedContainer = document.querySelector('.currency-input-wrapper');
+        if (amountTenderedContainer) {
+            const oldInput = document.getElementById('amountTendered');
+            const newInput = document.createElement('input');
+            
+            // Copy all attributes from the old input
+            newInput.type = "number";
+            newInput.id = "amountTendered";
+            newInput.className = "currency-input";
+            newInput.placeholder = "0.00";
+            newInput.step = "0.01";
+            newInput.min = "0";
+            
+            // Replace the old input with the new one
+            if (oldInput && oldInput.parentNode) {
+                oldInput.parentNode.replaceChild(newInput, oldInput);
+            }
+            
+            // Add event listener to the new input element
+            newInput.addEventListener('input', calculateChange);
+        }
         
-        // Reset payment fields
-        document.getElementById('amountTendered').value = '';
         document.getElementById('change').value = '₱0.00';
         document.getElementById('confirmPaymentBtn').disabled = true;
+
+        // Reset payment method to cash (default)
+        const cashRadio = document.querySelector('input[name="payment"][value="cash"]');
+        if (cashRadio) {
+            cashRadio.checked = true;
+        }
+        
+        // Show cash payment fields
+        const cashPaymentFields = document.getElementById('cashPaymentFields');
+        if (cashPaymentFields) {
+            cashPaymentFields.style.display = 'flex';
+        }
+        
+        // Reset button state
+        const confirmBtn = document.getElementById('confirmPaymentBtn');
+        if (confirmBtn) {
+            confirmBtn.disabled = true;
+            confirmBtn.innerHTML = '<i class="fas fa-check-circle"></i> Confirm Payment';
+        }
     };
     
     // Function to handle checkout
@@ -609,6 +716,15 @@ document.addEventListener('DOMContentLoaded', function() {
         const modal = document.getElementById('checkoutModal');
         modal.classList.add('show');
         document.body.style.overflow = 'hidden';
+        
+        // Focus on the amount tendered input after a short delay to ensure the modal is visible
+        setTimeout(() => {
+            const amountTenderedInput = document.getElementById('amountTendered');
+            if (amountTenderedInput) {
+                amountTenderedInput.value = '';  // Ensure it's clear
+                amountTenderedInput.focus();
+            }
+        }, 300);
     };
     
     // Function to complete transaction
@@ -620,24 +736,45 @@ document.addEventListener('DOMContentLoaded', function() {
             confirmBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
             
             // Get transaction details
-            const subtotal = parseFloat(document.getElementById('checkout-subtotal').textContent);
-            const tax = parseFloat(document.getElementById('checkout-tax').textContent);
-            const discountAmount = parseFloat(document.getElementById('checkout-discount').textContent || '0');
-            const total = parseFloat(document.getElementById('amountDue').textContent);
+            const subtotal = parseFloat(document.getElementById('checkout-subtotal').textContent.replace(/,/g, ''));
+            const tax = parseFloat(document.getElementById('checkout-tax').textContent.replace(/,/g, ''));
+            const discountAmount = parseFloat(document.getElementById('checkout-discount').textContent.replace(/,/g, '') || '0');
+            const total = parseFloat(document.getElementById('amountDue').textContent.replace(/,/g, ''));
             const amountTendered = parseFloat(document.getElementById('amountTendered').value);
             const change = amountTendered - total;
+            
+            // Get payment method details
+            const paymentMethodSelect = document.getElementById('paymentMethodSelect');
+            let paymentMethod = document.querySelector('input[name="payment"]:checked').value;
+            
+            // Get e-payment type if applicable
+            if (paymentMethod === 'epayment') {
+                const epaymentTypeSelect = document.getElementById('epaymentTypeSelect');
+                if (epaymentTypeSelect) {
+                    paymentMethod = epaymentTypeSelect.value;
+                }
+            }
+            
+            // Create a deep copy of cartItems to ensure data integrity
+            const itemsForTransaction = cartItems.map(item => ({
+                item_id: item.id,
+                name: item.name, // Add name for receipt
+                quantity: item.quantity,
+                price: item.price
+            }));
+            
+            // Keep a copy of cart items for receipt printing before clearing the cart
+            const cartItemsForReceipt = JSON.parse(JSON.stringify(cartItems));
             
             // Build transaction object
             const transaction = {
                 user_id: localStorage.getItem('userId'),
                 total_amount: total,
-                payment_method: 'cash', // Default to cash for now
-                items: cartItems.map(item => ({
-                    item_id: item.id,
-                    quantity: item.quantity,
-                    price: item.price
-                }))
+                payment_method: paymentMethod,
+                items: itemsForTransaction
             };
+            
+            console.log('Sending transaction to server:', transaction);
             
             // Send transaction to server
             const response = await fetch(`${API_URL}/transactions`, {
@@ -654,23 +791,144 @@ document.addEventListener('DOMContentLoaded', function() {
                 throw new Error(errorData.error || 'Transaction failed');
             }
             
-            // Show success message
-            Swal.fire({
-                title: 'Transaction Complete!',
-                text: `Total: ₱${total.toFixed(2)}, Change: ₱${change.toFixed(2)}`,
-                icon: 'success',
-                confirmButtonColor: '#3498db',
-                background: '#141414',
-                color: '#f5f5f5'
-            });
+            const responseData = await response.json();
+            console.log('Transaction response:', responseData);
             
-            // Close modal
+            // Add item information to response data for receipt
+            responseData.items = itemsForTransaction;
+            
+            const transactionId = responseData.transaction_id || 'N/A';
+            const transactionDate = new Date().toLocaleString();
+            
+            // Get customer-facing receipt name based on payment method 
+            const paymentMethodNames = {
+                'cash': 'Cash',
+                'card': 'Card',
+                'gcash': 'GCash',
+                'paymaya': 'PayMaya',
+                'ewallet': 'E-Wallet',
+                'banktransfer': 'Bank Transfer'
+            };
+            
+            const paymentMethodName = paymentMethodNames[paymentMethod] || 'Other';
+            
+            // Close checkout modal first to avoid UI issues
             const modal = document.getElementById('checkoutModal');
             modal.classList.remove('show');
             document.body.style.overflow = 'auto';
             
-            // Clear cart
+            // Reset the button state even if we're going to show a success modal
+            // This prevents the button from staying in processing state if something interrupts the flow
+            confirmBtn.disabled = false;
+            confirmBtn.innerHTML = '<i class="fas fa-check-circle"></i> Confirm Payment';
+            
+            // Format items for receipt
+            const itemList = cartItemsForReceipt.map(item => {
+                return `
+                    <tr>
+                        <td>${item.name}</td>
+                        <td class="text-right">${item.quantity.toLocaleString()}</td>
+                        <td class="text-right">₱${item.price.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
+                        <td class="text-right">₱${(item.price * item.quantity).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
+                    </tr>
+                `;
+            }).join('');
+            
+            // Create custom transaction complete modal with improved UI
+            Swal.fire({
+                title: '<div class="transaction-success-title"><i class="fas fa-check-circle success-icon pulse"></i>Transaction Complete!</div>',
+                html: `
+                    <div class="transaction-success-container">
+                        <div class="transaction-receipt-card">
+                            <div class="transaction-header">
+                                <div class="transaction-id">Transaction #${transactionId}</div>
+                                <div class="transaction-date">${transactionDate}</div>
+                            </div>
+                            
+                            <div class="transaction-payment-info">
+                                <div class="payment-method">
+                                    <i class="${getPaymentIcon(paymentMethod)}"></i>
+                                    <span>${paymentMethodName}</span>
+                                </div>
+                                
+                                <div class="transaction-amount">
+                                    <div class="amount-label">Total Paid</div>
+                                    <div class="amount-value">₱${total.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</div>
+                                </div>
+                                
+                                ${paymentMethod === 'cash' ? `
+                                    <div class="payment-details">
+                                        <div class="payment-detail">
+                                            <span>Amount Tendered:</span>
+                                            <span>₱${amountTendered.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span>
+                                        </div>
+                                        <div class="payment-detail">
+                                            <span>Change:</span>
+                                            <span>₱${change.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span>
+                                        </div>
+                                    </div>
+                                ` : ''}
+                            </div>
+                            
+                            <div class="transaction-items">
+                                <div class="items-header">Items Purchased</div>
+                                <div class="items-table-container">
+                                    <table class="items-table">
+                                        <thead>
+                                            <tr>
+                                                <th>Item</th>
+                                                <th class="text-right">Qty</th>
+                                                <th class="text-right">Price</th>
+                                                <th class="text-right">Subtotal</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            ${itemList}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="receipt-actions">
+                            <button class="btn-print-receipt">
+                                <i class="fas fa-print"></i> Print Receipt
+                            </button>
+                        </div>
+                    </div>
+                `,
+                showConfirmButton: true,
+                confirmButtonText: 'Done',
+                confirmButtonColor: '#3498db',
+                background: '#141414',
+                width: '500px',
+                padding: '1rem',
+                customClass: {
+                    popup: 'transaction-success-popup',
+                    title: 'transaction-success-title-container',
+                    confirmButton: 'transaction-confirm-button',
+                    htmlContainer: 'transaction-success-html-container'
+                },
+                showClass: {
+                    popup: 'animate__animated animate__fadeInUp animate__faster'
+                },
+                hideClass: {
+                    popup: 'animate__animated animate__fadeOutDown animate__faster'
+                },
+                didOpen: () => {
+                    // Add event listener for print receipt button
+                    document.querySelector('.btn-print-receipt').addEventListener('click', function() {
+                        // Use the saved copy of cart items for receipt printing
+                        printReceipt(responseData, cartItemsForReceipt, total, amountTendered, change, paymentMethodName);
+                    });
+                }
+            });
+            
+            // Clear cart - make sure to reset the array AND localStorage
             cartItems = [];
+            localStorage.removeItem('cartItems');
+            
+            // Reset UI elements
             updateCart();
             
             // Refresh product list to update stock
@@ -692,9 +950,249 @@ document.addEventListener('DOMContentLoaded', function() {
             // Reset button
             const confirmBtn = document.getElementById('confirmPaymentBtn');
             confirmBtn.disabled = false;
-            confirmBtn.textContent = 'Confirm Payment';
+            confirmBtn.innerHTML = '<i class="fas fa-check-circle"></i> Confirm Payment';
         }
     };
+    
+    // Helper function to get payment icon based on payment method
+    function getPaymentIcon(paymentMethod) {
+        const iconMap = {
+            'cash': 'fas fa-money-bill-wave',
+            'card': 'fas fa-credit-card',
+            'gcash': 'fas fa-mobile-alt',
+            'paymaya': 'fas fa-wallet',
+            'ewallet': 'fas fa-mobile-alt',
+            'banktransfer': 'fas fa-university'
+        };
+        
+        return iconMap[paymentMethod] || 'fas fa-dollar-sign';
+    }
+    
+    // Function to print receipt
+    function printReceipt(transaction, items, total, amountTendered, change, paymentMethodName) {
+        const receiptDate = new Date().toLocaleString();
+        const receiptNumber = generateReceiptNumber();
+        
+        // If items array is empty or undefined, try to extract it from the transaction data
+        if (!items || items.length === 0) {
+            console.log('No items provided to printReceipt, attempting to extract from transaction data');
+            console.log('Transaction data:', transaction);
+            
+            if (transaction && transaction.items && Array.isArray(transaction.items)) {
+                items = transaction.items;
+                console.log('Using items from transaction data:', items);
+            } else {
+                console.error('No items available for receipt');
+                items = [];
+            }
+        }
+        
+        // Calculate subtotal directly from items to ensure accuracy
+        const subtotal = items.reduce((sum, item) => {
+            const price = parseFloat(item.price);
+            const quantity = parseInt(item.quantity);
+            const itemTotal = price * quantity;
+            console.log(`Item: ${item.name}, Price: ${price}, Qty: ${quantity}, Total: ${itemTotal}`);
+            return sum + itemTotal;
+        }, 0);
+        
+        console.log('Calculated subtotal:', subtotal);
+        
+        // Calculate tax
+        const tax = subtotal * TAX_RATE;
+        console.log('Calculated tax:', tax);
+        
+        // Calculate total if not provided
+        if (!total || total === 0) {
+            total = subtotal + tax;
+        }
+        console.log('Final total:', total);
+        
+        // Format items for receipt
+        const receiptItems = items.map(item => {
+            const price = parseFloat(item.price);
+            const quantity = parseInt(item.quantity);
+            const itemTotal = price * quantity;
+            
+            return `
+                <tr>
+                    <td style="text-align: left; padding: 3px 5px;">${item.name || 'Unknown Item'}</td>
+                    <td style="text-align: center; padding: 3px 5px;">${quantity}</td>
+                    <td style="text-align: right; padding: 3px 5px;">₱${price.toFixed(2)}</td>
+                    <td style="text-align: right; padding: 3px 5px;">₱${itemTotal.toFixed(2)}</td>
+                </tr>
+            `;
+        }).join('');
+        
+        const printWindow = window.open('', '_blank');
+        printWindow.document.write(`
+            <html>
+                <head>
+                    <title>Receipt #${receiptNumber}</title>
+                    <style>
+                        body {
+                            font-family: 'Courier New', monospace;
+                            font-size: 12px;
+                            margin: 0;
+                            padding: 20px;
+                            color: #000;
+                            max-width: 300px;
+                            margin: 0 auto;
+                        }
+                        .receipt-header {
+                            text-align: center;
+                            margin-bottom: 10px;
+                            padding-bottom: 10px;
+                            border-bottom: 1px dashed #000;
+                        }
+                        .receipt-header h1 {
+                            font-size: 18px;
+                            margin: 0;
+                        }
+                        .receipt-header p {
+                            margin: 4px 0;
+                            font-size: 12px;
+                        }
+                        .transaction-info {
+                            margin-bottom: 10px;
+                            font-size: 12px;
+                        }
+                        .transaction-info p {
+                            margin: 3px 0;
+                        }
+                        .receipt-items {
+                            width: 100%;
+                            border-collapse: collapse;
+                            margin: 10px 0;
+                            font-size: 11px;
+                        }
+                        .receipt-items th {
+                            text-align: left;
+                            padding: 3px 5px;
+                            border-bottom: 1px solid #000;
+                            font-weight: bold;
+                        }
+                        .receipt-items td {
+                            padding: 3px 5px;
+                        }
+                        .receipt-totals {
+                            margin-top: 10px;
+                            text-align: right;
+                            font-size: 12px;
+                            border-top: 1px dashed #000;
+                            padding-top: 10px;
+                        }
+                        .receipt-totals .row {
+                            display: flex;
+                            justify-content: space-between;
+                            margin: 3px 0;
+                        }
+                        .receipt-total {
+                            font-weight: bold;
+                            font-size: 13px;
+                            margin: 5px 0;
+                        }
+                        .payment-info {
+                            margin-top: 10px;
+                            text-align: left;
+                            font-size: 12px;
+                        }
+                        .payment-info .row {
+                            display: flex;
+                            justify-content: space-between;
+                            margin: 3px 0;
+                        }
+                        .receipt-footer {
+                            text-align: center;
+                            margin-top: 15px;
+                            border-top: 1px dashed #000;
+                            padding-top: 10px;
+                            font-size: 11px;
+                        }
+                        @media print {
+                            body {
+                                width: 80mm; /* Standard thermal receipt width */
+                                margin: 0;
+                                padding: 5px;
+                            }
+                        }
+                    </style>
+                </head>
+                <body>
+                    <div class="receipt-header">
+                        <h1>MotorTech</h1>
+                        <p>Parts & Accessories Shop</p>
+                        <p>123 Main Street, Taguig City</p>
+                        <p>Tel: (02) 8123-4567</p>
+                        <p>VAT Reg #: 123-456-789-000</p>
+                    </div>
+                    
+                    <div class="transaction-info">
+                        <p><strong>Receipt #:</strong> ${receiptNumber}</p>
+                        <p><strong>Date:</strong> ${receiptDate}</p>
+                        <p><strong>Transaction ID:</strong> ${transaction.transaction_id || "N/A"}</p>
+                        <p><strong>Cashier:</strong> ${localStorage.getItem('userName') || 'Staff'}</p>
+                    </div>
+                    
+                    <table class="receipt-items">
+                        <thead>
+                            <tr>
+                                <th style="text-align: left; width: 40%;">Item</th>
+                                <th style="text-align: center; width: 15%;">Qty</th>
+                                <th style="text-align: right; width: 20%;">Price</th>
+                                <th style="text-align: right; width: 25%;">Total</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${receiptItems}
+                        </tbody>
+                    </table>
+                    
+                    <div class="receipt-totals">
+                        <div class="row">
+                            <span>Subtotal:</span>
+                            <span>₱${subtotal.toFixed(2)}</span>
+                        </div>
+                        <div class="row">
+                            <span>VAT (${(TAX_RATE * 100).toFixed(0)}%):</span>
+                            <span>₱${tax.toFixed(2)}</span>
+                        </div>
+                        <div class="row receipt-total">
+                            <span>TOTAL:</span>
+                            <span>₱${total.toFixed(2)}</span>
+                        </div>
+                    </div>
+                    
+                    <div class="payment-info">
+                        <p><strong>Payment Method:</strong> ${paymentMethodName}</p>
+                        ${paymentMethodName === 'Cash' ? `
+                            <div class="row">
+                                <span>Amount Tendered:</span>
+                                <span>₱${amountTendered.toFixed(2)}</span>
+                            </div>
+                            <div class="row">
+                                <span>Change:</span>
+                                <span>₱${change.toFixed(2)}</span>
+                            </div>
+                        ` : ''}
+                    </div>
+                    
+                    <div class="receipt-footer">
+                        <p>Thank you for shopping at MotorTech Motorsport!</p>
+                        <p>This serves as your official receipt.</p>
+                        <p>Come back again!</p>
+                    </div>
+                </body>
+                <script>
+                    window.onload = function() {
+                        window.print();
+                    }
+                </script>
+            </html>
+        `);
+        printWindow.document.close();
+        printWindow.focus();
+    }
     
     // Function to show transaction history
     const showTransactionHistory = async () => {
@@ -752,7 +1250,7 @@ document.addEventListener('DOMContentLoaded', function() {
                                 <span class="transaction-id">#${transaction.transaction_id}</span>
                                 <span class="transaction-date">${formattedDate}</span>
                             </div>
-                            <div class="transaction-amount">₱${parseFloat(transaction.total_amount).toFixed(2)}</div>
+                            <div class="transaction-amount">₱${parseFloat(transaction.total_amount).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</div>
                         </div>
                         <button class="btn-view-transaction" data-id="${transaction.transaction_id}">
                             View Details
@@ -785,7 +1283,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     };
     
-    // Function to view transaction details
+    // Function to view transaction details with formatted numbers
     const viewTransactionDetails = async (transactionId) => {
         try {
             // Fetch transaction details from server
@@ -807,7 +1305,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 minute: '2-digit'
             });
             
-            // Show transaction details in a SweetAlert
+            // Show transaction details in a SweetAlert with formatted numbers
             Swal.fire({
                 title: `Transaction #${transaction.transaction_id}`,
                 html: `
@@ -830,9 +1328,9 @@ document.addEventListener('DOMContentLoaded', function() {
                             ${transaction.items.map(item => `
                                 <tr>
                                     <td>${item.item_name}</td>
-                                    <td>₱${parseFloat(item.price).toFixed(2)}</td>
-                                    <td>${item.quantity}</td>
-                                    <td>₱${(item.price * item.quantity).toFixed(2)}</td>
+                                    <td>₱${parseFloat(item.price).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
+                                    <td>${item.quantity.toLocaleString()}</td>
+                                    <td>₱${(item.price * item.quantity).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
                                 </tr>
                             `).join('')}
                         </tbody>
@@ -841,7 +1339,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     <div class="transaction-details-summary">
                         <div class="summary-row">
                             <span>Total:</span>
-                            <span>₱${transaction.total_amount.toFixed(2)}</span>
+                            <span>₱${transaction.total_amount.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span>
                         </div>
                     </div>
                 </div>
@@ -885,45 +1383,80 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     };
     
-    // Function to calculate change
+    // Function to calculate change with formatted numbers
     const calculateChange = () => {
-        const amountDue = parseFloat(document.getElementById('amountDue').textContent);
+        const amountDue = parseFloat(document.getElementById('amountDue').textContent.replace(/,/g, ''));
         const amountTendered = parseFloat(document.getElementById('amountTendered').value) || 0;
         
-        const change = amountTendered - amountDue;
-        document.getElementById('change').value = change >= 0 ? `₱${change.toFixed(2)}` : '₱0.00';
+        // Only calculate change if tendered amount is sufficient
+        const change = amountTendered >= amountDue ? (amountTendered - amountDue) : 0;
+        const changeElement = document.getElementById('change');
+        
+        changeElement.value = `₱${change.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+        
+        // Add highlight animation when change value updates
+        changeElement.classList.remove('highlight-change');
+        void changeElement.offsetWidth; // Trigger reflow to restart animation
+        changeElement.classList.add('highlight-change');
         
         // Enable/disable confirm button based on whether enough money was tendered
         const confirmBtn = document.getElementById('confirmPaymentBtn');
         confirmBtn.disabled = amountTendered < amountDue;
     };
     
-    // Function to handle logout with fixed-size modal
+    // Function to handle logout with enhanced modal
     const handleLogout = () => {
         Swal.fire({
-            title: 'Logout Confirmation',
-            text: 'Are you sure you want to log out?',
-            icon: 'question',
+            title: '<div class="logout-title"><i class="fas fa-sign-out-alt"></i> Logout Confirmation</div>',
+            html: `
+                <div class="logout-content">
+                    <p>Are you sure you want to log out from the system?</p>
+                    <div class="logout-user-info">
+                        <i class="fas fa-user-circle"></i>
+                        <span>${localStorage.getItem('userName') || 'User'}</span>
+                    </div>
+                </div>
+            `,
+            icon: null,
             showCancelButton: true,
-            confirmButtonText: 'Yes, Logout',
-            cancelButtonText: 'Cancel',
+            confirmButtonText: '<i class="fas fa-sign-out-alt"></i> Yes, Logout',
+            cancelButtonText: '<i class="fas fa-times"></i> Cancel',
             confirmButtonColor: '#3498db',
+            cancelButtonColor: '#2c3e50',
             background: '#141414',
             color: '#f5f5f5',
             width: '400px', // Fixed width for logout modal
             customClass: {
-                container: 'fixed-size-modal'
-            }
+                container: 'fixed-size-modal',
+                title: 'logout-modal-title',
+                htmlContainer: 'logout-modal-content',
+                confirmButton: 'logout-confirm-button',
+                cancelButton: 'logout-cancel-button',
+                popup: 'logout-modal-popup'
+            },
+            buttonsStyling: true
         }).then((result) => {
             if (result.isConfirmed) {
-                // Clear all authentication data
-                localStorage.removeItem('authToken');
-                localStorage.removeItem('userName');
-                localStorage.removeItem('userRole');
-                localStorage.removeItem('userId');
-                
-                // Redirect to login page
-                window.location.href = 'login.html';
+                // Show a brief loading state
+                Swal.fire({
+                    title: 'Logging Out',
+                    html: '<i class="fas fa-circle-notch fa-spin"></i>',
+                    showConfirmButton: false,
+                    allowOutsideClick: false,
+                    timer: 800,
+                    background: '#141414',
+                    color: '#f5f5f5',
+                    didOpen: () => {
+                        // Clear all authentication data
+                        localStorage.removeItem('authToken');
+                        localStorage.removeItem('userName');
+                        localStorage.removeItem('userRole');
+                        localStorage.removeItem('userId');
+                    }
+                }).then(() => {
+                    // Redirect to login page
+                    window.location.href = 'login.html';
+                });
             }
         });
     };
@@ -987,7 +1520,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 </div>
                 
                 <button class="btn-checkout" id="checkoutBtn" disabled>Checkout</button>
-                <button class="btn-history" id="historyBtn">Transaction History</button>
+                <button class="btn-history" id="historyBtn" onclick="window.TransactionHistory?.showTransactionHistory()">Transaction History</button>
             `;
         }
         
@@ -1016,22 +1549,26 @@ document.addEventListener('DOMContentLoaded', function() {
                 <div class="discount-options">
                     <h3>Apply Discount</h3>
                     <div class="discount-types">
-                        <div class="discount-option">
-                            <input type="checkbox" id="seniorDiscount" class="discount-checkbox">
-                            <label for="seniorDiscount">Senior Discount (20%)</label>
-                        </div>
-                        <div class="discount-option">
-                            <input type="checkbox" id="pwdDiscount" class="discount-checkbox">
-                            <label for="pwdDiscount">PWD Discount (20%)</label>
-                        </div>
-                        <div class="discount-option">
-                            <input type="checkbox" id="promoDiscount" class="discount-checkbox">
-                            <label for="promoDiscount">Promo Code (10%)</label>
-                        </div>
+                        <label class="discount-option">
+                            <input type="checkbox" name="discountType" value="senior" id="seniorDiscount">
+                            <span class="checkbox-custom"></span>
+                            <span>Senior Citizen (5%)</span>
+                        </label>
+                        <label class="discount-option">
+                            <input type="checkbox" name="discountType" value="pwd" id="pwdDiscount">
+                            <span class="checkbox-custom"></span>
+                            <span>PWD (2%)</span>
+                        </label>
+                        <label class="discount-option">
+                            <input type="checkbox" name="discountType" value="loyalty" id="loyaltyDiscount">
+                            <span class="checkbox-custom"></span>
+                            <span>Loyalty (3%)</span>
+                        </label>
                     </div>
-                    <div id="discountIdContainer" style="display:none">
-                        <label for="discountId">ID Number:</label>
-                        <input type="text" id="discountId" placeholder="Enter ID Number">
+                    
+                    <div id="discountIdContainer" class="discount-id-container" style="display: none;">
+                        <label for="discountIdNumber">ID Number:</label>
+                        <input type="text" id="discountIdNumber" placeholder="Enter ID number">
                     </div>
                 </div>
                 
@@ -1045,102 +1582,98 @@ document.addEventListener('DOMContentLoaded', function() {
                         <span>Tax (12%):</span>
                         <span>₱<span id="checkout-tax">0.00</span></span>
                     </div>
-                    <div class="summary-row" id="discount-row" style="display:none">
+                    <div class="summary-row" id="discount-row" style="display: none;">
                         <span>Discount:</span>
                         <span>₱<span id="checkout-discount">0.00</span></span>
                     </div>
-                    <div class="summary-row total">
-                        <span>Amount Due:</span>
+                    <div class="summary-row total-final">
+                        <span>Total Due:</span>
                         <span>₱<span id="amountDue">0.00</span></span>
                     </div>
                 </div>
                 
-                <!-- Payment Form -->
-                <div class="payment-form">
+                <!-- Payment Method Selection -->
+                <h3>Payment Method</h3>
+                <div class="payment-options">
+                    <label>
+                        <input type="radio" name="payment" value="cash" checked>
+                        <i class="fas fa-money-bill-wave"></i>
+                        <span>Cash</span>
+                    </label>
+                    <label>
+                        <input type="radio" name="payment" value="ewallet">
+                        <i class="fas fa-mobile-alt"></i>
+                        <span>E-Wallet</span>
+                    </label>
+                    <label>
+                        <input type="radio" name="payment" value="card">
+                        <i class="fas fa-credit-card"></i>
+                        <span>Card</span>
+                    </label>
+                    <label>
+                        <input type="radio" name="payment" value="banktransfer">
+                        <i class="fas fa-university"></i>
+                        <span>Bank Transfer</span>
+                    </label>
+                </div>
+                
+                <!-- Cash Payment Fields (only shown for cash payment) -->
+                <div id="cashPaymentFields" class="payment-input">
+                    <div class="cash-payment-header">
+                        <div class="cash-payment-title">
+                            <i class="fas fa-money-bill-wave"></i> Cash Payment
+                        </div>
+                    </div>
+                    <div class="cash-payment-subtitle">
+                        Enter the amount received from customer
+                    </div>
+                    
                     <div class="form-group">
-                        <label for="amountTendered">Amount Tendered:</label>
-                        <input type="number" id="amountTendered" min="0" step="0.01" placeholder="Enter amount">
+                        <label for="amountTendered">
+                            <i class="fas fa-hand-holding-usd"></i> Amount Tendered:
+                        </label>
+                        <div class="currency-input-wrapper">
+                            <input type="number" id="amountTendered" class="currency-input" placeholder="0.00" step="0.01" min="0">
+                        </div>
                     </div>
                     <div class="form-group">
-                        <label for="change">Change:</label>
+                        <label for="change">
+                            <i class="fas fa-coins"></i> Change:
+                        </label>
                         <input type="text" id="change" value="₱0.00" readonly>
                     </div>
                 </div>
                 
-                <div class="modal-actions">
-                    <button id="confirmPaymentBtn" class="btn-primary" disabled>Confirm Payment</button>
-                    <button id="cancelPaymentBtn" class="btn-secondary">Cancel</button>
-                </div>
+                <button class="btn-confirm-payment" id="confirmPaymentBtn" disabled>Complete Payment</button>
             `;
-            
-            // Add event listeners for discount checkboxes
-            document.querySelectorAll('.discount-checkbox').forEach(checkbox => {
-                checkbox.addEventListener('change', function() {
-                    // Uncheck other checkboxes
-                    document.querySelectorAll('.discount-checkbox').forEach(cb => {
-                        if (cb !== this) cb.checked = false;
-                    });
-                    
-                    // Show/hide ID container
-                    const discountIdContainer = document.getElementById('discountIdContainer');
-                    const discountRow = document.getElementById('discount-row');
-                    
-                    if (this.checked && (this.id === 'seniorDiscount' || this.id === 'pwdDiscount')) {
-                        discountIdContainer.style.display = 'block';
-                    } else {
-                        discountIdContainer.style.display = 'none';
-                    }
-                    
-                    // Calculate discount
-                    const subtotal = parseFloat(document.getElementById('checkout-subtotal').textContent);
-                    let discountRate = 0;
-                    
-                    if (this.checked) {
-                        if (this.id === 'seniorDiscount' || this.id === 'pwdDiscount') {
-                            discountRate = 0.2; // 20% discount
-                        } else if (this.id === 'promoDiscount') {
-                            discountRate = 0.1; // 10% discount
-                        }
-                        
-                        discountRow.style.display = 'flex';
-                    } else {
-                        discountRow.style.display = 'none';
-                    }
-                    
-                    const discountAmount = subtotal * discountRate;
-                    document.getElementById('checkout-discount').textContent = discountAmount.toFixed(2);
-                    
-                    // Update amount due
-                    const tax = parseFloat(document.getElementById('checkout-tax').textContent);
-                    const amountDue = subtotal + tax - discountAmount;
-                    document.getElementById('amountDue').textContent = amountDue.toFixed(2);
-                    
-                    // Reset change calculation
-                    document.getElementById('amountTendered').value = '';
-                    document.getElementById('change').value = '₱0.00';
-                    document.getElementById('confirmPaymentBtn').disabled = true;
-                });
-            });
             
             // Add event listener for amount tendered input
             const amountTenderedInput = document.getElementById('amountTendered');
             if (amountTenderedInput) {
-                amountTenderedInput.addEventListener('input', calculateChange);
+                // Remove any existing listeners first to prevent duplicates
+                const newAmountTenderedInput = amountTenderedInput.cloneNode(true);
+                amountTenderedInput.parentNode.replaceChild(newAmountTenderedInput, amountTenderedInput);
+                
+                // Add the new event listener
+                newAmountTenderedInput.addEventListener('input', calculateChange);
+                
+                // Add focus event to help with mobile devices
+                newAmountTenderedInput.addEventListener('focus', function() {
+                    // On some mobile devices, this helps ensure the keyboard appears
+                    this.blur();
+                    this.focus();
+                });
             }
             
             // Add event listener for confirm payment button
             const confirmPaymentBtn = document.getElementById('confirmPaymentBtn');
             if (confirmPaymentBtn) {
-                confirmPaymentBtn.addEventListener('click', completeTransaction);
-            }
-            
-            // Add event listener for cancel payment button
-            const cancelPaymentBtn = document.getElementById('cancelPaymentBtn');
-            if (cancelPaymentBtn) {
-                cancelPaymentBtn.addEventListener('click', function() {
-                    checkoutModal.classList.remove('show');
-                    document.body.style.overflow = 'auto';
-                });
+                // Remove any existing listeners first to prevent duplicates
+                const newConfirmPaymentBtn = confirmPaymentBtn.cloneNode(true);
+                confirmPaymentBtn.parentNode.replaceChild(newConfirmPaymentBtn, confirmPaymentBtn);
+                
+                // Add the new event listener
+                newConfirmPaymentBtn.addEventListener('click', completeTransaction);
             }
         }
         
@@ -1196,8 +1729,68 @@ document.addEventListener('DOMContentLoaded', function() {
         // History button
         const historyBtn = document.getElementById('historyBtn');
         if (historyBtn) {
-            historyBtn.addEventListener('click', showTransactionHistory);
+            historyBtn.addEventListener('click', function(e) {
+                e.preventDefault();
+                console.log('History button clicked from pos.js handler');
+                if (window.TransactionHistory && window.TransactionHistory.showTransactionHistory) {
+                    window.TransactionHistory.showTransactionHistory();
+                } else {
+                    console.error('TransactionHistory module not loaded');
+                    // Try to load and initialize it on the fly
+                    const script = document.createElement('script');
+                    script.src = 'js/transactionHistory.js';
+                    script.onload = function() {
+                        if (window.TransactionHistory) {
+                            window.TransactionHistory.init();
+                            window.TransactionHistory.showTransactionHistory();
+                        }
+                    };
+                    document.body.appendChild(script);
+                }
+            });
         }
+
+        // Payment method radio buttons - improve handling to focus the input field
+        document.querySelectorAll('input[name="payment"]').forEach(radio => {
+            // Remove existing listeners to prevent duplicates
+            const newRadio = radio.cloneNode(true);
+            radio.parentNode.replaceChild(newRadio, radio);
+            
+            // Add new listener with improved functionality
+            newRadio.addEventListener('change', function() {
+                const cashPaymentFields = document.getElementById('cashPaymentFields');
+                const confirmPaymentBtn = document.getElementById('confirmPaymentBtn');
+                const amountTenderedInput = document.getElementById('amountTendered');
+                
+                if (this.value === 'cash') {
+                    // Show cash payment fields
+                    cashPaymentFields.style.display = 'flex';
+                    
+                    // Disable confirm button until valid amount is entered
+                    confirmPaymentBtn.disabled = true;
+                    
+                    // Check if there's already a valid amount
+                    const amountTendered = parseFloat(amountTenderedInput.value) || 0;
+                    const amountDue = parseFloat(document.getElementById('amountDue').textContent.replace(/,/g, ''));
+                    
+                    // Enable button if amount is valid
+                    confirmPaymentBtn.disabled = amountTendered < amountDue;
+                    
+                    // Focus the input field after a short delay to ensure UI is updated
+                    setTimeout(() => {
+                        if (amountTenderedInput) {
+                            amountTenderedInput.focus();
+                        }
+                    }, 100);
+                } else {
+                    // Hide cash payment fields for non-cash methods
+                    cashPaymentFields.style.display = 'none';
+                    
+                    // Enable button immediately (since payment is exact)
+                    confirmPaymentBtn.disabled = false;
+                }
+            });
+        });
     };
     
     // Initialize the page
@@ -1209,7 +1802,7 @@ document.addEventListener('DOMContentLoaded', function() {
             // Hide all payment details
             document.getElementById('cashDetails').classList.remove('active');
             document.getElementById('cardDetails').classList.remove('active');
-            document.getElementById('gcashDetails').classList.remove('active');
+            document.getElementById('ewalletDetails').classList.remove('active');
             
             // Show the selected payment details
             document.getElementById(`${this.value}Details`).classList.add('active');
@@ -1244,19 +1837,19 @@ document.addEventListener('DOMContentLoaded', function() {
                 </button>
                 <div class="cart-item-header">
                     <div class="cart-item-name">${item.name}</div>
-                    <div class="cart-item-price">₱${parseFloat(item.price).toFixed(2)}</div>
+                    <div class="cart-item-price">₱${parseFloat(item.price).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</div>
                 </div>
                 <div class="cart-item-footer">
                     <div class="cart-item-quantity">
                         <button class="quantity-btn" onclick="updateQuantity(${item.id}, -1)">
                             <i class="fas fa-minus"></i>
                         </button>
-                        <div class="quantity-value">${item.quantity}</div>
+                        <div class="quantity-value">${item.quantity.toLocaleString()}</div>
                         <button class="quantity-btn" onclick="updateQuantity(${item.id}, 1)">
                             <i class="fas fa-plus"></i>
                         </button>
                     </div>
-                    <div class="cart-item-subtotal">₱${(item.price * item.quantity).toFixed(2)}</div>
+                    <div class="cart-item-subtotal">₱${(item.price * item.quantity).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</div>
                 </div>
             </div>
         `;
@@ -1273,7 +1866,7 @@ document.addEventListener('DOMContentLoaded', function() {
         // Collect payment details based on payment method
         if (paymentMethod === 'cash') {
             const cashAmount = parseFloat(document.getElementById('cashAmount').value) || 0;
-            const changeAmount = parseFloat(document.getElementById('changeAmount').value.replace('₱', '')) || 0;
+            const changeAmount = parseFloat(document.getElementById('changeAmount').value.replace('₱', '').replace(/,/g, '')) || 0;
             
             paymentDetails = {
                 method: 'cash',
@@ -1283,15 +1876,21 @@ document.addEventListener('DOMContentLoaded', function() {
         } else if (paymentMethod === 'card') {
             paymentDetails = {
                 method: 'card',
-                cardNumber: document.getElementById('cardNumber').value,
-                cardName: document.getElementById('cardName').value,
-                cardExpiry: document.getElementById('cardExpiry').value
+                cardNumber: document.getElementById('cardNumber')?.value || '',
+                cardName: document.getElementById('cardName')?.value || '',
+                cardExpiry: document.getElementById('cardExpiry')?.value || ''
             };
-        } else if (paymentMethod === 'gcash') {
+        } else if (paymentMethod === 'ewallet') {
             paymentDetails = {
-                method: 'gcash',
-                gcashNumber: document.getElementById('gcashNumber').value,
-                referenceNumber: document.getElementById('gcashReference').value
+                method: 'ewallet',
+                ewalletNumber: document.getElementById('ewalletNumber')?.value || '',
+                referenceNumber: document.getElementById('ewalletReference')?.value || ''
+            };
+        } else if (paymentMethod === 'banktransfer') {
+            paymentDetails = {
+                method: 'banktransfer',
+                bankAccount: document.getElementById('bankAccount')?.value || '',
+                referenceNumber: document.getElementById('bankReference')?.value || ''
             };
         }
         
@@ -1299,8 +1898,36 @@ document.addEventListener('DOMContentLoaded', function() {
         paymentDetails.printReceipt = printReceipt;
         paymentDetails.emailReceipt = emailReceipt;
         
-        // Process the transaction (existing logic)
-        // ...
+        // Use the correct cart data
+        // Important fix - use cartItems (global array) instead of cart
+        // First, try to use the cartItems global array if it exists and has items
+        if (window.cartItems && window.cartItems.length > 0) {
+            paymentDetails.items = [...window.cartItems]; // Make a copy to avoid reference issues
+        } 
+        // If cartItems isn't available, fall back to the cart array
+        else if (cart && cart.length > 0) {
+            paymentDetails.items = [...cart]; // Make a copy to avoid reference issues
+        }
+        // If both are empty, check localStorage
+        else {
+            const storedCart = JSON.parse(localStorage.getItem('cartItems')) || [];
+            paymentDetails.items = storedCart;
+        }
+        
+        console.log("Items for receipt:", paymentDetails.items);
+        
+        // Calculate receipt totals from items to ensure consistency
+        if (paymentDetails.items && paymentDetails.items.length > 0) {
+            paymentDetails.subtotal = paymentDetails.items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+            paymentDetails.tax = paymentDetails.subtotal * 0.12;
+            paymentDetails.total = paymentDetails.subtotal + paymentDetails.tax;
+        } else {
+            console.error("No items found for receipt");
+            // Fallback to values from the UI if available
+            paymentDetails.subtotal = parseFloat(document.getElementById('subtotalAmount')?.textContent?.replace('₱', '')?.replace(/,/g, '') || '0');
+            paymentDetails.tax = parseFloat(document.getElementById('checkout-tax')?.textContent?.replace(/,/g, '') || '0');
+            paymentDetails.total = parseFloat(document.getElementById('totalAmount')?.textContent?.replace('₱', '')?.replace(/,/g, '') || '0');
+        }
         
         // Generate and print receipt if needed
         if (printReceipt) {
@@ -1308,154 +1935,218 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
     
-    // Generate and print receipt function
+    // Generate and print receipt function with proper item handling
     function generateAndPrintReceipt(paymentDetails) {
-        // Create receipt HTML
-        const receiptHTML = `
-            <div class="receipt">
-                <div class="receipt-header">
-                    <h2>MotorTech</h2>
-                    <p>Motorcycle Parts & Accessories</p>
-                    <p>${new Date().toLocaleString()}</p>
-                    <p>Receipt #: ${generateReceiptNumber()}</p>
-                </div>
-                <div class="receipt-items">
-                    ${cart.map(item => `
-                        <div class="receipt-item">
-                            <div class="receipt-item-details">
-                                <span class="receipt-item-name">${item.name}</span>
-                                <span class="receipt-item-quantity">x${item.quantity}</span>
-                            </div>
-                            <span class="receipt-item-price">₱${(item.price * item.quantity).toFixed(2)}</span>
-                        </div>
-                    `).join('')}
-                </div>
-                <div class="receipt-summary">
-                    <div class="receipt-summary-row">
-                        <span>Subtotal:</span>
-                        <span>₱${calculateSubtotal().toFixed(2)}</span>
-                    </div>
-                    <div class="receipt-summary-row">
-                        <span>Tax (12%):</span>n>
-                        <span>₱${calculateTax().toFixed(2)}</span>
-                    </div>
-                    <div class="receipt-summary-row total">
-                        <span>Total:</span>
-                        <span>₱${calculateTotal().toFixed(2)}</span>
-                    </div>
-                </div>
-                <div class="receipt-payment">
-                    <div class="receipt-payment-method">
-                        <span>Payment Method:</span>
-                        <span>${paymentDetails.method.toUpperCase()}</span>
-                    </div>
-                    ${paymentDetails.method === 'cash' ? `
-                        <div class="receipt-payment-detail">
-                            <span>Amount Received:</span>
-                            <span>₱${paymentDetails.cashAmount.toFixed(2)}</span>
-                        </div>
-                        <div class="receipt-payment-detail">
-                            <span>Change:</span>
-                            <span>₱${paymentDetails.changeAmount.toFixed(2)}</span>
-                        </div>
-                    ` : ''}
-                </div>
-                <div class="receipt-footer">
-                    <p>Thank you for your purchase!</p>
-                    <p>Please come again.</p>
-                </div>
-            </div>
-        `;
+        // Create the receipt window
+        const receiptWindow = window.open('', '_blank', 'width=400,height=600');
         
-        // Open a new window and write the receipt HTML
-        const receiptWindow = window.open('', '_blank', 'width=300,height=600');
+        // Debug logging to verify we have items
+        console.log("Receipt generation - Items:", paymentDetails.items);
+        console.log("Receipt generation - Subtotal:", paymentDetails.subtotal);
+        
+        // Ensure we have items
+        if (!paymentDetails.items || paymentDetails.items.length === 0) {
+            console.error("No items available for receipt");
+            paymentDetails.items = [];
+        }
+
+        // Format items for receipt
+        const itemsHTML = paymentDetails.items.map(item => {
+            const itemTotal = (item.price * item.quantity);
+            return `
+                <tr>
+                    <td style="text-align: left; padding: 3px 5px;">${item.name}</td>
+                    <td style="text-align: center; padding: 3px 5px;">${item.quantity}</td>
+                    <td style="text-align: right; padding: 3px 5px;">₱${parseFloat(item.price).toFixed(2)}</td>
+                    <td style="text-align: right; padding: 3px 5px;">₱${itemTotal.toFixed(2)}</td>
+                </tr>
+            `;
+        }).join('');
+        
+        // Calculate totals
+        const subtotal = paymentDetails.subtotal || 0;
+        const tax = paymentDetails.tax || 0;
+        const total = paymentDetails.total || 0;
+        
+        // Get payment method display name
+        const paymentMethodNames = {
+            'cash': 'Cash',
+            'card': 'Card',
+            'ewallet': 'E-Wallet',
+            'gcash': 'GCash',
+            'paymaya': 'PayMaya',
+            'banktransfer': 'Bank Transfer'
+        };
+        const paymentMethodName = paymentMethodNames[paymentDetails.method] || paymentDetails.method;
+        
+        // Generate receipt HTML
         receiptWindow.document.write(`
             <html>
-            <head>
-                <title>Receipt</title>
-                <style>
-                    body {
-                        font-family: 'Courier New', monospace;
-                        font-size: 12px;
-                        line-height: 1.4;
-                        padding: 10px;
-                    }
-                    .receipt {
-                        width: 270px;
-                        margin: 0 auto;
-                    }
-                    .receipt-header {
-                        text-align: center;
-                        margin-bottom: 10px;
-                    }
-                    .receipt-header h2 {
-                        margin: 0;
-                        font-size: 16px;
-                    }
-                    .receipt-header p {
-                        margin: 5px 0;
-                    }
-                    .receipt-items {
-                        border-top: 1px dashed #000;
-                        border-bottom: 1px dashed #000;
-                        padding: 10px 0;
-                    }
-                    .receipt-item {
-                        display: flex;
-                        justify-content: space-between;
-                        margin-bottom: 5px;
-                    }
-                    .receipt-item-details {
-                        display: flex;
-                        flex-direction: column;
-                    }
-                    .receipt-summary {
-                        margin: 10px 0;
-                    }
-                    .receipt-summary-row {
-                        display: flex;
-                        justify-content: space-between;
-                    }
-                    .total {
-                        font-weight: bold;
-                        margin-top: 5px;
-                    }
-                    .receipt-payment {
-                        margin: 10px 0;
-                    }
-                    .receipt-payment-method, .receipt-payment-detail {
-                        display: flex;
-                        justify-content: space-between;
-                    }
-                    .receipt-footer {
-                        text-align: center;
-                        margin-top: 10px;
-                        border-top: 1px dashed #000;
-                        padding-top: 10px;
-                    }
-                    @media print {
+                <head>
+                    <title>Receipt</title>
+                    <style>
                         body {
+                            font-family: 'Courier New', monospace;
+                            font-size: 12px;
                             margin: 0;
-                            padding: 0;
+                            padding: 20px;
+                            color: #000;
+                            max-width: 350px;
+                            margin: 0 auto;
                         }
-                        .receipt {
+                        .receipt-header {
+                            text-align: center;
+                            margin-bottom: 10px;
+                            padding-bottom: 10px;
+                            border-bottom: 1px dashed #000;
+                        }
+                        .receipt-header h1 {
+                            font-size: 18px;
+                            margin: 0;
+                        }
+                        .receipt-header p {
+                            margin: 4px 0;
+                            font-size: 12px;
+                        }
+                        .transaction-info {
+                            margin-bottom: 10px;
+                            font-size: 12px;
+                        }
+                        .transaction-info p {
+                            margin: 3px 0;
+                        }
+                        .receipt-items {
                             width: 100%;
+                            border-collapse: collapse;
+                            margin: 10px 0;
+                            font-size: 11px;
                         }
-                    }
-                </style>
-            </head>
-            <body>
-                ${receiptHTML}
+                        .receipt-items th {
+                            text-align: left;
+                            padding: 3px 5px;
+                            border-bottom: 1px solid #000;
+                            font-weight: bold;
+                        }
+                        .receipt-items td {
+                            padding: 3px 5px;
+                        }
+                        .receipt-totals {
+                            margin-top: 10px;
+                            text-align: right;
+                            font-size: 12px;
+                            border-top: 1px dashed #000;
+                            padding-top: 10px;
+                        }
+                        .receipt-totals .row {
+                            display: flex;
+                            justify-content: space-between;
+                            margin: 3px 0;
+                        }
+                        .receipt-total {
+                            font-weight: bold;
+                            font-size: 13px;
+                            margin: 5px 0;
+                        }
+                        .payment-info {
+                            margin-top: 10px;
+                            text-align: left;
+                            font-size: 12px;
+                        }
+                        .payment-info .row {
+                            display: flex;
+                            justify-content: space-between;
+                            margin: 3px 0;
+                        }
+                        .receipt-footer {
+                            text-align: center;
+                            margin-top: 15px;
+                            border-top: 1px dashed #000;
+                            padding-top: 10px;
+                            font-size: 11px;
+                        }
+                        @media print {
+                            body {
+                                width: 80mm; /* Standard thermal receipt width */
+                                margin: 0;
+                                padding: 5px;
+                            }
+                        }
+                    </style>
+                </head>
+                <body>
+                    <div class="receipt-header">
+                        <h1>MotorTech Motorsport</h1>
+                        <p>Parts & Accessories Shop</p>
+                        <p>123 Main Street, Taguig City</p>
+                        <p>Tel: (02) 8123-4567</p>
+                        <p>VAT Reg #: 123-456-789-000</p>
+                    </div>
+                    
+                    <div class="transaction-info">
+                        <p><strong>Receipt #:</strong> ${generateReceiptNumber()}</p>
+                        <p><strong>Date:</strong> ${new Date().toLocaleString()}</p>
+                        <p><strong>Cashier:</strong> ${localStorage.getItem('userName') || 'Staff'}</p>
+                    </div>
+                    
+                    <table class="receipt-items">
+                        <thead>
+                            <tr>
+                                <th style="text-align: left; width: 40%;">Item</th>
+                                <th style="text-align: center; width: 15%;">Qty</th>
+                                <th style="text-align: right; width: 20%;">Price</th>
+                                <th style="text-align: right; width: 25%;">Total</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${itemsHTML}
+                        </tbody>
+                    </table>
+                    
+                    <div class="receipt-totals">
+                        <div class="row">
+                            <span>Subtotal:</span>
+                            <span>₱${subtotal.toFixed(2)}</span>
+                        </div>
+                        <div class="row">
+                            <span>VAT (12%):</span>
+                            <span>₱${tax.toFixed(2)}</span>
+                        </div>
+                        <div class="row receipt-total">
+                            <span>TOTAL:</span>
+                            <span>₱${total.toFixed(2)}</span>
+                        </div>
+                    </div>
+                    
+                    <div class="payment-info">
+                        <p><strong>Payment Method:</strong> ${paymentMethodName}</p>
+                        ${paymentDetails.method === 'cash' ? `
+                            <div class="row">
+                                <span>Amount Tendered:</span>
+                                <span>₱${paymentDetails.cashAmount.toFixed(2)}</span>
+                            </div>
+                            <div class="row">
+                                <span>Change:</span>
+                                <span>₱${paymentDetails.changeAmount.toFixed(2)}</span>
+                            </div>
+                        ` : ''}
+                    </div>
+                    
+                    <div class="receipt-footer">
+                        <p>Thank you for shopping at MotorTech Motorsport!</p>
+                        <p>Items purchased cannot be returned.</p>
+                        <p>This serves as your official receipt.</p>
+                        <p>Come back again!</p>
+                    </div>
+                </body>
                 <script>
                     window.onload = function() {
                         window.print();
-                        // Optional: Close the window after printing
-                        // setTimeout(function() { window.close(); }, 500);
                     }
                 </script>
-            </body>
             </html>
         `);
+        receiptWindow.document.close();
+        receiptWindow.focus();
     }
     
     // Generate a receipt number
@@ -1472,7 +2163,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
 // Cart functionality with real-time price updates
 let cart = [];
-const TAX_RATE = 0.12; // 12% tax raterate (changed from 12%)
+const TAX_RATE = 0.12; // 12% tax rate (corrected from 0.0012)
 
 // Function to add item to cart with real-time price updates
 function addToCart(itemId, itemName, itemPrice) {
@@ -1513,18 +2204,18 @@ function updateCartItemUI(item) {
         // Update quantity display
         const quantityElement = cartItemElement.querySelector('.quantity-value');
         if (quantityElement) {
-            quantityElement.textContent = item.quantity;
+            quantityElement.textContent = item.quantity.toLocaleString();
         }
         
         // Update subtotal if it exists in the UI
         const subtotalElement = cartItemElement.querySelector('.cart-item-subtotal');
         if (subtotalElement) {
-            subtotalElement.textContent = `₱${(item.price * item.quantity).toFixed(2)}`;
+            subtotalElement.textContent = `₱${(item.price * item.quantity).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
         }
     }
 }
 
-// Function to add a new cart item to the UI
+// Function to add a new cart item to the UI with formatted numbers
 function addCartItemToUI(item) {
     const cartItems = document.getElementById('cartItems');
     const emptyCart = document.querySelector('.empty-cart');
@@ -1539,21 +2230,21 @@ function addCartItemToUI(item) {
     cartItemElement.className = 'cart-item';
     cartItemElement.dataset.id = item.id;
     
-    // Calculate subtotal for this item
-    const subtotal = (item.price * item.quantity).toFixed(2);
+    // Calculate subtotal for this item with formatted numbers
+    const subtotal = (item.price * item.quantity).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
     
-    // New layout based on standard POS design like in the image
+    // New layout based on standard POS design with formatted numbers
     cartItemElement.innerHTML = `
         <div class="cart-item-details">
             <div class="cart-item-name">${item.name}</div>
-            <div class="cart-item-price">₱${parseFloat(item.price).toFixed(2)}</div>
+            <div class="cart-item-price">₱${parseFloat(item.price).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</div>
         </div>
         <div class="cart-item-controls">
             <div class="quantity-control">
                 <button class="quantity-btn minus-btn" onclick="updateQuantity(${item.id}, -1)">
                     <i class="fas fa-minus"></i>
                 </button>
-                <input type="text" class="quantity-value" value="${item.quantity}" readonly>
+                <input type="text" class="quantity-value" value="${item.quantity.toLocaleString()}" readonly>
                 <button class="quantity-btn plus-btn" onclick="updateQuantity(${item.id}, 1)">
                     <i class="fas fa-plus"></i>
                 </button>
@@ -1571,20 +2262,20 @@ function addCartItemToUI(item) {
     document.getElementById('checkoutBtn').disabled = false;
 }
 
-// Function to update the UI for a specific cart item
+// Function to update the UI for a specific cart item with formatted numbers
 function updateCartItemUI(item) {
     const cartItemElement = document.querySelector(`.cart-item[data-id="${item.id}"]`);
     if (cartItemElement) {
         // Update quantity display
         const quantityInput = cartItemElement.querySelector('.quantity-value');
         if (quantityInput) {
-            quantityInput.value = item.quantity;
+            quantityInput.value = item.quantity.toLocaleString();
         }
         
-        // Update subtotal display
+        // Update subtotal display with formatted numbers
         const subtotalElement = cartItemElement.querySelector('.cart-item-subtotal');
         if (subtotalElement) {
-            subtotalElement.textContent = `₱${(item.price * item.quantity).toFixed(2)}`;
+            subtotalElement.textContent = `₱${(item.price * item.quantity).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
         }
     }
 }
@@ -1663,7 +2354,7 @@ function removeFromCart(itemId) {
     }
 }
 
-// New function to explicitly reset cart totals to zero
+// New function to explicitly reset cart totals to zero with formatted numbers
 function resetCartTotals() {
     // Reset total in cart summary
     const totalAmount = document.getElementById('totalAmount');
@@ -1688,7 +2379,7 @@ function resetCartTotals() {
     if (modalTotal) modalTotal.textContent = '0.00';
 }
 
-// Update the existing updateCartTotals function to check for empty cart first
+// Update the existing updateCartTotals function to format numbers with commas
 function updateCartTotals() {
     // If cart is empty, reset totals to zero and exit
     if (cart.length === 0) {
@@ -1709,20 +2400,20 @@ function updateCartTotals() {
         cartCountElement.style.display = totalItems > 0 ? 'flex' : 'none';
     }
     
-    // Update the total amount in the cart summary
+    // Update the total amount in the cart summary with formatted numbers
     const totalAmount = document.getElementById('totalAmount');
     if (totalAmount) {
-        totalAmount.textContent = total.toFixed(2);
+        totalAmount.textContent = total.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
     }
     
-    // Also update checkout modal totals if it exists and is open
+    // Also update checkout modal totals if it exists and is open with formatted numbers
     const modalSubtotal = document.getElementById('modalSubtotal');
     const modalTax = document.getElementById('modalTax'); 
     const modalTotal = document.getElementById('modalTotal');
     
-    if (modalSubtotal) modalSubtotal.textContent = subtotal.toFixed(2);
-    if (modalTax) modalTax.textContent = tax.toFixed(2);
-    if (modalTotal) modalTotal.textContent = total.toFixed(2);
+    if (modalSubtotal) modalSubtotal.textContent = subtotal.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
+    if (modalTax) modalTax.textContent = tax.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
+    if (modalTotal) modalTotal.textContent = total.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
 }
 
 // Animation for adding item to cart
@@ -1810,14 +2501,14 @@ function openItemDetailsModal(itemId) {
         .then(item => {
             console.log('Item details:', item);
             
-            // Populate modal with item details
+            // Populate modal with item details and formatted numbers
             modalItemName.textContent = item.item_name || 'Unknown Item';
             modalItemCategory.textContent = item.category || 'Uncategorized';
-            modalItemPrice.textContent = `₱${parseFloat(item.price).toFixed(2)}`;
+            modalItemPrice.textContent = `₱${parseFloat(item.price).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
             modalItemDescription.textContent = item.description || 'No description available for this product.';
             modalItemId.textContent = item.item_id || '-';
             
-            // Handle stock status display
+            // Handle stock status display with formatted numbers
             const stockQty = parseInt(item.stock_quantity);
             if (stockQty <= 0) {
                 modalItemStock.textContent = 'Out of Stock';
@@ -1825,11 +2516,11 @@ function openItemDetailsModal(itemId) {
                 modalAddToCartBtn.disabled = true;
                 notAvailableOverlay.style.display = 'flex';
             } else if (stockQty < 10) {
-                modalItemStock.textContent = `Low Stock (${stockQty})`;
+                modalItemStock.textContent = `Low Stock (${stockQty.toLocaleString()})`;
                 modalItemStock.className = 'meta-value low-stock';
                 modalAddToCartBtn.disabled = false;
             } else {
-                modalItemStock.textContent = `In Stock (${stockQty})`;
+                modalItemStock.textContent = `In Stock (${stockQty.toLocaleString()})`;
                 modalItemStock.className = 'meta-value stock';
                 modalAddToCartBtn.disabled = false;
             }
@@ -1938,17 +2629,17 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 });
 
-// Function to create cart item HTML - fixed layout with product info and centered controls
+// Function to create cart item HTML with formatted numbers
 function createCartItemHTML(item) {
   return `
     <div class="cart-item" data-id="${item.id}">
       <div class="cart-item-info">
         <div class="cart-item-name">${item.name}</div>
-        <div class="cart-item-price">₱${item.price.toFixed(2)}</div>
+        <div class="cart-item-price">₱${item.price.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</div>
       </div>
       <div class="quantity-wrapper">
         <button class="quantity-btn minus-btn" data-id="${item.id}">-</button>
-        <span class="quantity-value">${item.quantity}</span>
+        <span class="quantity-value">${item.quantity.toLocaleString()}</span>
         <button class="quantity-btn plus-btn" data-id="${item.id}">+</button>
       </div>
       <button class="cart-item-delete" data-id="${item.id}">
