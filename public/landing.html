@@ -13,12 +13,7 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
   <link rel="stylesheet" href="css/landing.css">
 
-  <!-- Defer non-critical CSS -->
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" media="print" onload="this.media='all'">
-
   <!-- Defer scripts to improve initial load performance -->
-  <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js" defer></script>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js" defer></script>
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11" defer></script>
   <script src="js/landingdesign.js" defer></script>
   <script src="js/landing.js" defer></script>
@@ -42,10 +37,10 @@
     </a>
     <nav>
       <ul class="nav-links" id="nav-links">
+        <li><a href="#" class="nav-home">Home</a></li>
         <li><a href="#features">Features</a></li>
-        <li><a href="#products">Products</a></li>
-        <li><a href="#about">About</a></li>
-        <li><a href="#contact">Contact</a></li>
+        <li><a href="#system-preview">System Interface</a></li>
+        <li><a href="#about-section">About</a></li>
         <li><a href="login.html" class="btn-login">Login</a></li>
       </ul>
       <div class="hamburger" id="hamburger">
@@ -55,115 +50,81 @@
   </header>
 
   <!-- Hero Section -->
-  <section class="hero">
+  <section id="home" class="hero">
     <div class="hero-content">
-      <h1>Revolutionize Your Motorcycle Business</h1>
-      <p>MotorTech is the ultimate POS system designed for motorcycle shops. Streamline your operations, manage inventory, and boost sales with ease.</p>
-      <a href="#features" class="btn-primary">Explore Features</a>
+      <h1>MotorTech</h1>
+      <p>MotorTech POS system streamlines inventory management and sales processing for your motorcycle parts shop.</p>
+      <a href="login.html" class="btn-primary">Get Started</a>
     </div>
   </section>
 
   <!-- Features Section -->
   <section id="features" class="features">
-    <h2>Powerful Features Built for Your Business</h2>
+    <h2>Core System Features</h2>
     <div class="feature-grid">
       <div class="feature-item">
-        <i class="fas fa-cogs"></i>
-        <h3>Specialized for Motorcycles</h3>
-        <p>Tailored features to manage motorcycle parts and services with categories specific to bike components.</p>
+        <i class="fas fa-boxes"></i>
+        <h3>Inventory Management</h3>
+        <p>Track motorcycle parts inventory, manage stock levels, and get alerts when items are running low.</p>
+      </div>
+      <div class="feature-item">
+        <i class="fas fa-cash-register"></i>
+        <h3>Point of Sale</h3>
+        <p>Process sales quickly with an intuitive interface designed for ease of use and transaction efficiency.</p>
+      </div>
+      <div class="feature-item">
+        <i class="fas fa-users-cog"></i>
+        <h3>User Management</h3>
+        <p>Create and manage user accounts with different permission levels for administrators and cashiers.</p>
       </div>
       <div class="feature-item">
         <i class="fas fa-chart-line"></i>
-        <h3>Real-Time Analytics</h3>
-        <p>Track sales, inventory levels, and customer trends in real-time with beautiful, easy-to-understand dashboards.</p>
-      </div>
-      <div class="feature-item">
-        <i class="fas fa-tools"></i>
-        <h3>Inventory Management</h3>
-        <p>Keep track of your stock levels, set reorder points, and get low stock alerts automatically.</p>
-      </div>
-      <div class="feature-item">
-        <i class="fas fa-money-bill-wave"></i>
-        <h3>Quick Checkout</h3>
-        <p>Process payments quickly with an intuitive interface designed for speed and accuracy.</p>
-      </div>
-      <div class="feature-item">
-        <i class="fas fa-user-friends"></i>
-        <h3>Customer Management</h3>
-        <p>Build and maintain customer relationships with detailed history and preferences tracking.</p>
-      </div>
-      <div class="feature-item">
-        <i class="fas fa-mobile-alt"></i>
-        <h3>Mobile Friendly</h3>
-        <p>Access your business data anytime, anywhere with our responsive mobile interface.</p>
+        <h3>Sales Tracking</h3>
+        <p>Monitor sales performance with detailed transaction history and reports for informed business decisions.</p>
       </div>
     </div>
   </section>
 
-  <!-- Products Showcase -->
-  <section id="products" class="products">
-    <h2>Our Product Gallery</h2>
-    <div class="product-grid">
-      <div class="product-card">
-        <div class="image-placeholder" style="background-image: url('images/placeholder1.jpg'); background-size: cover; background-position: center;">
-          <span>POS Terminal</span>
+  <!-- System Preview -->
+  <section id="system-preview" class="system-preview">
+    <h2>System Interface</h2>
+    <div class="preview-container">
+      <div class="preview-item">
+        <div class="preview-image admin-dashboard">
+          <div class="overlay">
+            <span>Admin Dashboard</span>
+          </div>
         </div>
-        <h3>POS Terminal</h3>
-        <p>Our sleek, modern POS terminal designed for motorcycle shops.</p>
       </div>
-      <div class="product-card">
-        <div class="image-placeholder" style="background-image: url('images/placeholder2.jpg'); background-size: cover; background-position: center;">
-          <span>Mobile App</span>
-        </div>
-        <h3>Mobile App</h3>
-        <p>Access your inventory and sales data on the go with our mobile app.</p>
-      </div>
-      <div class="product-card">
-        <div class="image-placeholder" style="background-image: url('images/placeholder3.jpg'); background-size: cover; background-position: center;">
-          <span>Admin Dashboard</span>
-        </div>
-        <h3>Admin Dashboard</h3>
-        <p>Comprehensive analytics dashboard for business insights.</p>
-      </div>
-    </div>
-  </section>
-
-  <!-- About Section -->
-  <section id="about" class="about">
-    <h2>About MotorTech</h2>
-    <p>MotorTech is a cutting-edge Point of Sale system designed specifically for motorcycle businesses. Whether you're a small shop or a large dealership, our system helps you streamline operations, reduce costs, and improve customer satisfaction.</p>
-    <p>Founded by motorcycle enthusiasts who understand the unique challenges of the industry, MotorTech combines powerful technology with user-friendly design to create the perfect solution for your business.</p>
-    <a href="#contact" class="btn-secondary">Contact Us</a>
-  </section>
-
-  <!-- Testimonials -->
-  <section class="testimonials">
-    <h2>What Our Customers Say</h2>
-    <div class="testimonial-slider">
-      <div class="testimonial">
-        <div class="quote">"MotorTech has completely transformed how we run our motorcycle shop. Inventory management is now a breeze, and we've seen a 30% increase in efficiency."</div>
-        <div class="author">
-          <div class="author-image"></div>
-          <div class="author-info">
-            <h4>Michael Rodriguez</h4>
-            <p>Owner, FastLane Motorcycles</p>
+      <div class="preview-item">
+        <div class="preview-image pos-interface">
+          <div class="overlay">
+            <span>POS Interface</span>
           </div>
         </div>
       </div>
     </div>
   </section>
 
-  <!-- Contact Section -->
-  <section id="contact" class="contact">
-    <h2>Get in Touch</h2>
-    <p>Have questions or ready to revolutionize your motorcycle business? We'd love to hear from you!</p>
-    <form id="contact-form">
-      <input type="text" placeholder="Your Name" required>
-      <input type="email" placeholder="Your Email" required>
-      <input type="text" placeholder="Subject">
-      <textarea placeholder="Your Message" required></textarea>
-      <button type="submit" class="btn-primary">Send Message</button>
-    </form>
+  <!-- About Section -->
+  <section id="about-section" class="about">
+    <h2>About MotorTech POS</h2>
+    <p>MotorTech POS is designed specifically for motorcycle parts shops, focusing on simplicity and efficiency. Our system helps you manage inventory, process sales, and track business performance with a clean, intuitive interface.</p>
+    <div class="about-features">
+      <div class="about-feature">
+        <i class="fas fa-bolt"></i>
+        <h4>Fast Performance</h4>
+      </div>
+      <div class="about-feature">
+        <i class="fas fa-shield-alt"></i>
+        <h4>Secure System</h4>
+      </div>
+      <div class="about-feature">
+        <i class="fas fa-desktop"></i>
+        <h4>Modern Interface</h4>
+      </div>
+    </div>
+    <a href="login.html" class="btn-secondary">Login to System</a>
   </section>
 
   <!-- Footer -->
@@ -172,13 +133,7 @@
       <i class="fas fa-motorcycle rotating-icon"></i>
       <span>Motor<span class="tech">Tech</span></span>
     </div>
-    <p>&copy; 2023 MotorTech. All rights reserved.</p>
-    <ul class="social-links">
-      <li><a href="#"><i class="fab fa-facebook-f"></i></a></li>
-      <li><a href="#"><i class="fab fa-twitter"></i></a></li>
-      <li><a href="#"><i class="fab fa-instagram"></i></a></li>
-      <li><a href="#"><i class="fab fa-linkedin-in"></i></a></li>
-    </ul>
+    <p>&copy; 2025 MOTORPOS, Group 6</p>
   </footer>
 </body>
 </html>

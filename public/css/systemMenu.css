@@ -1,0 +1,933 @@
+/* System Menu Styles */
+
+/* Reset Button styling */
+.btn-reset {
+  position: relative;
+  overflow: hidden;
+  transition: all 0.3s ease;
+}
+
+.btn-reset::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 0;
+  height: 100%;
+  background: linear-gradient(to right, var(--danger), #c0392b);
+  transition: 0.5s ease;
+  z-index: -1;
+}
+
+.btn-reset:hover::before {
+  width: 100%;
+}
+
+.btn-reset:hover {
+  color: white;
+  transform: translateY(-2px);
+  box-shadow: 0 5px 15px rgba(231, 76, 60, 0.3);
+  border-color: var(--danger);
+}
+
+.btn-reset i {
+  margin-right: 5px;
+  transition: transform 0.3s ease;
+}
+
+.btn-reset:hover i {
+  transform: rotate(360deg);
+}
+
+/* Reset confirmation modal styling */
+.reset-confirmation-modal {
+  max-width: 550px !important;
+}
+
+.reset-confirmation-modal .swal2-title {
+  color: #e74c3c !important;
+  font-size: 1.8rem !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 12px !important;
+}
+
+.reset-confirmation-modal .swal2-content {
+  color: var(--text-color) !important;
+}
+
+.reset-confirm-button {
+  background: linear-gradient(to right, #e74c3c, #c0392b) !important;
+  border: none !important;
+  animation: danger-pulse 2s infinite !important;
+  font-weight: 600 !important;
+}
+
+@keyframes danger-pulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(231, 76, 60, 0.6);
+  }
+  70% {
+    box-shadow: 0 0 0 10px rgba(231, 76, 60, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(231, 76, 60, 0);
+  }
+}
+
+.reset-cancel-button {
+  background: linear-gradient(to right, #3498db, #2980b9) !important;
+  border: none !important;
+}
+
+/* Reset options list in confirmation */
+.reset-options {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  background: rgba(0, 0, 0, 0.2);
+  padding: 18px;
+  border-radius: 8px;
+  margin: 15px 0;
+  border-left: 3px solid rgba(231, 76, 60, 0.5);
+  text-align: left;
+}
+
+.reset-options label {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  cursor: pointer;
+  padding: 8px;
+  transition: transform 0.2s ease;
+  position: relative;
+  background-color: rgba(0, 0, 0, 0.15);
+  border-radius: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.reset-options label:hover {
+  transform: translateX(5px);
+  background-color: rgba(231, 76, 60, 0.05);
+  border-color: rgba(231, 76, 60, 0.2);
+}
+
+.reset-options label input[type="checkbox"] {
+  margin-top: 3px;
+  cursor: pointer;
+  width: 16px;
+  height: 16px;
+  accent-color: var(--danger);
+}
+
+.reset-option-content {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+}
+
+.reset-options label span {
+  font-weight: 600;
+  font-size: 1.05rem;
+  display: block;
+  margin-bottom: 3px;
+}
+
+.reset-options label small {
+  display: block;
+  color: var(--text-dark);
+  font-size: 0.8rem;
+  margin-top: 2px;
+}
+
+.confirmation-input {
+  margin-top: 20px;
+  background-color: rgba(231, 76, 60, 0.1);
+  padding: 15px;
+  border-radius: 8px;
+  text-align: left;
+  border: 1px solid rgba(231, 76, 60, 0.2);
+}
+
+.confirmation-input label {
+  display: block;
+  margin-bottom: 10px;
+  font-weight: 600;
+  color: #e74c3c;
+  text-transform: uppercase;
+  font-size: 0.9rem;
+}
+
+.confirmation-input input[type="text"] {
+  width: 100%;
+  padding: 12px;
+  background-color: rgba(0, 0, 0, 0.3);
+  border: 2px solid rgba(231, 76, 60, 0.5);
+  border-radius: 5px;
+  color: #e74c3c;
+  font-size: 1.1rem;
+  text-align: center;
+  font-weight: 700;
+  letter-spacing: 3px;
+  transition: all 0.3s ease;
+  outline: none;
+}
+
+.confirmation-input input[type="text"]:focus {
+  outline: none;
+  border-color: #e74c3c;
+  box-shadow: 0 0 0 2px rgba(231, 76, 60, 0.3);
+}
+
+/* Reset progress styles - Enhanced */
+.reset-progress {
+  margin: 20px 0;
+  text-align: center;
+}
+
+.reset-progress-bar {
+  width: 100%;
+  height: 15px;
+  background-color: rgba(0, 0, 0, 0.2);
+  border-radius: 8px;
+  overflow: hidden;
+  margin: 15px 0;
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.3);
+}
+
+.reset-progress-fill {
+  height: 100%;
+  background: linear-gradient(to right, #e74c3c, #c0392b);
+  width: 0;
+  transition: width 0.5s ease;
+  box-shadow: 0 0 10px rgba(231, 76, 60, 0.5);
+  background-size: 20px 20px;
+  background-image: linear-gradient(
+    45deg,
+    rgba(255, 255, 255, .1) 25%,
+    transparent 25%,
+    transparent 50%,
+    rgba(255, 255, 255, .1) 50%,
+    rgba(255, 255, 255, .1) 75%,
+    transparent 75%,
+    transparent
+  );
+  animation: reset-progress-animation 1s linear infinite;
+}
+
+@keyframes reset-progress-animation {
+  0% {
+    background-position: 0 0;
+  }
+  100% {
+    background-position: 40px 0;
+  }
+}
+
+#resetProgressText {
+  font-size: 14px;
+  color: var(--text-color);
+  margin-top: 10px;
+  font-weight: 500;
+}
+
+/* Reset result message - Enhanced */
+.reset-result {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  margin: 15px 0;
+}
+
+.reset-result i {
+  color: var(--success);
+  font-size: 48px;
+  margin-bottom: 15px;
+  animation: success-bounce 1s ease-in-out;
+}
+
+@keyframes success-bounce {
+  0%, 20%, 50%, 80%, 100% {transform: translateY(0);}
+  40% {transform: translateY(-20px);}
+  60% {transform: translateY(-10px);}
+}
+
+.reset-result p {
+  font-size: 16px;
+  color: var(--text-color);
+  margin-bottom: 20px;
+}
+
+.reset-summary {
+  margin-top: 20px;
+  background-color: rgba(0, 0, 0, 0.2);
+  border-radius: 8px;
+  padding: 15px;
+  width: 100%;
+  text-align: left;
+  border-left: 3px solid var(--success);
+}
+
+.reset-item {
+  padding: 10px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.reset-item:last-child {
+  border-bottom: none;
+}
+
+.reset-item i {
+  font-size: 16px;
+  animation: none;
+  margin: 0;
+}
+
+/* Warning styles */
+.btn-reset:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  background: transparent;
+}
+
+.btn-reset:disabled:hover::before {
+  width: 0;
+}
+
+.btn-reset:disabled:hover {
+  transform: none;
+  box-shadow: none;
+}
+
+/* Loading spinner for reset operation */
+.btn-reset.loading i {
+  animation: spin 1.5s infinite linear;
+}
+
+/* Database Connection Modal Styles */
+.db-connection-popup {
+  max-width: 500px !important;
+}
+
+.db-connection-result {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 15px 0;
+  text-align: center;
+}
+
+.db-connection-icon {
+  font-size: 48px;
+  color: var(--success);
+  margin-bottom: 15px;
+  animation: pulse-success 2s infinite;
+}
+
+.db-connection-icon.error {
+  color: var(--danger);
+  animation: pulse-error 2s infinite;
+}
+
+.db-connection-details {
+  background: rgba(46, 204, 113, 0.1);
+  border: 1px solid var(--success);
+  border-radius: 8px;
+  padding: 15px;
+  margin: 15px 0 5px;
+  width: 100%;
+  text-align: left;
+}
+
+.db-connection-details.error {
+  background: rgba(231, 76, 60, 0.1);
+  border: 1px solid var(--danger);
+}
+
+.db-connection-details p {
+  margin: 8px 0;
+  color: var(--text-color);
+}
+
+.db-connection-details strong {
+  display: inline-block;
+  min-width: 80px;
+  color: var(--success);
+}
+
+.db-connection-details.error strong {
+  color: var(--danger);
+}
+
+@keyframes pulse-success {
+  0% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.05);
+    opacity: 0.9;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes pulse-error {
+  0% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.05);
+    opacity: 0.9;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+/* Button states for database check */
+#checkDatabase.checking {
+  background: rgba(243, 156, 18, 0.2);
+  border-color: var(--warning);
+  color: var(--warning);
+  cursor: not-allowed;
+}
+
+#checkDatabase.connected {
+  background: rgba(46, 204, 113, 0.2);
+  border-color: var(--success);
+  color: var(--success);
+}
+
+#checkDatabase.disconnected {
+  background: rgba(231, 76, 60, 0.2);
+  border-color: var(--danger);
+  color: var(--danger);
+}
+
+#checkDatabase i.fa-spinner {
+  animation: spin 1s linear infinite;
+}
+
+#checkDatabase i.fa-check-circle {
+  color: var(--success);
+}
+
+#checkDatabase i.fa-times-circle {
+  color: var(--danger);
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Export Data Modal Styles */
+.export-popup {
+  max-width: 600px !important;
+  width: 90% !important;
+}
+
+.large-export-popup {
+  max-width: 800px !important;
+  width: 90% !important;
+}
+
+.export-options h4 {
+  margin: 20px 0 10px;
+  color: var(--primary-color);
+  font-size: 16px;
+  text-align: left;
+  border-bottom: 1px solid rgba(52, 152, 219, 0.2);
+  padding-bottom: 8px;
+}
+
+.export-options-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 15px;
+  margin: 15px 0;
+}
+
+.export-option {
+  position: relative;
+}
+
+.export-option input[type="radio"] {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.export-option label {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 15px;
+  border-radius: 8px;
+  background-color: rgba(52, 152, 219, 0.1);
+  border: 1px solid rgba(52, 152, 219, 0.2);
+  cursor: pointer;
+  transition: all 0.3s ease;
+  gap: 10px;
+  height: 100%;
+}
+
+.export-option label:hover {
+  background-color: rgba(52, 152, 219, 0.15);
+  transform: translateY(-2px);
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+}
+
+.export-option input[type="radio"]:checked + label {
+  background-color: rgba(52, 152, 219, 0.2);
+  border-color: var(--primary-color);
+  box-shadow: 0 5px 15px rgba(52, 152, 219, 0.15);
+}
+
+.export-option label i {
+  font-size: 24px;
+  color: var(--primary-color);
+}
+
+.export-option label span {
+  font-weight: 500;
+}
+
+.export-date-range {
+  display: flex;
+  gap: 15px;
+  margin: 15px 0;
+}
+
+.date-input-group {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 5px;
+}
+
+.date-input-group label {
+  font-size: 14px;
+  color: var(--text-color);
+}
+
+.export-date-input {
+  width: 100%;
+  padding: 10px;
+  border-radius: 5px;
+  background-color: var(--dark-color);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: var(--text-color);
+  font-size: 14px;
+}
+
+.export-date-input:focus {
+  outline: none;
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.2);
+}
+
+.export-format-options {
+  display: flex;
+  gap: 15px;
+  margin: 15px 0;
+}
+
+.export-format {
+  flex: 1;
+  position: relative;
+}
+
+.export-format input[type="radio"] {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.export-format label {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 40px;
+  border-radius: 5px;
+  background-color: rgba(52, 152, 219, 0.1);
+  border: 1px solid rgba(52, 152, 219, 0.2);
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-weight: 500;
+}
+
+.export-format label:hover {
+  background-color: rgba(52, 152, 219, 0.15);
+}
+
+.export-format input[type="radio"]:checked + label {
+  background-color: rgba(52, 152, 219, 0.2);
+  border-color: var(--primary-color);
+}
+
+/* Export Loading State */
+.export-loading {
+  padding: 20px 0;
+  text-align: center;
+}
+
+.export-progress {
+  margin: 20px 0;
+}
+
+.export-progress-bar {
+  height: 8px;
+  background-color: rgba(255, 255, 255, 0.1);
+  border-radius: 4px;
+  overflow: hidden;
+  margin-bottom: 10px;
+}
+
+.export-progress-fill {
+  height: 100%;
+  background: linear-gradient(to right, var(--primary-color), var(--primary-dark));
+  width: 0;
+  transition: width 0.3s ease;
+}
+
+.export-progress-text {
+  font-size: 14px;
+  color: var(--text-dark);
+}
+
+/* Export Report Styles */
+.export-report {
+  padding: 0;
+}
+
+.export-table-container {
+  max-height: 400px;
+  overflow-y: auto;
+  margin-bottom: 20px;
+  border-radius: 8px;
+  border: 1px solid rgba(52, 152, 219, 0.2);
+}
+
+.export-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+.export-table thead {
+  position: sticky;
+  top: 0;
+  background-color: var(--dark-secondary);
+  z-index: 1;
+}
+
+.export-table th {
+  background-color: rgba(52, 152, 219, 0.1);
+  color: var(--primary-color);
+  font-weight: 600;
+  text-align: left;
+  padding: 12px 15px;
+  border-bottom: 1px solid rgba(52, 152, 219, 0.2);
+}
+
+.export-table td {
+  padding: 10px 15px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  color: var(--text-color);
+}
+
+.export-table tr:nth-child(even) {
+  background-color: rgba(255, 255, 255, 0.02);
+}
+
+.export-table tr:hover {
+  background-color: rgba(52, 152, 219, 0.05);
+}
+
+/* Export Summary Styles */
+.export-summary {
+  background-color: rgba(52, 152, 219, 0.05);
+  border: 1px solid rgba(52, 152, 219, 0.2);
+  border-radius: 8px;
+  padding: 15px;
+  margin-bottom: 20px;
+}
+
+.export-summary h3 {
+  margin-top: 0;
+  margin-bottom: 15px;
+  color: var(--primary-color);
+  font-size: 16px;
+  text-align: center;
+}
+
+.summary-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 15px;
+}
+
+.summary-item {
+  text-align: center;
+  padding: 10px;
+  background-color: rgba(0, 0, 0, 0.2);
+  border-radius: 5px;
+  border: 1px solid rgba(52, 152, 219, 0.1);
+}
+
+.summary-label {
+  font-size: 12px;
+  color: var(--text-dark);
+  margin-bottom: 5px;
+}
+
+.summary-value {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--primary-color);
+}
+
+/* Export Actions */
+.export-actions {
+  display: flex;
+  justify-content: center;
+  margin-top: 20px;
+}
+
+.export-btn {
+  background: linear-gradient(to right, var(--primary-color), var(--primary-dark));
+  color: white;
+  border: none;
+  padding: 12px 20px;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 5px 15px rgba(52, 152, 219, 0.2);
+}
+
+.export-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(52, 152, 219, 0.3);
+}
+
+.export-btn i {
+  font-size: 16px;
+}
+
+/* Reset Options Styles - Enhanced */
+.reset-options-container {
+  margin: 10px 0;
+  color: var(--text-color);
+}
+
+.reset-description {
+  margin-bottom: 15px;
+  color: var(--text-dark);
+  font-size: 0.9rem;
+  text-align: left;
+}
+
+.reset-warning {
+  background: rgba(231, 76, 60, 0.15);
+  color: #e74c3c;
+  padding: 12px;
+  border-radius: 8px;
+  margin-bottom: 20px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-weight: 600;
+  border: 1px solid rgba(231, 76, 60, 0.5);
+  box-shadow: 0 4px 15px rgba(231, 76, 60, 0.15);
+}
+
+.reset-warning i {
+  font-size: 24px;
+  color: #e74c3c;
+  animation: pulse-warning 2s infinite;
+}
+
+@keyframes pulse-warning {
+  0% {
+    opacity: 0.8;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.1);
+  }
+  100% {
+    opacity: 0.8;
+    transform: scale(1);
+  }
+}
+
+/* Date Range Controls for Exports */
+.date-range-options {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.date-presets {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  justify-content: center;
+  margin-top: 5px;
+}
+
+.date-preset-btn {
+  background-color: rgba(52, 152, 219, 0.1);
+  border: 1px solid rgba(52, 152, 219, 0.2);
+  color: var(--text-color);
+  padding: 8px 12px;
+  border-radius: 5px;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.date-preset-btn:hover {
+  background-color: rgba(52, 152, 219, 0.2);
+  transform: translateY(-2px);
+}
+
+.date-preset-btn.active {
+  background-color: var(--primary-color);
+  color: white;
+  border-color: var(--primary-color);
+}
+
+/* Date Type Selector */
+.date-type-selector {
+  display: flex;
+  gap: 15px;
+  margin: 15px 0;
+  justify-content: center;
+}
+
+.date-type-option {
+  position: relative;
+  flex: 1;
+  max-width: 200px;
+}
+
+.date-type-option input[type="radio"] {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.date-type-option label {
+  display: block;
+  background-color: rgba(52, 152, 219, 0.1);
+  border: 1px solid rgba(52, 152, 219, 0.2);
+  padding: 10px;
+  border-radius: 5px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.date-type-option label:hover {
+  background-color: rgba(52, 152, 219, 0.15);
+}
+
+.date-type-option input[type="radio"]:checked + label {
+  background-color: rgba(52, 152, 219, 0.3);
+  border-color: var(--primary-color);
+  color: white;
+}
+
+/* Specific Date Selection */
+.specific-date-option {
+  margin: 15px 0;
+  text-align: center;
+}
+
+/* Export Date Range Text */
+.export-date-range {
+  color: var(--text-dark);
+  margin-bottom: 15px;
+  text-align: center;
+  font-size: 0.9rem;
+}
+
+/* Export Report Container */
+.export-report {
+  padding: 20px 0;
+  overflow-y: auto;
+  max-height: 70vh;
+}
+
+/* Large Export Popup */
+.large-export-popup {
+  max-width: 900px !important;
+  width: 90% !important;
+}
+
+/* Export Close Button */
+.export-close-button {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  z-index: 10;
+}
+
+/* Additional styles for export table display */
+.export-table-container {
+  max-height: 400px;
+  overflow-y: auto;
+  margin: 20px 0;
+  border: 1px solid rgba(52, 152, 219, 0.2);
+  border-radius: 8px;
+}
+
+/* Export Download Button */
+.export-btn {
+  background: linear-gradient(to right, var(--primary-color), var(--primary-dark));
+  color: white;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  margin: 0 auto;
+}
+
+.export-btn:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 6px 15px rgba(52, 152, 219, 0.3);
+}
+
+.export-btn i {
+  font-size: 16px;
+}

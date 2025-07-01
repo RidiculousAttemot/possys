@@ -6,6 +6,7 @@ const itemsController = require('./controllers/items');
 const transactionsController = require('./controllers/transactions');
 const usersController = require('./controllers/users');
 const imageUploadController = require('./controllers/imageUpload');
+const exportDataController = require('./controllers/exportData');
 
 // USER routes
 router.get('/users', usersController.getAllUsers);
@@ -48,5 +49,11 @@ router.post('/validate-token', (req, res) => {
     // For simplicity, we're just returning valid: true
     res.json({ valid: true });
 });
+
+// Add export data routes
+router.get('/api/export/sales', exportDataController.getSalesData);
+router.get('/api/export/inventory', exportDataController.getInventoryData);
+router.get('/api/export/transactions', exportDataController.getTransactionsData);
+router.get('/api/export/full', exportDataController.getFullData);
 
 module.exports = router;

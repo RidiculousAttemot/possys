@@ -27,6 +27,7 @@
 
 html {
   scroll-behavior: smooth;
+  scroll-padding-top: 80px; /* Add padding to account for fixed header */
 }
 
 body {
@@ -131,8 +132,42 @@ header.sticky {
   color: var(--text-dark);
   text-decoration: none;
   font-weight: 500;
-  transition: var(--transition);
+  transition: color 0.3s ease;
   position: relative;
+  display: inline-block;
+  will-change: transform;
+  backface-visibility: hidden;
+  transform: translateZ(0);
+}
+
+.nav-links li a:not(.btn-login)::after {
+  content: '';
+  position: absolute;
+  width: 0;
+  height: 2px;
+  background: var(--primary-color);
+  bottom: -5px;
+  left: 0;
+  transition: width 0.3s ease;
+  transform: translateZ(0);
+  will-change: width;
+  opacity: 0.99; /* Fix for Safari rendering */
+}
+
+.nav-links li a:not(.btn-login):hover {
+  color: var(--text-color);
+}
+
+.nav-links li a:not(.btn-login):hover::after {
+  width: 100%;
+}
+
+.nav-links li a.active {
+  color: var(--text-color);
+}
+
+.nav-links li a.active::after {
+  width: 100%;
 }
 
 .nav-links li a:not(.btn-login)::after {
@@ -199,16 +234,16 @@ header.sticky {
 .hero {
   height: 100vh;
   background: linear-gradient(135deg, rgba(15, 15, 15, 0.95), rgba(10, 10, 10, 0.98)),
-              url('../images/motorcycle-bg.jpg');
+              url('../assets/images/admin-dashboard.jpg');
   background-size: cover;
   background-position: center;
+  position: relative;
   display: flex;
   align-items: center;
   justify-content: center;
   text-align: center;
   color: white;
   padding: 0 20px;
-  position: relative;
 }
 
 .hero::before {
@@ -217,7 +252,7 @@ header.sticky {
   width: 100%;
   height: 100%;
   background-image: url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M11 18c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm48 25c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm-43-7c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zm63 31c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zM34 90c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zm56-76c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zM12 86c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm28-65c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm23-11c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm-6 60c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm29 22c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zM32 63c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm57-13c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm-9-21c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM60 91c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 2 2 2 2zM35 41c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM12 60c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2z' fill='%233498db' fill-opacity='0.05' fill-rule='evenodd'/%3E%3C/svg%3E");
-  opacity: 0.2;
+  opacity: 0.1;
 }
 
 .hero-content {
@@ -231,6 +266,7 @@ header.sticky {
   font-size: 3.5rem;
   font-weight: 700;
   margin-bottom: 20px;
+  text-shadow: 0 2px 10px rgba(0,0,0,0.5);
   background: linear-gradient(45deg, var(--text-color) 30%, var(--primary-color) 70%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
@@ -310,6 +346,7 @@ section h2::after {
 .features {
   background: var(--dark-secondary);
   text-align: center;
+  padding: 100px 50px;
 }
 
 .features h2::after {
@@ -331,8 +368,12 @@ section h2::after {
   box-shadow: var(--box-shadow);
   transition: var(--transition);
   border: 1px solid rgba(52, 152, 219, 0.1);
-  position: relative;
-  overflow: hidden;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: center;
+  text-align: center;
 }
 
 .feature-item::before {
@@ -357,7 +398,7 @@ section h2::after {
 }
 
 .feature-item i {
-  font-size: 3rem;
+  font-size: 2.5rem;
   color: var(--primary-color);
   margin-bottom: 20px;
   transition: var(--transition);
@@ -795,5 +836,180 @@ footer .social-links a:hover {
   
   section h2 {
     font-size: 2rem;
+    
   }
+}
+
+/* System Preview Section - Updated with blur effect and standardized UI */
+.system-preview {
+  background: var(--dark-color);
+  text-align: center;
+  padding: 100px 50px;
+}
+
+.system-preview h2::after {
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.preview-container {
+  display: flex;
+  justify-content: center;
+  gap: 30px;
+  margin-top: 20px;
+  flex-wrap: wrap;
+}
+
+.preview-item {
+  flex: 0 1 45%;
+  max-width: 500px;
+  overflow: hidden;
+  border-radius: 15px;
+  box-shadow: 0 15px 30px rgba(0, 0, 0, 0.4);
+  transition: var(--transition);
+  position: relative;
+}
+
+.preview-item:hover {
+  transform: translateY(-10px);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6);
+}
+
+.preview-image {
+  height: 300px;
+  background-size: cover;
+  background-position: center top;
+  position: relative;
+}
+
+/* Fixed UI: removed the gradient overlay that was causing white effect */
+.preview-image.admin-dashboard {
+  background-image: url('../assets/images/admin.jpg');
+}
+
+.preview-image.pos-interface {
+  background-image: url('../assets/images/possssss.png');
+}
+
+/* Updated overlay with blur effect for better text visibility */
+.overlay {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.8) 60%, transparent);
+  opacity: 0;
+  transition: var(--transition);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.preview-item:hover .overlay {
+  opacity: 1;
+}
+
+/* Updated style for the label with blurred background */
+.overlay span {
+  color: white;
+  font-weight: 600;
+  font-size: 1.5rem;
+  text-shadow: 0 2px 5px rgba(0, 0, 0, 0.5);
+  padding: 12px 25px;
+  border-radius: 30px;
+  background: rgba(52, 152, 219, 0.3);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+  transform: translateY(20px);
+  transition: all 0.4s ease;
+}
+
+.preview-item:hover .overlay span {
+  transform: translateY(0);
+}
+
+/* About Features */
+.about-features {
+  display: flex;
+  justify-content: center;
+  gap: 40px;
+  margin: 30px 0;
+  flex-wrap: wrap;
+}
+
+.about-feature {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  background: linear-gradient(135deg, rgba(52, 152, 219, 0.1), rgba(52, 152, 219, 0.05));
+  padding: 20px 30px;
+  border-radius: 15px;
+  min-width: 150px;
+  transition: var(--transition);
+  border: 1px solid rgba(52, 152, 219, 0.05);
+}
+
+.about-feature:hover {
+  transform: translateY(-5px);
+  background: linear-gradient(135deg, rgba(52, 152, 219, 0.15), rgba(52, 152, 219, 0.1));
+  border-color: rgba(52, 152, 219, 0.2);
+}
+
+.about-feature i {
+  font-size: 2rem;
+  color: var(--primary-color);
+}
+
+.about-feature h4 {
+  margin: 0;
+  color: var(--text-color);
+}
+
+/* Update Hero Section for better appearance */
+.hero {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  color: white;
+  padding: 0 20px;
+}
+
+.hero-content h1 {
+  font-size: 3.5rem;
+  margin-bottom: 20px;
+  text-shadow: 0 2px 10px rgba(0,0,0,0.5);
+}
+
+/* Update Feature section for better visual balance */
+.features {
+  padding: 100px 50px;
+}
+
+.feature-grid {
+  margin-top: 50px;
+}
+
+.feature-item {
+  padding: 40px 30px;
+  border-radius: 15px;
+  box-shadow: var(--box-shadow);
+  transition: var(--transition);
+  border: 1px solid rgba(52, 152, 219, 0.1);
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: center;
+  text-align: center;
+}
+
+.feature-item i {
+  font-size: 2.5rem;
+  margin-bottom: 20px;
 }

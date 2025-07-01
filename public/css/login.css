@@ -194,6 +194,7 @@ body {
   z-index: 1;
   margin-bottom: 5px;
   font-weight: 700;
+  color: var(--text-color); /* Ensure the entire text is white by default */
 }
 
 .login-header .tech {
@@ -329,7 +330,7 @@ body {
   align-items: center;
   position: relative;
   cursor: pointer;
-  color: var (--text-dark);
+  color: var(--text-color); /* Changed from var(--text-dark) to white */
 }
 
 .remember input {

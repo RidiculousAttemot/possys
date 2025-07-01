@@ -6,6 +6,7 @@ const itemsController = require('../controllers/items');
 const usersController = require('../controllers/users');
 const transactionsController = require('../controllers/transactions');
 const adminController = require('../controllers/admin');
+const exportDataController = require('../controllers/exportData');
 
 // Items/Inventory routes
 router.get('/inventory', itemsController.getInventory);
@@ -33,6 +34,12 @@ router.get('/transaction-stats', transactionsController.getTransactionStats);
 router.get('/admin-info', adminController.getAdminInfo);
 router.get('/dashboard-stats', adminController.getDashboardStats);
 router.get('/reports/:type', adminController.generateReport);
+
+// Export data routes
+router.get('/export/sales', exportDataController.getSalesData);
+router.get('/export/inventory', exportDataController.getInventoryData);
+router.get('/export/transactions', exportDataController.getTransactionsData);
+router.get('/export/full', exportDataController.getFullData);
 
 // Database check - simple health check endpoint
 router.get('/', (req, res) => {

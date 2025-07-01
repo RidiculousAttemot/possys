@@ -2796,10 +2796,12 @@ main {
 
 .search-icon {
   position: absolute;
-  right: 12px;
-  top: 50%;
-  transform: translateY(-50%);
-  color: var(--text-dark);
+  right: 10px;
+  color: var(--primary-color);
+  font-size: 14px;
+  z-index: 2; /* Keep the icon above the input but not blocking clicks */
+  pointer-events: none; /* This ensures clicks pass through the icon to the input field */
+
 }
 
 /* Modal Styling - Compatible with admin interface */
@@ -5419,3 +5421,4 @@ main {
   70% { box-shadow: 0 0 0 15px rgba(52, 152, 219, 0); }
   100% { box-shadow: 0 0 0 0 rgba(52, 152, 219, 0); }
 }
+

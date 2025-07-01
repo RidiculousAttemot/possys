@@ -937,7 +937,19 @@ document.addEventListener('DOMContentLoaded', function() {
             // Add event listener to the new button
             newBtn.addEventListener('click', function() {
                 const transactionId = this.getAttribute('data-id');
-                viewTransactionDetails(transactionId);
+                if (typeof TransactionHistoryAdmin !== 'undefined') {
+                    TransactionHistoryAdmin.viewTransactionDetails(transactionId);
+                } else {
+                    console.error('TransactionHistoryAdmin module not loaded');
+                    Swal.fire({
+                        title: 'Error',
+                        text: 'Transaction details functionality is not available.',
+                        icon: 'error',
+                        confirmButtonColor: '#3498db',
+                        background: '#141414',
+                        color: '#f5f5f5'
+                    });
+                }
             });
         });
     }
@@ -1563,49 +1575,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             });
         }
-        
-        // Database connection checker
-        const checkDatabaseBtn = document.getElementById('checkDatabase');
-        if (checkDatabaseBtn) {
-            checkDatabaseBtn.addEventListener('click', async () => {
-                // Show loading state
-                const originalContent = checkDatabaseBtn.innerHTML;
-                checkDatabaseBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Checking...';
-                checkDatabaseBtn.disabled = true;
-                
-                try {
-                    const response = await fetch(`${API_URL}/?timestamp=${Date.now()}`);
-                    
-                    if (response.ok) {
-                        Swal.fire({
-                            title: 'Connection Successful!',
-                            text: 'Database connection is working properly.',
-                            icon: 'success',
-                            confirmButtonColor: '#3498db',
-                            background: '#141414',
-                            color: '#f5f5f5'
-                        });
-                    } else {
-                        throw new Error('Database connection test failed');
-                    }
-                } catch (error) {
-                    console.error('Database connection test failed:', error);
-                    
-                    Swal.fire({
-                        title: 'Connection Failed!',
-                        text: 'Database connection test failed. Please check your server.',
-                        icon: 'error',
-                        confirmButtonColor: '#3498db',
-                        background: '#141414',
-                        color: '#f5f5f5'
-                    });
-                } finally {
-                    // Restore button state
-                    checkDatabaseBtn.innerHTML = originalContent;
-                    checkDatabaseBtn.disabled = false;
-                }
-            });
-        }
     };
     
     // Call init function
@@ -1742,3 +1711,426 @@ function showSection(sectionId) {
         menuItem.parentElement.classList.add('active');
     }
 }
+
+// Function to handle logout with enhanced modal
+function handleLogout() {
+    Swal.fire({
+        title: '<div class="logout-title"><i class="fas fa-sign-out-alt"></i> Logout Confirmation</div>',
+        html: `
+            <div class="logout-content">
+                <p>Are you sure you want to log out from the admin system?</p>
+                <div class="logout-user-info">
+                    <i class="fas fa-user-shield"></i>
+                    <span>${localStorage.getItem('userName') || 'Admin'}</span>
+                </div>
+            </div>
+        `,
+        icon: null,
+        showCancelButton: true,
+        confirmButtonText: '<i class="fas fa-sign-out-alt"></i> Yes, Logout',
+        cancelButtonText: '<i class="fas fa-times"></i> Cancel',
+        confirmButtonColor: '#3498db',
+        cancelButtonColor: '#2c3e50',
+        background: '#141414',
+        color: '#f5f5f5',
+        width: '400px', // Fixed width for logout modal
+        customClass: {
+            container: 'fixed-size-modal',
+            title: 'logout-modal-title',
+            htmlContainer: 'logout-modal-content',
+            confirmButton: 'logout-confirm-button',
+            cancelButton: 'logout-cancel-button',
+            popup: 'logout-modal-popup'
+        },
+        buttonsStyling: true
+    }).then((result) => {
+        if (result.isConfirmed) {
+            // Show a brief loading state
+            Swal.fire({
+                title: 'Logging Out',
+                html: '<i class="fas fa-circle-notch fa-spin"></i>',
+                showConfirmButton: false,
+                allowOutsideClick: false,
+                timer: 800,
+                background: '#141414',
+                color: '#f5f5f5',
+                customClass: {
+                    popup: 'logout-loading-popup'
+                },
+                didOpen: () => {
+                    // Clear all authentication data
+                    localStorage.removeItem('authToken');
+                    localStorage.removeItem('userName');
+                    localStorage.removeItem('userRole');
+                    localStorage.removeItem('userId');
+                }
+            }).then(() => {
+                // Redirect to login page
+                window.location.href = 'login.html';
+            });
+        }
+    });
+}
+
+// Add event listener to logout button using the enhanced modal
+document.addEventListener('DOMContentLoaded', function() {
+    // Set up logout button with enhanced modal
+    const logoutBtn = document.querySelector('.btn-logout');
+    if (logoutBtn) {
+        logoutBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            handleLogout();
+        });
+    }
+});
+
+// Number formatting utilities
+function formatNumber(number) {
+    if (number === undefined || number === null) return '0';
+    return number.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+}
+
+function formatCurrency(number) {
+    if (number === undefined || number === null) return '₱0.00';
+    
+    // Handle if number already has peso sign
+    if (typeof number === 'string' && number.includes('₱')) {
+        number = parseFloat(number.replace('₱', '').replace(/,/g, ''));
+    }
+    
+    return '₱' + parseFloat(number).toFixed(2).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+}
+
+// Function to format numbers in dashboard statistics
+function formatDashboardStats() {
+    // Format user count
+    const userCount = document.getElementById('userCount');
+    if (userCount && userCount.textContent) {
+        userCount.textContent = formatNumber(parseInt(userCount.textContent));
+    }
+    
+    // Format total sales
+    const totalSales = document.getElementById('totalSales');
+    if (totalSales && totalSales.textContent) {
+        totalSales.textContent = formatCurrency(totalSales.textContent);
+    }
+    
+    // Format item count
+    const itemCount = document.getElementById('itemCount');
+    if (itemCount && itemCount.textContent) {
+        itemCount.textContent = formatNumber(parseInt(itemCount.textContent));
+    }
+    
+    // Format transaction count
+    const transactionCount = document.getElementById('transactionCount');
+    if (transactionCount && transactionCount.textContent) {
+        transactionCount.textContent = formatNumber(parseInt(transactionCount.textContent));
+    }
+}
+
+// Format numbers when displaying inventory items
+function formatInventoryNumbers() {
+    // Format price column in inventory table
+    document.querySelectorAll('.inventory-table td:nth-child(5)').forEach(cell => {
+        if (cell.textContent.includes('₱')) {
+            cell.textContent = formatCurrency(cell.textContent);
+        } else {
+            cell.textContent = formatCurrency(cell.textContent);
+        }
+    });
+    
+    // Format stock quantities
+    document.querySelectorAll('.inventory-table td:nth-child(6)').forEach(cell => {
+        const stockText = cell.textContent.trim();
+        if (!isNaN(stockText)) {
+            cell.textContent = formatNumber(parseInt(stockText));
+        }
+    });
+}
+
+// Format transaction amounts in transaction table
+function formatTransactionAmounts() {
+    document.querySelectorAll('.transactions-table td:nth-child(4)').forEach(cell => {
+        if (cell.textContent) {
+            cell.textContent = formatCurrency(cell.textContent);
+        }
+    });
+}
+
+// Add this to the original displayDashboardData function or call after it
+document.addEventListener('DOMContentLoaded', function() {
+    // Format numbers when dashboard data is loaded
+    const originalRefreshDashboard = window.refreshDashboard || function(){};
+    
+    window.refreshDashboard = function() {
+        originalRefreshDashboard();
+        
+        // Apply formatting after a short delay to ensure data is loaded
+        setTimeout(() => {
+            formatDashboardStats();
+            formatInventoryNumbers();
+            formatTransactionAmounts();
+        }, 100);
+    };
+    
+    // Format numbers on initial load
+    setTimeout(formatDashboardStats, 300);
+    
+    // Refresh button should format numbers after refresh
+    const refreshButton = document.getElementById('refreshDashboard');
+    if (refreshButton) {
+        refreshButton.addEventListener('click', function() {
+            setTimeout(() => {
+                formatDashboardStats();
+                formatInventoryNumbers();
+                formatTransactionAmounts();
+            }, 300);
+        });
+    }
+    
+    // MutationObserver to watch for dynamic content changes
+    const observer = new MutationObserver(function(mutations) {
+        mutations.forEach(function(mutation) {
+            if (mutation.type === 'childList') {
+                if (mutation.target.id === 'inventoryTable') {
+                    formatInventoryNumbers();
+                } else if (mutation.target.id === 'transactionsTable') {
+                    formatTransactionAmounts();
+                }
+            }
+        });
+    });
+    
+    // Start observing tables for dynamic content changes
+    const inventoryTable = document.getElementById('inventoryTable');
+    const transactionsTable = document.getElementById('transactionsTable');
+    
+    if (inventoryTable) {
+        observer.observe(inventoryTable, { childList: true });
+    }
+    
+    if (transactionsTable) {
+        observer.observe(transactionsTable, { childList: true });
+    }
+});
+
+// Function to view transaction details - integrated with TransactionHistoryAdmin module
+function viewTransactionDetails(transactionId) {
+    // Check if TransactionHistoryAdmin module is available
+    if (typeof TransactionHistoryAdmin !== 'undefined') {
+        TransactionHistoryAdmin.viewTransactionDetails(transactionId);
+    } else {
+        console.error('TransactionHistoryAdmin module not loaded');
+        
+        // Fallback alert in case the module isn't loaded
+        Swal.fire({
+            title: 'Error',
+            text: 'Transaction details functionality is not available. Please check the console for more information.',
+            icon: 'error',
+            confirmButtonColor: '#3498db',
+            background: '#141414',
+            color: '#f5f5f5'
+        });
+    }
+}
+
+// Add event listeners to buttons in transaction table
+function addTransactionButtonListeners() {
+    document.querySelectorAll('.transactions-table .btn-view').forEach(button => {
+        // Clone and replace to avoid stale event listeners
+        const newBtn = button.cloneNode(true);
+        button.parentNode.replaceChild(newBtn, button);
+        
+        // Add event listener to the new button
+        newBtn.addEventListener('click', function() {
+            const transactionId = this.getAttribute('data-id');
+            if (typeof TransactionHistoryAdmin !== 'undefined') {
+                TransactionHistoryAdmin.viewTransactionDetails(transactionId);
+            } else {
+                console.error('TransactionHistoryAdmin module not loaded');
+                Swal.fire({
+                    title: 'Error',
+                    text: 'Transaction details functionality is not available.',
+                    icon: 'error',
+                    confirmButtonColor: '#3498db',
+                    background: '#141414',
+                    color: '#f5f5f5'
+                });
+            }
+        });
+    });
+}
+
+// Get transaction data from API
+const fetchTransactions = async () => {
+    try {
+        const response = await fetch(`${API_URL}/transactions`, {
+            headers: {
+                'Authorization': `Bearer ${localStorage.getItem('authToken')}`
+            }
+        });
+        
+        if (!response.ok) {
+            throw new Error('Failed to fetch transactions');
+        }
+        
+        const transactions = await response.json();
+        
+        // Populate the transactions table
+        const transactionsTable = document.querySelector('.transactions-table tbody');
+        if (transactionsTable) {
+            transactionsTable.innerHTML = '';
+            
+            transactions.forEach(transaction => {
+                // Format date
+                const date = new Date(transaction.transaction_date);
+                const formattedDate = date.toLocaleDateString('en-US', { 
+                    year: 'numeric', 
+                    month: 'short', 
+                    day: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                });
+                
+                // Get payment method icon
+                const paymentMethodIcons = {
+                    'cash': 'fas fa-money-bill-wave',
+                    'card': 'fas fa-credit-card',
+                    'gcash': 'fas fa-mobile-alt',
+                    'paymaya': 'fas fa-wallet',
+                    'ewallet': 'fas fa-mobile-alt',
+                    'banktransfer': 'fas fa-university'
+                };
+                const icon = paymentMethodIcons[transaction.payment_method] || 'fas fa-dollar-sign';
+                
+                // Create table row
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${transaction.transaction_id}</td>
+                    <td>${transaction.user_name || 'N/A'}</td>
+                    <td>₱${parseFloat(transaction.total_amount).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
+                    <td><i class="${icon}"></i> ${transaction.payment_method}</td>
+                    <td>${formattedDate}</td>
+                    <td>
+                        <div class="action-buttons">
+                            <button class="btn-view" data-id="${transaction.transaction_id}" title="View Details">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                        </div>
+                    </td>
+                `;
+                transactionsTable.appendChild(row);
+            });
+            
+            // Add event listeners to the view buttons
+            addTransactionButtonListeners();
+        }
+        
+    } catch (error) {
+        console.error('Error fetching transactions:', error);
+        Swal.fire({
+            title: 'Error!',
+            text: 'Failed to load transactions. Please try again.',
+            icon: 'error',
+            confirmButtonColor: '#3498db',
+            background: '#141414',
+            color: '#f5f5f5'
+        });
+    }
+};
+
+// Initialize the page with event listeners
+const init = async () => {
+    // Check if we're coming back after a page reload (e.g., from form submission)
+    const lastSection = localStorage.getItem('lastActiveSection');
+    if (lastSection) {
+        // Navigate to that section
+        showSection(lastSection);
+        // Remove the stored section to avoid unexpected redirects in the future
+        localStorage.removeItem('lastActiveSection');
+        console.log('Navigated to previously active section:', lastSection);
+    }
+
+    // Load dashboard data first
+    await loadDashboard();
+    
+    // Load all data sections in parallel
+    await Promise.all([
+        loadInventory(),
+        loadUsers(),
+        loadTransactions()
+    ]);
+    
+    // Add dashboard refresh handler with loading state
+    const refreshDashboard = document.getElementById('refreshDashboard');
+    if (refreshDashboard) {
+        refreshDashboard.addEventListener('click', async () => {
+            // Show loading state
+            const originalContent = refreshDashboard.innerHTML;
+            refreshDashboard.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Refreshing...';
+            refreshDashboard.disabled = true;
+            
+            try {
+                // Reload all data sections
+                await Promise.all([
+                    loadDashboard(),
+                    loadInventory(),
+                    loadUsers(),
+                    loadTransactions()
+                ]);
+                
+                // Show success message
+                Swal.fire({
+                    title: 'Refreshed!',
+                    text: 'All data has been updated successfully.',
+                    icon: 'success',
+                    timer: 1500,
+                    showConfirmButton: false,
+                    background: '#141414',
+                    color: '#f5f5f5'
+                });
+            } catch (error) {
+                console.error('Error refreshing data:', error);
+                
+                Swal.fire({
+                    title: 'Error!',
+                    text: 'Failed to refresh data. Please try again.',
+                    icon: 'error',
+                    confirmButtonColor: '#3498db',
+                    background: '#141414',
+                    color: '#f5f5f5'
+                });
+            } finally {
+                // Restore button state
+                refreshDashboard.innerHTML = originalContent;
+                refreshDashboard.disabled = false;
+            }
+        });
+    }
+};
+
+// Call init function
+init();
+
+// Make sure TransactionHistoryAdmin module is loaded
+const loadTransactionHistoryAdminModule = () => {
+    if (typeof TransactionHistoryAdmin === 'undefined') {
+        // Check if the script is already loaded
+        const existingScript = document.querySelector('script[src*="transactionHistoryAdmin.js"]');
+        if (!existingScript) {
+            // Create and append the script
+            const script = document.createElement('script');
+            script.src = '/public/js/transactionHistoryAdmin.js';
+            script.onload = () => {
+                console.log('TransactionHistoryAdmin module loaded');
+                TransactionHistoryAdmin.init();
+            };
+            script.onerror = () => console.error('Failed to load TransactionHistoryAdmin module');
+            document.body.appendChild(script);
+        }
+    }
+};
+
+// Load TransactionHistoryAdmin module when DOM is loaded
+document.addEventListener('DOMContentLoaded', loadTransactionHistoryAdminModule);
+
