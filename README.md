@@ -18,8 +18,9 @@ A Point of Sale system built with Node.js, Express, and MySQL for managing motor
 
 2. **Configure environment:**
    ```bash
-   cp .env.example .env
-   # Edit .env with your MySQL credentials
+   # Windows: copy .env.example .env
+   # Unix/Mac: cp .env.example .env
+   # Then edit .env with your MySQL credentials
    ```
 
 3. **Set up MySQL database:**
