@@ -16,21 +16,27 @@ A Point of Sale system built with Node.js, Express, and MySQL for managing motor
    npm install
    ```
 
-2. **Set up MySQL database:**
+2. **Configure environment:**
+   ```bash
+   cp .env.example .env
+   # Edit .env with your MySQL credentials
+   ```
+
+3. **Set up MySQL database:**
    - Create database: `morpos`
    - Update credentials in `.env` file
 
-3. **Initialize database tables:**
+4. **Initialize database tables:**
    ```bash
    node server/dbSetup.js
    ```
 
-4. **Start the application:**
+5. **Start the application:**
    ```bash
    npm start
    ```
 
-5. **Access the system:**
+6. **Access the system:**
    - Open browser: `http://localhost:5000/login.html`
    - Default admin: `admin` / `admin123`
 

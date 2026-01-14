@@ -133,22 +133,30 @@ npm install
 
 ### Step 3: Configure Environment Variables
 
-1. Create a `.env` file in the root directory (if it doesn't exist)
-2. Add the following configuration:
+1. Copy the example environment file:
+   ```bash
+   cp .env.example .env
+   ```
+
+2. Open `.env` file in a text editor and update the configuration:
 
 ```env
+# Server Configuration
+PORT=5000
+
 # Database Configuration
 DB_HOST=localhost
 DB_USER=root
 DB_PASSWORD=your_mysql_password_here
 DB_NAME=morpos
 
-# Server Configuration
-PORT=5000
-NODE_ENV=development
+# JWT Configuration
+JWT_SECRET=your_super_secret_key_change_this_in_production
 ```
 
 Replace `your_mysql_password_here` with your actual MySQL root password.
+
+⚠️ **Important:** Never commit the `.env` file to version control. It contains sensitive information.
 
 ### Step 4: Initialize the Database Tables
 
