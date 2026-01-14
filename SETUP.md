@@ -63,6 +63,8 @@ After initialization:
 If you haven't installed MySQL yet:
 
 1. Download MySQL Community Server from [https://dev.mysql.com/downloads/mysql/](https://dev.mysql.com/downloads/mysql/)
+   - Recommended: MySQL 8.0 or higher (minimum 5.7)
+   - Choose the appropriate version for your Windows system
 2. Run the installer
 3. During installation:
    - Choose **Developer Default** or **Server only**
@@ -243,6 +245,12 @@ node server/dbSetup.js
 **Solution:**
 Reinstall dependencies:
 ```bash
+# Windows (Command Prompt)
+rmdir /s /q node_modules
+del package-lock.json
+npm install
+
+# Windows (PowerShell) or Unix/Linux/Mac
 rm -rf node_modules
 rm package-lock.json
 npm install

@@ -182,6 +182,10 @@ This creates all required tables:
    - The app creates `public/assets/images/` automatically
    - If needed, create manually:
      ```bash
+     # Windows (Command Prompt)
+     mkdir public\assets\images
+     
+     # Windows (PowerShell) or Unix/Linux/Mac
      mkdir -p public/assets/images
      ```
 
@@ -204,11 +208,14 @@ This creates all required tables:
 
 Reinstall dependencies:
 ```bash
-# Remove existing installations
+# Windows (Command Prompt)
+rmdir /s /q node_modules
+del package-lock.json
+npm install
+
+# Windows (PowerShell) or Unix/Linux/Mac
 rm -rf node_modules
 rm package-lock.json
-
-# Reinstall
 npm install
 ```
 
