@@ -48,7 +48,7 @@ A Point of Sale system built with Node.js, Express, and MySQL for managing motor
 If you encounter this Windows disk management error, it means your storage disk needs to be initialized before MySQL can use it. **[See detailed solution in SETUP.md](SETUP.md#disk-initialization-windows)**
 
 Quick fix:
-1. Open Disk Management (Windows + X → Disk Management)
+1. Open Disk Management (Windows key + X → Disk Management)
 2. Right-click on "Disk 1" → Initialize Disk
 3. Choose GPT (recommended) or MBR
 4. Create a new volume and format as NTFS

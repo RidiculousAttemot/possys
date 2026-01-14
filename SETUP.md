@@ -22,7 +22,7 @@ Before installing the POS system, ensure you have:
 If you encounter the error **"Disk 1 is unknown and not initialized"**, follow these steps:
 
 ### Step 1: Open Disk Management
-1. Press `Windows + X` keys together
+1. Press `Windows key + X` keys together
 2. Select **Disk Management** from the menu
 3. Wait for the Disk Management window to load
 

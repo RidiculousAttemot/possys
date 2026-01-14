@@ -18,10 +18,10 @@ This error appears in Windows Disk Management, not in the POS application itself
 **Step-by-step guide:**
 
 1. **Open Disk Management**
-   - Press `Windows Key + X`
+   - Press `Windows key + X`
    - Click on "Disk Management"
    - Alternatively: Right-click Start → Disk Management
-   - Or: Press `Windows Key + R`, type `diskmgmt.msc`, press Enter
+   - Or: Press `Windows key + R`, type `diskmgmt.msc`, press Enter
 
 2. **Locate Disk 1**
    - Look for a disk labeled "Disk 1"
@@ -172,6 +172,8 @@ This creates all required tables:
    ```bash
    # Windows
    netstat -ano | findstr :5000
+   # Note: The last column shows the PID (Process ID)
+   # Replace <PID_NUMBER> below with the actual PID from the output
    taskkill /PID <PID_NUMBER> /F
    ```
 
