@@ -6,7 +6,7 @@ A Point of Sale system built with Node.js, Express, and MySQL for managing motor
 
 ### Prerequisites
 - Node.js (>= 14.0.0)
-- MySQL Server (>= 5.7)
+- MySQL Server (>= 5.7, recommended 8.0+)
 - Windows 10/11 or compatible OS
 
 ### Installation

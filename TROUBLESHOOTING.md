@@ -72,8 +72,14 @@ If MySQL was trying to use this disk:
 
 1. **Start MySQL Service**
    ```bash
+   # Try these commands (service name may vary based on MySQL version)
    net start MySQL
+   # Or
+   net start MySQL80
+   # Or
+   net start MySQL57
    ```
+   Note: The exact service name depends on your MySQL installation. Check Services console if needed.
 
 2. **Or restart through Services**
    - Press `Windows + R`, type `services.msc`
@@ -249,7 +255,7 @@ If these solutions don't resolve your issue:
 3. **Verify all prerequisites**
    - Node.js version: `node --version` (should be >= 14.0.0)
    - npm version: `npm --version`
-   - MySQL version: `mysql --version` (should be >= 5.7)
+   - MySQL version: `mysql --version` (minimum 5.7, recommended 8.0 or higher)
 
 4. **Check the setup guide**
    - See [SETUP.md](SETUP.md) for detailed installation instructions

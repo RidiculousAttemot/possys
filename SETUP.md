@@ -13,7 +13,7 @@ This guide will help you set up the Point of Sale System for Motorcycle Parts.
 
 Before installing the POS system, ensure you have:
 - Node.js (version 14.0.0 or higher)
-- MySQL Server (version 5.7 or higher)
+- MySQL Server (minimum version 5.7, recommended 8.0 or higher)
 - At least 1GB of free disk space
 - Windows 10/11 (or appropriate OS)
 
@@ -137,6 +137,10 @@ npm install
 
 1. Copy the example environment file:
    ```bash
+   # Windows (Command Prompt)
+   copy .env.example .env
+   
+   # Windows (PowerShell) or Unix/Linux/Mac
    cp .env.example .env
    ```
 
