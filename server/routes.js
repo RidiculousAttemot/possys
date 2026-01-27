@@ -7,6 +7,7 @@ const transactionsController = require('./controllers/transactions');
 const usersController = require('./controllers/users');
 const imageUploadController = require('./controllers/imageUpload');
 const exportDataController = require('./controllers/exportData');
+const resetController = require('./controllers/reset');
 
 // USER routes
 router.get('/users', usersController.getAllUsers);
@@ -28,6 +29,11 @@ router.get('/transactions', transactionsController.getAllTransactions);
 router.get('/transactions/:id', transactionsController.getTransactionById);
 router.post('/transactions', transactionsController.createTransaction);
 router.get('/transaction-stats', transactionsController.getTransactionStats);
+
+// RESET routes
+router.delete('/reset/transactions', resetController.resetTransactions);
+router.delete('/reset/inventory', resetController.resetInventory);
+router.delete('/reset/users', resetController.resetUsers);
 
 // IMAGE UPLOAD route
 router.post('/upload-image', imageUploadController.uploadImage);
