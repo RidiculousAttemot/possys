@@ -5,8 +5,78 @@ let isSubmitting = false;
 
 // API base URL - define once at the top
 const API_URL = 'http://localhost:5000/api';
+const ASSET_BASE_URL = API_URL.replace(/\/api$/, '');
 
-document.addEventListener('DOMContentLoaded', function() {
+const resolveAssetUrl = (assetPath) => {
+    if (!assetPath) {
+        return '';
+    }
+
+    const value = String(assetPath);
+    if (/^https?:\/\//i.test(value)) {
+        return value;
+    }
+
+    if (value.startsWith('/')) {
+        return `${ASSET_BASE_URL}${value}`;
+    }
+
+    return `${ASSET_BASE_URL}/${value.replace(/^\/+/, '')}`;
+};
+
+document.addEventListener('DOMContentLoaded', async function() {
+    const checkAuth = async () => {
+        const token = localStorage.getItem('authToken');
+
+        if (!token) {
+            console.log('No auth token found. Redirecting to login...');
+            window.location.href = 'login.html';
+            return null;
+        }
+
+        if (window.AuthGuard && typeof window.AuthGuard.validateSession === 'function') {
+            const session = await window.AuthGuard.validateSession();
+
+            if (!session.valid || !session.user) {
+                console.log('Session validation failed. Redirecting to login...');
+                window.location.href = 'login.html';
+                return null;
+            }
+
+            if (session.user.role !== 'admin') {
+                console.log('Server session role is not admin. Redirecting to POS...');
+                window.location.href = 'pos.html';
+                return null;
+            }
+
+            const userDisplayElement = document.querySelector('.user-display');
+            if (userDisplayElement) {
+                userDisplayElement.textContent = session.user.full_name || session.user.username || 'Admin';
+            }
+
+            return session;
+        }
+
+        const userRole = localStorage.getItem('userRole');
+        if (userRole !== 'admin') {
+            console.log('User is not admin. Redirecting to POS...');
+            window.location.href = 'pos.html';
+            return null;
+        }
+
+        const userDisplayElement = document.querySelector('.user-display');
+        if (userDisplayElement) {
+            userDisplayElement.textContent = localStorage.getItem('userName') || 'Admin';
+        }
+
+        return { valid: true, user: { role: userRole } };
+    };
+
+    const session = await checkAuth();
+    if (!session) {
+        return;
+    }
+
     // FIRST: Check for last active section before doing anything else
     // This ensures that after a page reload (e.g., from form submission with image)
     // we return to the correct section (e.g., inventory)
@@ -20,27 +90,6 @@ document.addEventListener('DOMContentLoaded', function() {
         localStorage.removeItem('lastActiveSection');
     }
 
-    // Check if user is logged in immediately
-    if (!localStorage.getItem('authToken')) {
-        console.log('No auth token found. Redirecting to login...');
-        window.location.href = 'login.html';
-        return;
-    }
-    
-    // Check user role
-    const userRole = localStorage.getItem('userRole');
-    if (userRole !== 'admin') {
-        console.log('User is not admin. Redirecting to POS...');
-        window.location.href = 'pos.html';
-        return;
-    }
-
-    // Set admin name in UI
-    const userDisplayElement = document.querySelector('.user-display');
-    if (userDisplayElement) {
-        userDisplayElement.textContent = localStorage.getItem('userName') || 'Admin';
-    }
-    
     // Setup logout button with improved functionality
     const logoutBtn = document.querySelector('.btn-logout');
     if (logoutBtn) {
@@ -82,35 +131,6 @@ document.addEventListener('DOMContentLoaded', function() {
             });
         });
     }
-    
-    // Authentication check
-    const checkAuth = () => {
-        const token = localStorage.getItem('authToken');
-        const userRole = localStorage.getItem('userRole');
-        
-        if (!token) {
-            // Redirect to login page if no token
-            window.location.href = 'login.html';
-            return false;
-        }
-        
-        // Check if user is not admin - they should not access admin page
-        if (userRole !== 'admin') {
-            window.location.href = 'pos.html';
-            return false;
-        }
-        
-        // Set admin name in UI
-        const userDisplayElement = document.querySelector('.user-display');
-        if (userDisplayElement) {
-            userDisplayElement.textContent = localStorage.getItem('userName') || 'Admin';
-        }
-        
-        return true;
-    };
-    
-    // Check authentication on load
-    if (!checkAuth()) return;
     
     // Load dashboard data with improved error handling
     const loadDashboard = async () => {
@@ -278,16 +298,9 @@ document.addEventListener('DOMContentLoaded', function() {
             let imageHtml = '';
             
             if (item.image && item.image !== 'null' && item.image !== 'undefined') {
-                // For working with Live Server which serves from /public
-                // When using Live Server, adjust the path to include /public
-                if (window.location.href.includes(':5500') || window.location.href.includes('localhost')) {
-                    imagePath = window.location.origin + '/public' + item.image;
-                } else {
-                    // For production deployment
-                    imagePath = item.image;
-                }
+                imagePath = resolveAssetUrl(item.image);
                 
-                imageHtml = `<img src="${imagePath}" alt="${item.item_name}" onerror="this.onerror=null; this.src='${window.location.origin}/public/assets/images/no-image.png'; console.log('Using fallback for item ${item.item_id}');">`;
+                imageHtml = `<img src="${imagePath}" alt="${item.item_name}" onerror="this.onerror=null; this.src='${resolveAssetUrl('/assets/images/no-image.png')}'; console.log('Using fallback for item ${item.item_id}');">`;
             } else {
                 imageHtml = '<i class="fas fa-image no-image"></i>';
             }
@@ -1166,19 +1179,11 @@ document.addEventListener('DOMContentLoaded', function() {
             const currentImagePreview = document.getElementById('currentItemImage');
             if (item.image) {
                 // Fix image path using similar logic as in displayInventory
-                let imagePath = '';
-                
-                // For working with Live Server which serves from /public
-                if (window.location.href.includes(':5500') || window.location.href.includes('localhost')) {
-                    imagePath = window.location.origin + '/public' + item.image;
-                } else {
-                    // For production deployment
-                    imagePath = item.image;
-                }
+                const imagePath = resolveAssetUrl(item.image);
                 
                 currentImagePreview.innerHTML = `
                     <img src="${imagePath}" alt="${item.item_name}" style="max-width: 100px; margin-bottom: 10px;" 
-                         onerror="this.onerror=null; this.src='${window.location.origin}/public/assets/images/no-image.png'; console.log('Using fallback in preview');">
+                         onerror="this.onerror=null; this.src='${resolveAssetUrl('/assets/images/no-image.png')}'; console.log('Using fallback in preview');">
                     <p class="current-filename">Current: ${item.image.split('/').pop()}</p>
                 `;
                 currentImagePreview.style.display = 'block';
@@ -1710,6 +1715,17 @@ function showSection(sectionId) {
     if (menuItem) {
         menuItem.parentElement.classList.add('active');
     }
+
+    localStorage.setItem('lastActiveSection', sectionId);
+
+    if (typeof window !== 'undefined' && typeof window.dispatchEvent === 'function') {
+        window.dispatchEvent(new CustomEvent('admin:section-change', {
+            detail: {
+                sectionId,
+                label: menuItem ? menuItem.textContent.trim() : sectionId
+            }
+        }));
+    }
 }
 
 // Function to handle logout with enhanced modal
@@ -2078,6 +2094,10 @@ const init = async () => {
                     loadUsers(),
                     loadTransactions()
                 ]);
+
+                if (typeof window.loadAuditSummary === 'function') {
+                    window.loadAuditSummary();
+                }
                 
                 // Show success message
                 Swal.fire({

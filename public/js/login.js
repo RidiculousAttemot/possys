@@ -1,46 +1,35 @@
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
     console.log('Login page loaded. Checking authentication...');
+
+    const getApiBase = () => {
+        const { protocol, hostname, origin } = window.location;
+
+        // If frontend is served by Live Server (e.g. :5500/:5501), use backend API port.
+        if (protocol.startsWith('http') && (hostname === 'localhost' || hostname === '127.0.0.1')) {
+            if (window.location.port !== '5000') {
+                return 'http://localhost:5000/api';
+            }
+            return `${origin}/api`;
+        }
+
+        if (protocol.startsWith('http') && hostname) {
+            return `${origin}/api`;
+        }
+
+        return 'http://localhost:5000/api';
+    };
+
+    const API_BASE = getApiBase();
     
-    // Check if user is already logged in
-    const token = localStorage.getItem('authToken');
-    
-    if (token) {
-        console.log('Authentication token found. Validating...');
-        // Validate token by making a request to the server
-        fetch('http://localhost:5000/api/validate-token', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}`
-            }
-        })
-        .then(response => {
-            if (!response.ok) {
-                console.log('Token validation failed. Clearing auth data...');
-                // If token is invalid, clear localStorage
-                localStorage.clear();
-                return null;
-            }
-            return response.json();
-        })
-        .then(data => {
-            if (data && data.valid) {
-                console.log('Token valid. Redirecting based on role...');
-                // Redirect to appropriate page based on role
-                const userRole = localStorage.getItem('userRole');
-                if (userRole === 'admin') {
-                    window.location.href = 'admin.html';
-                } else {
-                    window.location.href = 'pos.html';
-                }
-            }
-        })
-        .catch(error => {
-            console.error('Error validating token:', error);
-            localStorage.clear();
-        });
-    } else {
-        console.log('No authentication token found. User needs to log in.');
+    // Redirect already authenticated users before showing the form
+    if (window.AuthGuard && typeof window.AuthGuard.validateSession === 'function') {
+        const session = await window.AuthGuard.validateSession();
+
+        if (session.valid && session.user) {
+            console.log('Token valid. Redirecting based on server-issued session...');
+            window.AuthGuard.redirectByRole(session.user);
+            return;
+        }
     }
 
     // Listen for form submission
@@ -68,18 +57,26 @@ document.addEventListener('DOMContentLoaded', () => {
             try {
                 // Send login request
                 console.log(`Attempting login for user: ${username}`);
-                const response = await fetch('http://localhost:5000/api/login', {
+                const response = await fetch(`${API_BASE}/login`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ username, password })
                 });
 
-                const data = await response.json();
+                let data = {};
+                const contentType = response.headers.get('content-type') || '';
+                if (contentType.includes('application/json')) {
+                    data = await response.json();
+                }
 
                 if (response.ok) {
                     // Store authentication data
                     console.log('Login successful. Setting auth data...');
-                    localStorage.setItem('authToken', data.token || 'token-' + Date.now());
+                    if (!data.token) {
+                        throw new Error('Server did not return an authentication token');
+                    }
+
+                    localStorage.setItem('authToken', data.token);
                     localStorage.setItem('userName', data.user.full_name || username);
                     localStorage.setItem('userRole', data.user.role);
                     localStorage.setItem('userId', data.user.user_id);
@@ -102,10 +99,17 @@ document.addEventListener('DOMContentLoaded', () => {
                     });
                 } else {
                     // Show error message
-                    console.log('Login failed:', data.error);
+                    const serverError = data && data.error ? data.error : null;
+                    const fallbackError = response.status === 401
+                        ? 'Invalid username or password.'
+                        : `Login failed (${response.status}). Please try again.`;
+                    const message = serverError || fallbackError;
+
+                    console.log('Login failed:', message);
+
                     Swal.fire({
                         title: 'Login Failed',
-                        text: data.error || 'Invalid username or password',
+                        text: message,
                         icon: 'error'
                     });
                     
@@ -117,7 +121,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 console.error('Login error:', error);
                 Swal.fire({
                     title: 'Error',
-                    text: 'An error occurred during login. Please try again.',
+                    text: error.message || 'Unable to connect to the server. Please check that the backend is running and try again.',
                     icon: 'error'
                 });
             } finally {

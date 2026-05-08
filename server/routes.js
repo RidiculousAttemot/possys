@@ -8,6 +8,31 @@ const usersController = require('./controllers/users');
 const imageUploadController = require('./controllers/imageUpload');
 const exportDataController = require('./controllers/exportData');
 const resetController = require('./controllers/reset');
+const auditController = require('./controllers/audit');
+const auditMiddleware = require('./middleware/auditMiddleware');
+const authMiddleware = require('./middleware/authMiddleware');
+const { extractBearerToken, verifyAuthToken } = require('./utils/auth');
+
+router.post('/login', usersController.login);
+
+// Token validation endpoint
+router.post('/validate-token', (req, res) => {
+    const token = extractBearerToken(req.headers.authorization);
+
+    if (!token) {
+        return res.status(401).json({ valid: false });
+    }
+
+    try {
+        const user = verifyAuthToken(token);
+        return res.json({ valid: true, user });
+    } catch (error) {
+        return res.status(401).json({ valid: false });
+    }
+});
+
+router.use(authMiddleware);
+router.use(auditMiddleware);
 
 // USER routes
 router.get('/users', usersController.getAllUsers);
@@ -15,7 +40,6 @@ router.get('/users/:id', usersController.getUserById);
 router.post('/users', usersController.createUser);
 router.put('/users/:id', usersController.updateUser);
 router.delete('/users/:id', usersController.deleteUser);
-router.post('/login', usersController.login);
 
 // Inventory routes
 router.get('/inventory', itemsController.getInventory);
@@ -41,25 +65,15 @@ router.post('/upload-image', imageUploadController.uploadImage);
 // Add admin statistics route
 router.get('/admin/stats', require('./controllers/admin').getDashboardStats);
 
-// Token validation endpoint
-router.post('/validate-token', (req, res) => {
-    const token = req.headers.authorization?.split(' ')[1];
-    
-    // In a real application, you would verify the JWT token
-    // For this simple example, we'll just check if a token exists
-    if (!token) {
-        return res.status(401).json({ valid: false });
-    }
-    
-    // In a production app, you would verify the token's signature and expiration
-    // For simplicity, we're just returning valid: true
-    res.json({ valid: true });
-});
+// Audit log routes
+router.post('/audit-events', auditController.recordEvent);
+router.get('/audit-logs', auditController.getAuditLogs);
+router.get('/audit-logs/summary', auditController.getAuditSummary);
 
 // Add export data routes
-router.get('/api/export/sales', exportDataController.getSalesData);
-router.get('/api/export/inventory', exportDataController.getInventoryData);
-router.get('/api/export/transactions', exportDataController.getTransactionsData);
-router.get('/api/export/full', exportDataController.getFullData);
+router.get('/export/sales', exportDataController.getSalesData);
+router.get('/export/inventory', exportDataController.getInventoryData);
+router.get('/export/transactions', exportDataController.getTransactionsData);
+router.get('/export/full', exportDataController.getFullData);
 
 module.exports = router;

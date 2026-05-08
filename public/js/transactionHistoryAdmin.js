@@ -752,8 +752,8 @@ const TransactionHistoryAdmin = (() => {
             </head>
             <body>
                 <div class="receipt-header">
-                    <h1>MotorTech Motorsport</h1>
-                    <p>Parts & Accessories Shop</p>
+                    <h1>NovaPOS</h1>
+                    <p>Retail Point of Sale</p>
                     <p>123 Main Street, Taguig City</p>
                     <p>Tel: (02) 8123-4567</p>
                     ${hasReturns ? `<div class="returns-note">*INCLUDES RETURNED ITEMS*</div>` : ''}
@@ -794,7 +794,7 @@ const TransactionHistoryAdmin = (() => {
                     <p><strong>Payment Method:</strong> ${paymentMethodName}</p>
                 </div>
                 <div class="receipt-footer">
-                    <p>Thank you for shopping at MotorTech Motorsport!</p>
+                    <p>Thank you for shopping with NovaPOS!</p>
                     <p>This receipt serves as proof of purchase.</p>
                     ${hasReturns ? `<p><strong>Note:</strong> Some items have been returned.</p>` : ''}
                 </div>

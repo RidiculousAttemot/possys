@@ -1,0 +1,739 @@
+@import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Space+Grotesk:wght@400;500;700&display=swap');
+
+:root {
+  --ui-bg: #06101b;
+  --ui-bg-alt: #0a1422;
+  --ui-surface: rgba(13, 22, 36, 0.82);
+  --ui-surface-strong: rgba(17, 28, 44, 0.95);
+  --ui-border: rgba(148, 163, 184, 0.14);
+  --ui-text: #eef6ff;
+  --ui-muted: #93a8c4;
+  --ui-accent: #34d3ff;
+  --ui-accent-2: #ffb64d;
+  --ui-success: #45df9f;
+  --ui-danger: #ff7171;
+  --ui-shadow: 0 24px 60px rgba(0, 0, 0, 0.32);
+}
+
+body[data-page="landing"],
+body[data-page="pos"] {
+  font-family: 'Manrope', sans-serif;
+  color: var(--ui-text);
+  background:
+    radial-gradient(circle at top left, rgba(52, 211, 255, 0.12), transparent 28%),
+    radial-gradient(circle at 80% 0%, rgba(255, 182, 77, 0.12), transparent 30%),
+    linear-gradient(180deg, #07111c 0%, #04080d 100%);
+}
+
+body[data-page="landing"]::before,
+body[data-page="pos"]::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  background-image: linear-gradient(rgba(255, 255, 255, 0.02) 1px, transparent 1px), linear-gradient(90deg, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
+  background-size: 44px 44px;
+  mask-image: radial-gradient(circle at 50% 0%, black 12%, transparent 80%);
+  opacity: 0.28;
+}
+
+body[data-page="landing"] .background,
+body[data-page="pos"] .background {
+  background: radial-gradient(circle at 50% 0%, rgba(52, 211, 255, 0.08), transparent 45%), linear-gradient(180deg, rgba(3, 8, 14, 0.98), rgba(5, 10, 18, 0.98));
+}
+
+body[data-page="landing"] .cube,
+body[data-page="pos"] .cube {
+  background: linear-gradient(145deg, rgba(52, 211, 255, 0.12), rgba(255, 182, 77, 0.06));
+  border: 1px solid rgba(148, 163, 184, 0.12);
+  box-shadow: 0 0 28px rgba(52, 211, 255, 0.06);
+  opacity: 0.34;
+}
+
+body[data-page="landing"] header,
+body[data-page="pos"] header {
+  background: rgba(8, 15, 26, 0.82);
+  border-bottom: 1px solid rgba(148, 163, 184, 0.12);
+  backdrop-filter: blur(18px);
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.2);
+}
+
+body[data-page="landing"] .logo,
+body[data-page="pos"] .logo {
+  font-family: 'Space Grotesk', sans-serif;
+  letter-spacing: 0.01em;
+}
+
+body[data-page="landing"] .logo .rotating-icon,
+body[data-page="pos"] .logo .rotating-icon {
+  color: var(--ui-accent);
+}
+
+body[data-page="landing"] .btn-primary,
+body[data-page="landing"] .btn-secondary,
+body[data-page="landing"] .btn-login,
+body[data-page="pos"] .btn-checkout,
+body[data-page="pos"] .btn-history,
+body[data-page="pos"] .btn-logout,
+body[data-page="pos"] .btn-primary,
+body[data-page="pos"] .btn-secondary {
+  border-radius: 999px;
+  font-family: 'Space Grotesk', sans-serif;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+}
+
+body[data-page="landing"] .btn-primary,
+body[data-page="landing"] .btn-login,
+body[data-page="pos"] .btn-checkout,
+body[data-page="pos"] .btn-primary {
+  background: linear-gradient(135deg, var(--ui-accent), #1f8dd1);
+  color: #03101b !important;
+  box-shadow: 0 18px 32px rgba(52, 211, 255, 0.18);
+}
+
+body[data-page="landing"] .btn-secondary,
+body[data-page="pos"] .btn-history,
+body[data-page="pos"] .btn-secondary,
+body[data-page="pos"] .btn-logout {
+  color: var(--ui-text);
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(148, 163, 184, 0.14);
+}
+
+body[data-page="landing"] .btn-primary:hover,
+body[data-page="landing"] .btn-secondary:hover,
+body[data-page="landing"] .btn-login:hover,
+body[data-page="pos"] .btn-checkout:hover,
+body[data-page="pos"] .btn-history:hover,
+body[data-page="pos"] .btn-logout:hover,
+body[data-page="pos"] .btn-primary:hover,
+body[data-page="pos"] .btn-secondary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 18px 34px rgba(0, 0, 0, 0.22);
+}
+
+body[data-page="landing"] .hero {
+  position: relative;
+  overflow: hidden;
+}
+
+body[data-page="landing"] .hero::after {
+  content: '';
+  position: absolute;
+  inset: auto -15% -25% auto;
+  width: 340px;
+  height: 340px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(52, 211, 255, 0.22), transparent 70%);
+  pointer-events: none;
+}
+
+body[data-page="landing"] .hero-content {
+  max-width: 860px;
+  padding: clamp(28px, 5vw, 56px);
+  background: linear-gradient(180deg, rgba(12, 21, 35, 0.82), rgba(8, 14, 24, 0.88));
+  border: 1px solid rgba(148, 163, 184, 0.14);
+  border-radius: 30px;
+  box-shadow: var(--ui-shadow);
+  backdrop-filter: blur(18px);
+}
+
+body[data-page="landing"] .hero-content h1 {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: clamp(3rem, 7vw, 5rem);
+  margin-bottom: 16px;
+}
+
+body[data-page="landing"] .hero-content p {
+  color: var(--ui-muted);
+  max-width: 62ch;
+  margin: 0 auto 24px;
+  font-size: 1.02rem;
+}
+
+body[data-page="landing"] .hero-content .btn-primary {
+  margin-top: 12px;
+}
+
+body[data-page="landing"] .features,
+body[data-page="landing"] .system-preview,
+body[data-page="landing"] .about {
+  width: min(1180px, calc(100% - 32px));
+  margin: 28px auto;
+  padding: 30px 24px;
+  background: linear-gradient(180deg, rgba(12, 21, 35, 0.88), rgba(8, 14, 24, 0.88));
+  border: 1px solid rgba(148, 163, 184, 0.12);
+  border-radius: 28px;
+  box-shadow: var(--ui-shadow);
+  backdrop-filter: blur(16px);
+}
+
+body[data-page="landing"] .features h2,
+body[data-page="landing"] .system-preview h2,
+body[data-page="landing"] .about h2,
+body[data-page="pos"] .categories h2,
+body[data-page="pos"] .items h2,
+body[data-page="pos"] .checkout h2 {
+  font-family: 'Space Grotesk', sans-serif;
+  letter-spacing: 0.01em;
+}
+
+body[data-page="landing"] .feature-item,
+body[data-page="landing"] .preview-item,
+body[data-page="landing"] .about-feature {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(148, 163, 184, 0.09);
+  border-radius: 20px;
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.14);
+}
+
+body[data-page="landing"] .feature-item:hover,
+body[data-page="landing"] .preview-item:hover,
+body[data-page="landing"] .about-feature:hover {
+  transform: translateY(-4px);
+  border-color: rgba(52, 211, 255, 0.2);
+}
+
+body[data-page="landing"] .preview-image .overlay {
+  background: linear-gradient(180deg, rgba(5, 10, 18, 0.08), rgba(5, 10, 18, 0.68));
+  backdrop-filter: blur(2px);
+}
+
+body[data-page="landing"] footer {
+  margin-top: 28px;
+  padding: 24px 20px;
+  background: rgba(8, 15, 26, 0.78);
+  border-top: 1px solid rgba(148, 163, 184, 0.12);
+  backdrop-filter: blur(16px);
+}
+
+body[data-page="pos"] main {
+  grid-template-columns: 280px minmax(0, 1fr) 360px;
+  gap: 18px;
+  padding: 18px;
+  min-height: calc(100vh - 84px);
+}
+
+body[data-page="pos"] .categories,
+body[data-page="pos"] .items,
+body[data-page="pos"] .checkout {
+  background: linear-gradient(180deg, rgba(12, 21, 35, 0.9), rgba(8, 14, 24, 0.9));
+  border: 1px solid rgba(148, 163, 184, 0.12);
+  border-radius: 24px;
+  box-shadow: var(--ui-shadow);
+  backdrop-filter: blur(16px);
+}
+
+body[data-page="pos"] .categories h2,
+body[data-page="pos"] .items h2 {
+  border-bottom: 1px solid rgba(148, 163, 184, 0.12);
+  padding-bottom: 12px;
+}
+
+body[data-page="pos"] .category-item,
+body[data-page="pos"] .cart-item,
+body[data-page="pos"] .product-card,
+body[data-page="pos"] .item-card,
+body[data-page="pos"] .summary-row,
+body[data-page="pos"] .payment-option label {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(148, 163, 184, 0.09);
+  border-radius: 16px;
+}
+
+body[data-page="pos"] .category-item.active {
+  color: #03101b;
+  background: linear-gradient(135deg, var(--ui-accent), #8cecff);
+  border-color: transparent;
+  box-shadow: 0 14px 24px rgba(52, 211, 255, 0.16);
+}
+
+body[data-page="pos"] .search-container input,
+body[data-page="pos"] .payment-details input,
+body[data-page="pos"] .checkout input,
+body[data-page="pos"] .modal input,
+body[data-page="pos"] .modal select,
+body[data-page="pos"] .modal textarea {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(148, 163, 184, 0.12);
+  color: var(--ui-text);
+  border-radius: 14px;
+}
+
+body[data-page="pos"] .item-grid > *,
+body[data-page="pos"] .product-card,
+body[data-page="pos"] .cart-item {
+  background: linear-gradient(180deg, rgba(12, 21, 35, 0.9), rgba(8, 14, 24, 0.92));
+  border: 1px solid rgba(148, 163, 184, 0.12);
+  border-radius: 20px;
+  box-shadow: 0 16px 28px rgba(0, 0, 0, 0.18);
+}
+
+body[data-page="pos"] .item-grid > *:hover,
+body[data-page="pos"] .product-card:hover,
+body[data-page="pos"] .cart-item:hover {
+  transform: translateY(-3px);
+  border-color: rgba(52, 211, 255, 0.2);
+}
+
+body[data-page="pos"] .cart-summary {
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(148, 163, 184, 0.1);
+  border-radius: 20px;
+  padding: 16px;
+}
+
+body[data-page="pos"] .btn-checkout:disabled {
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--ui-muted) !important;
+  box-shadow: none;
+}
+
+body[data-page="pos"] .modal {
+  background: rgba(1, 5, 10, 0.72);
+  backdrop-filter: blur(14px);
+}
+
+body[data-page="pos"] .modal-content {
+  background: linear-gradient(180deg, rgba(12, 21, 35, 0.98), rgba(8, 14, 24, 0.98));
+  border: 1px solid rgba(148, 163, 184, 0.12);
+  border-radius: 24px;
+  box-shadow: 0 30px 70px rgba(0, 0, 0, 0.5);
+}
+
+body[data-page="pos"] .checkout-table th,
+body[data-page="pos"] .checkout-table td,
+body[data-page="pos"] .payment-option label span {
+  color: var(--ui-text);
+}
+
+body[data-page="pos"] .payment-option input:checked + label,
+body[data-page="pos"] .category-item:hover {
+  border-color: rgba(52, 211, 255, 0.2);
+}
+
+body[data-page="pos"] .summary-row.total {
+  background: linear-gradient(135deg, rgba(52, 211, 255, 0.12), rgba(255, 182, 77, 0.08));
+}
+
+body[data-page="pos"] .summary-value,
+body[data-page="pos"] .cart-count {
+  color: var(--ui-accent);
+}
+
+@media (max-width: 1200px) {
+  body[data-page="pos"] main {
+    grid-template-columns: 240px minmax(0, 1fr);
+  }
+
+  body[data-page="pos"] .checkout {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (max-width: 960px) {
+  body[data-page="landing"] .features,
+  body[data-page="landing"] .system-preview,
+  body[data-page="landing"] .about {
+    width: calc(100% - 20px);
+  }
+
+  body[data-page="pos"] main {
+    grid-template-columns: 1fr;
+    height: auto;
+  }
+
+  body[data-page="pos"] .categories,
+  body[data-page="pos"] .items,
+  body[data-page="pos"] .checkout {
+    width: 100%;
+  }
+}
+
+@media (max-width: 720px) {
+  body[data-page="landing"] .hero-content {
+    text-align: left;
+  }
+
+  body[data-page="landing"] .hero-content p {
+    margin-left: 0;
+  }
+
+  body[data-page="landing"] .feature-grid,
+  body[data-page="landing"] .preview-container,
+  body[data-page="landing"] .about-features,
+  body[data-page="pos"] .payment-options {
+    grid-template-columns: 1fr;
+  }
+}@import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Space+Grotesk:wght@400;500;700&display=swap');
+
+:root {
+  --ui-bg: #06101b;
+  --ui-bg-alt: #0a1422;
+  --ui-surface: rgba(13, 22, 36, 0.82);
+  --ui-surface-strong: rgba(17, 28, 44, 0.95);
+  --ui-border: rgba(148, 163, 184, 0.14);
+  --ui-text: #eef6ff;
+  --ui-muted: #93a8c4;
+  --ui-accent: #34d3ff;
+  --ui-accent-2: #ffb64d;
+  --ui-success: #45df9f;
+  --ui-danger: #ff7171;
+  --ui-shadow: 0 24px 60px rgba(0, 0, 0, 0.32);
+}
+
+body[data-page="landing"],
+body[data-page="pos"] {
+  font-family: 'Manrope', sans-serif;
+  color: var(--ui-text);
+  background:
+    radial-gradient(circle at top left, rgba(52, 211, 255, 0.12), transparent 28%),
+    radial-gradient(circle at 80% 0%, rgba(255, 182, 77, 0.12), transparent 30%),
+    linear-gradient(180deg, #07111c 0%, #04080d 100%);
+}
+
+body[data-page="landing"]::before,
+body[data-page="pos"]::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  background-image: linear-gradient(rgba(255, 255, 255, 0.02) 1px, transparent 1px), linear-gradient(90deg, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
+  background-size: 44px 44px;
+  mask-image: radial-gradient(circle at 50% 0%, black 12%, transparent 80%);
+  opacity: 0.28;
+}
+
+body[data-page="landing"] .background,
+body[data-page="pos"] .background {
+  background: radial-gradient(circle at 50% 0%, rgba(52, 211, 255, 0.08), transparent 45%), linear-gradient(180deg, rgba(3, 8, 14, 0.98), rgba(5, 10, 18, 0.98));
+}
+
+body[data-page="landing"] .cube,
+body[data-page="pos"] .cube {
+  background: linear-gradient(145deg, rgba(52, 211, 255, 0.12), rgba(255, 182, 77, 0.06));
+  border: 1px solid rgba(148, 163, 184, 0.12);
+  box-shadow: 0 0 28px rgba(52, 211, 255, 0.06);
+  opacity: 0.34;
+}
+
+body[data-page="landing"] header,
+body[data-page="pos"] header {
+  background: rgba(8, 15, 26, 0.82);
+  border-bottom: 1px solid rgba(148, 163, 184, 0.12);
+  backdrop-filter: blur(18px);
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.2);
+}
+
+body[data-page="landing"] .logo,
+body[data-page="pos"] .logo {
+  font-family: 'Space Grotesk', sans-serif;
+  letter-spacing: 0.01em;
+}
+
+body[data-page="landing"] .logo .rotating-icon,
+body[data-page="pos"] .logo .rotating-icon {
+  color: var(--ui-accent);
+}
+
+body[data-page="landing"] .btn-primary,
+body[data-page="landing"] .btn-secondary,
+body[data-page="landing"] .btn-login,
+body[data-page="pos"] .btn-checkout,
+body[data-page="pos"] .btn-history,
+body[data-page="pos"] .btn-logout,
+body[data-page="pos"] .btn-primary,
+body[data-page="pos"] .btn-secondary {
+  border-radius: 999px;
+  font-family: 'Space Grotesk', sans-serif;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+}
+
+body[data-page="landing"] .btn-primary,
+body[data-page="landing"] .btn-login,
+body[data-page="pos"] .btn-checkout,
+body[data-page="pos"] .btn-primary {
+  background: linear-gradient(135deg, var(--ui-accent), #1f8dd1);
+  color: #03101b !important;
+  box-shadow: 0 18px 32px rgba(52, 211, 255, 0.18);
+}
+
+body[data-page="landing"] .btn-secondary,
+body[data-page="pos"] .btn-history,
+body[data-page="pos"] .btn-secondary,
+body[data-page="pos"] .btn-logout {
+  color: var(--ui-text);
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(148, 163, 184, 0.14);
+}
+
+body[data-page="landing"] .btn-primary:hover,
+body[data-page="landing"] .btn-secondary:hover,
+body[data-page="landing"] .btn-login:hover,
+body[data-page="pos"] .btn-checkout:hover,
+body[data-page="pos"] .btn-history:hover,
+body[data-page="pos"] .btn-logout:hover,
+body[data-page="pos"] .btn-primary:hover,
+body[data-page="pos"] .btn-secondary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 18px 34px rgba(0, 0, 0, 0.22);
+}
+
+body[data-page="landing"] .hero {
+  position: relative;
+  overflow: hidden;
+}
+
+body[data-page="landing"] .hero::after {
+  content: '';
+  position: absolute;
+  inset: auto -15% -25% auto;
+  width: 340px;
+  height: 340px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(52, 211, 255, 0.22), transparent 70%);
+  pointer-events: none;
+}
+
+body[data-page="landing"] .hero-content {
+  max-width: 860px;
+  padding: clamp(28px, 5vw, 56px);
+  background: linear-gradient(180deg, rgba(12, 21, 35, 0.82), rgba(8, 14, 24, 0.88));
+  border: 1px solid rgba(148, 163, 184, 0.14);
+  border-radius: 30px;
+  box-shadow: var(--ui-shadow);
+  backdrop-filter: blur(18px);
+}
+
+body[data-page="landing"] .hero-content h1 {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: clamp(3rem, 7vw, 5rem);
+  margin-bottom: 16px;
+}
+
+body[data-page="landing"] .hero-content p {
+  color: var(--ui-muted);
+  max-width: 62ch;
+  margin: 0 auto 24px;
+  font-size: 1.02rem;
+}
+
+body[data-page="landing"] .hero-content .btn-primary {
+  margin-top: 12px;
+}
+
+body[data-page="landing"] .features,
+body[data-page="landing"] .system-preview,
+body[data-page="landing"] .about {
+  width: min(1180px, calc(100% - 32px));
+  margin: 28px auto;
+  padding: 30px 24px;
+  background: linear-gradient(180deg, rgba(12, 21, 35, 0.88), rgba(8, 14, 24, 0.88));
+  border: 1px solid rgba(148, 163, 184, 0.12);
+  border-radius: 28px;
+  box-shadow: var(--ui-shadow);
+  backdrop-filter: blur(16px);
+}
+
+body[data-page="landing"] .features h2,
+body[data-page="landing"] .system-preview h2,
+body[data-page="landing"] .about h2,
+body[data-page="pos"] .categories h2,
+body[data-page="pos"] .items h2,
+body[data-page="pos"] .checkout h2 {
+  font-family: 'Space Grotesk', sans-serif;
+  letter-spacing: 0.01em;
+}
+
+body[data-page="landing"] .feature-item,
+body[data-page="landing"] .preview-item,
+body[data-page="landing"] .about-feature {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(148, 163, 184, 0.09);
+  border-radius: 20px;
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.14);
+}
+
+body[data-page="landing"] .feature-item:hover,
+body[data-page="landing"] .preview-item:hover,
+body[data-page="landing"] .about-feature:hover {
+  transform: translateY(-4px);
+  border-color: rgba(52, 211, 255, 0.2);
+}
+
+body[data-page="landing"] .preview-image .overlay {
+  background: linear-gradient(180deg, rgba(5, 10, 18, 0.08), rgba(5, 10, 18, 0.68));
+  backdrop-filter: blur(2px);
+}
+
+body[data-page="landing"] footer {
+  margin-top: 28px;
+  padding: 24px 20px;
+  background: rgba(8, 15, 26, 0.78);
+  border-top: 1px solid rgba(148, 163, 184, 0.12);
+  backdrop-filter: blur(16px);
+}
+
+body[data-page="pos"] main {
+  grid-template-columns: 280px minmax(0, 1fr) 360px;
+  gap: 18px;
+  padding: 18px;
+  min-height: calc(100vh - 84px);
+}
+
+body[data-page="pos"] .categories,
+body[data-page="pos"] .items,
+body[data-page="pos"] .checkout {
+  background: linear-gradient(180deg, rgba(12, 21, 35, 0.9), rgba(8, 14, 24, 0.9));
+  border: 1px solid rgba(148, 163, 184, 0.12);
+  border-radius: 24px;
+  box-shadow: var(--ui-shadow);
+  backdrop-filter: blur(16px);
+}
+
+body[data-page="pos"] .categories h2,
+body[data-page="pos"] .items h2 {
+  border-bottom: 1px solid rgba(148, 163, 184, 0.12);
+  padding-bottom: 12px;
+}
+
+body[data-page="pos"] .category-item,
+body[data-page="pos"] .cart-item,
+body[data-page="pos"] .product-card,
+body[data-page="pos"] .item-card,
+body[data-page="pos"] .summary-row,
+body[data-page="pos"] .payment-option label {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(148, 163, 184, 0.09);
+  border-radius: 16px;
+}
+
+body[data-page="pos"] .category-item.active {
+  color: #03101b;
+  background: linear-gradient(135deg, var(--ui-accent), #8cecff);
+  border-color: transparent;
+  box-shadow: 0 14px 24px rgba(52, 211, 255, 0.16);
+}
+
+body[data-page="pos"] .search-container input,
+body[data-page="pos"] .payment-details input,
+body[data-page="pos"] .checkout input,
+body[data-page="pos"] .modal input,
+body[data-page="pos"] .modal select,
+body[data-page="pos"] .modal textarea {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(148, 163, 184, 0.12);
+  color: var(--ui-text);
+  border-radius: 14px;
+}
+
+body[data-page="pos"] .item-grid > *,
+body[data-page="pos"] .product-card,
+body[data-page="pos"] .cart-item {
+  background: linear-gradient(180deg, rgba(12, 21, 35, 0.9), rgba(8, 14, 24, 0.92));
+  border: 1px solid rgba(148, 163, 184, 0.12);
+  border-radius: 20px;
+  box-shadow: 0 16px 28px rgba(0, 0, 0, 0.18);
+}
+
+body[data-page="pos"] .item-grid > *:hover,
+body[data-page="pos"] .product-card:hover,
+body[data-page="pos"] .cart-item:hover {
+  transform: translateY(-3px);
+  border-color: rgba(52, 211, 255, 0.2);
+}
+
+body[data-page="pos"] .cart-summary {
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(148, 163, 184, 0.1);
+  border-radius: 20px;
+  padding: 16px;
+}
+
+body[data-page="pos"] .btn-checkout:disabled {
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--ui-muted) !important;
+  box-shadow: none;
+}
+
+body[data-page="pos"] .modal {
+  background: rgba(1, 5, 10, 0.72);
+  backdrop-filter: blur(14px);
+}
+
+body[data-page="pos"] .modal-content {
+  background: linear-gradient(180deg, rgba(12, 21, 35, 0.98), rgba(8, 14, 24, 0.98));
+  border: 1px solid rgba(148, 163, 184, 0.12);
+  border-radius: 24px;
+  box-shadow: 0 30px 70px rgba(0, 0, 0, 0.5);
+}
+
+body[data-page="pos"] .checkout-table th,
+body[data-page="pos"] .checkout-table td,
+body[data-page="pos"] .payment-option label span {
+  color: var(--ui-text);
+}
+
+body[data-page="pos"] .payment-option input:checked + label,
+body[data-page="pos"] .category-item:hover {
+  border-color: rgba(52, 211, 255, 0.2);
+}
+
+body[data-page="pos"] .summary-row.total {
+  background: linear-gradient(135deg, rgba(52, 211, 255, 0.12), rgba(255, 182, 77, 0.08));
+}
+
+body[data-page="pos"] .summary-value,
+body[data-page="pos"] .cart-count {
+  color: var(--ui-accent);
+}
+
+@media (max-width: 1200px) {
+  body[data-page="pos"] main {
+    grid-template-columns: 240px minmax(0, 1fr);
+  }
+
+  body[data-page="pos"] .checkout {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (max-width: 960px) {
+  body[data-page="landing"] .features,
+  body[data-page="landing"] .system-preview,
+  body[data-page="landing"] .about {
+    width: calc(100% - 20px);
+  }
+
+  body[data-page="pos"] main {
+    grid-template-columns: 1fr;
+    height: auto;
+  }
+
+  body[data-page="pos"] .categories,
+  body[data-page="pos"] .items,
+  body[data-page="pos"] .checkout {
+    width: 100%;
+  }
+}
+
+@media (max-width: 720px) {
+  body[data-page="landing"] .hero-content {
+    text-align: left;
+  }
+
+  body[data-page="landing"] .hero-content p {
+    margin-left: 0;
+  }
+
+  body[data-page="landing"] .feature-grid,
+  body[data-page="landing"] .preview-container,
+  body[data-page="landing"] .about-features,
+  body[data-page="pos"] .payment-options {
+    grid-template-columns: 1fr;
+  }
+}

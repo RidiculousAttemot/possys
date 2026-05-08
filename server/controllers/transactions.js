@@ -1,5 +1,6 @@
 // controllers/transactions.js
 const db = require('../database');
+const { storeAuditEvent, buildAuditActor } = require('./audit');
 
 // GET all transactions
 exports.getAllTransactions = async (req, res) => {
@@ -83,6 +84,7 @@ exports.createTransaction = async (req, res) => {
         await connection.beginTransaction();
         
         const { user_id, total_amount, payment_method, items } = req.body;
+        const actor = buildAuditActor(req, req.body || {});
         
         // Validate request
         if (!user_id || !total_amount || !payment_method || !items || !Array.isArray(items) || items.length === 0) {
@@ -90,12 +92,16 @@ exports.createTransaction = async (req, res) => {
         }
         
         // Insert transaction
-        const [transactionResult] = await connection.query(
+        const [transactionRows, transactionMeta] = await connection.query(
             'INSERT INTO transactions (user_id, total_amount, payment_method) VALUES (?, ?, ?)',
             [user_id, total_amount, payment_method]
         );
         
-        const transaction_id = transactionResult.insertId;
+        const transaction_id = transactionMeta?.insertId || transactionRows?.[0]?.transaction_id;
+
+        if (!transaction_id) {
+            throw new Error('Failed to resolve created transaction id');
+        }
         
         // Insert transaction items and update inventory
         for (const item of items) {
@@ -114,6 +120,32 @@ exports.createTransaction = async (req, res) => {
         
         // Commit the transaction
         await connection.commit();
+
+        storeAuditEvent({
+            userId: actor.userId || user_id,
+            userName: actor.userName,
+            userRole: actor.userRole,
+            eventType: 'action',
+            eventLabel: `${actor.userRole === 'cashier' ? 'Cashier' : actor.userRole === 'admin' ? 'Admin' : 'User'} completed transaction #${transaction_id} for ${total_amount}`,
+            source: 'controller',
+            path: req.originalUrl,
+            method: req.method,
+            statusCode: 201,
+            metadata: {
+                transactionId: transaction_id,
+                total_amount,
+                payment_method,
+                itemCount: items.length,
+                cashierId: user_id,
+                items: items.map((item) => ({
+                    item_id: item.item_id,
+                    quantity: item.quantity,
+                    price: item.price
+                }))
+            }
+        }).catch((auditError) => {
+            console.error('Failed to write transaction audit event:', auditError);
+        });
         
         res.status(201).json({
             transaction_id,
@@ -150,7 +182,7 @@ exports.getTransactionStats = async (req, res) => {
         const [dailySales] = await db.query(`
             SELECT DATE(transaction_date) as date, SUM(total_amount) as total
             FROM transactions
-            WHERE transaction_date >= DATE_SUB(CURDATE(), INTERVAL 7 DAY)
+            WHERE transaction_date >= CURRENT_DATE - INTERVAL '7 days'
             GROUP BY DATE(transaction_date)
             ORDER BY date DESC
         `);

@@ -1092,7 +1092,7 @@ const TransactionHistory = (() => {
                 total_amount: 2500.50,
                 cashier_name: "John Doe",
                 items: [
-                    { item_id: 1, item_name: "Motorcycle Oil Filter", price: 350.00, quantity: 2 },
+                    { item_id: 1, item_name: "Premium Coffee Beans", price: 350.00, quantity: 2 },
                     { item_id: 2, item_name: "Brake Pads", price: 1800.50, quantity: 1 }
                 ]
             },
@@ -1531,7 +1531,7 @@ const TransactionHistory = (() => {
                 total_amount: 2500.50,
                 cashier_name: "John Doe",
                 items: [
-                    { item_id: 1, item_name: "Motorcycle Oil Filter", price: 350.00, quantity: 2 },
+                    { item_id: 1, item_name: "Premium Coffee Beans", price: 350.00, quantity: 2 },
                     { item_id: 2, item_name: "Brake Pads", price: 1800.50, quantity: 1 }
                 ]
             },
@@ -1885,8 +1885,8 @@ const TransactionHistory = (() => {
                 </head>
                 <body>
                     <div class="receipt-header">
-                        <h1>MotorTech</h1>
-                        <p>Parts & Accessories Shop</p>
+                        <h1>NovaPOS</h1>
+                        <p>Retail Point of Sale</p>
                         <p>123 Main Street, Taguig City</p>
                         <p>Tel: (02) 8123-4567</p>
                         <p>VAT Reg #: 123-456-789-000</p>
@@ -1934,7 +1934,7 @@ const TransactionHistory = (() => {
                     </div>
                     
                     <div class="receipt-footer">
-                        <p>Thank you for shopping at MotorTech Motorsport!</p>
+                        <p>Thank you for shopping with NovaPOS!</p>
                         <p>This is a reprint of your receipt.</p>
                         <p>Come back again!</p>
                     </div>

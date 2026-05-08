@@ -1,0 +1,178 @@
+@import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;700&display=swap');
+
+:root {
+  --refresh-bg-1: #0b1220;
+  --refresh-bg-2: #141c2f;
+  --refresh-text: #f5f8ff;
+  --refresh-muted: #9fb0cc;
+  --refresh-border: rgba(186, 203, 228, 0.2);
+  --refresh-cyan: #57d5ff;
+  --refresh-amber: #ffc56f;
+  --refresh-shadow: 0 18px 50px rgba(0, 0, 0, 0.35);
+}
+
+body[data-page='landing'],
+body[data-page='pos'],
+body[data-page='login'],
+body.admin-shell {
+  color-scheme: dark;
+}
+
+body[data-page='landing'] header,
+body[data-page='pos'] header,
+body[data-page='login'] .btn-return,
+body.admin-shell header {
+  backdrop-filter: blur(18px);
+  background: linear-gradient(120deg, rgba(11, 18, 32, 0.88), rgba(20, 28, 47, 0.78));
+  border: 1px solid var(--refresh-border);
+  box-shadow: var(--refresh-shadow);
+}
+
+body[data-page='landing'] .logo,
+body[data-page='pos'] .logo,
+body.admin-shell .logo,
+body[data-page='login'] .login-header h2 {
+  font-family: 'Space Grotesk', sans-serif;
+  letter-spacing: 0.02em;
+}
+
+body[data-page='landing'] .logo .tech,
+body[data-page='pos'] .logo .tech,
+body.admin-shell .logo .tech,
+body[data-page='login'] .login-header .tech {
+  color: var(--refresh-cyan);
+}
+
+body[data-page='login'] .login-box {
+  border: 1px solid var(--refresh-border);
+  box-shadow: var(--refresh-shadow);
+  background: linear-gradient(165deg, rgba(11, 18, 32, 0.9), rgba(20, 28, 47, 0.85));
+}
+
+body[data-page='login'] .logo-container {
+  background: linear-gradient(135deg, rgba(87, 213, 255, 0.2), rgba(255, 197, 111, 0.2));
+  border: 1px solid rgba(87, 213, 255, 0.35);
+}
+
+.modal {
+  background: rgba(5, 10, 18, 0.74) !important;
+  backdrop-filter: blur(8px);
+}
+
+.modal .modal-content,
+body.admin-shell .modal-content,
+body[data-page='pos'] .modal-content {
+  border-radius: 22px !important;
+  border: 1px solid var(--refresh-border) !important;
+  background: linear-gradient(170deg, rgba(12, 20, 34, 0.96), rgba(22, 32, 52, 0.94)) !important;
+  box-shadow: 0 30px 70px rgba(0, 0, 0, 0.45) !important;
+}
+
+body[data-page='landing'] select,
+body[data-page='landing'] option,
+body[data-page='pos'] select,
+body[data-page='pos'] option,
+body[data-page='login'] select,
+body[data-page='login'] option,
+body.admin-shell select,
+body.admin-shell option {
+  background: rgba(11, 18, 32, 0.98) !important;
+  color: var(--refresh-text) !important;
+  border-color: rgba(186, 203, 228, 0.22) !important;
+}
+
+body[data-page='landing'] select,
+body[data-page='pos'] select,
+body[data-page='login'] select,
+body.admin-shell select {
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  padding-right: 42px;
+}
+
+body[data-page='landing'] select:focus,
+body[data-page='pos'] select:focus,
+body[data-page='login'] select:focus,
+body.admin-shell select:focus {
+  outline: none;
+  border-color: var(--refresh-cyan) !important;
+  box-shadow: 0 0 0 3px rgba(87, 213, 255, 0.16);
+}
+
+body[data-page='landing'] option,
+body[data-page='pos'] option,
+body[data-page='login'] option,
+body.admin-shell option {
+  background: #0b1220;
+}
+
+body[data-page='landing'] .date-help-text,
+body.admin-shell .date-help-text,
+body[data-page='pos'] .date-help-text {
+  margin: -4px 0 14px;
+  color: var(--refresh-muted);
+  font-size: 0.92rem;
+}
+
+.modal .modal-content h2,
+body.admin-shell .modal-content h2,
+body[data-page='pos'] .modal-content h2 {
+  color: var(--refresh-text);
+  font-family: 'Space Grotesk', sans-serif;
+  border-bottom: 1px solid rgba(186, 203, 228, 0.14);
+  padding-bottom: 12px;
+}
+
+.modal .close,
+body.admin-shell .close,
+body[data-page='pos'] .close {
+  width: 36px;
+  height: 36px;
+  border-radius: 999px;
+  display: grid;
+  place-items: center;
+  color: #c5d4ef;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(186, 203, 228, 0.2);
+}
+
+.modal .close:hover,
+body.admin-shell .close:hover,
+body[data-page='pos'] .close:hover {
+  color: #fff;
+  background: rgba(255, 113, 113, 0.2);
+}
+
+.swal2-popup {
+  border-radius: 22px !important;
+  border: 1px solid var(--refresh-border) !important;
+  background: linear-gradient(170deg, rgba(12, 20, 34, 0.95), rgba(22, 32, 52, 0.92)) !important;
+  box-shadow: 0 30px 70px rgba(0, 0, 0, 0.45) !important;
+}
+
+.swal2-title {
+  color: var(--refresh-text) !important;
+  font-family: 'Space Grotesk', sans-serif !important;
+}
+
+.swal2-html-container {
+  color: var(--refresh-muted) !important;
+}
+
+.swal2-confirm,
+.swal2-cancel {
+  border-radius: 999px !important;
+  font-family: 'Space Grotesk', sans-serif !important;
+  font-weight: 700 !important;
+}
+
+.swal2-confirm {
+  background: linear-gradient(135deg, var(--refresh-cyan), #2f98e8) !important;
+  color: #041120 !important;
+}
+
+.swal2-cancel {
+  background: rgba(255, 255, 255, 0.08) !important;
+  color: #d5e3fc !important;
+}

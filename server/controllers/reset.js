@@ -1,4 +1,4 @@
-// controllers/reset.js
+ // controllers/reset.js
 const db = require('../database');
 
 const runInTransaction = async (fn) => {

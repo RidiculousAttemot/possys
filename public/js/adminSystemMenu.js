@@ -50,7 +50,7 @@ const AdminSystemMenu = (() => {
                         <p>Connection to database established successfully!</p>
                         <div class="db-connection-details">
                             <p><strong>Status:</strong> Connected</p>
-                            <p><strong>Database:</strong> MotorTech POS Database</p>
+                            <p><strong>Database:</strong> NovaPOS Database</p>
                             <p><strong>Server:</strong> localhost</p>
                         </div>
                     </div>
@@ -128,19 +128,10 @@ const AdminSystemMenu = (() => {
                             </div>
                         </div>
 
-                        <h4><i class="fas fa-calendar-alt"></i> Select Date Option</h4>
-                        <div class="date-type-selector">
-                            <div class="date-type-option">
-                                <input type="radio" id="dateRange" name="dateType" value="range" checked>
-                                <label for="dateRange">Date Range</label>
-                            </div>
-                            <div class="date-type-option">
-                                <input type="radio" id="specificDate" name="dateType" value="specific">
-                                <label for="specificDate">Specific Date</label>
-                            </div>
-                        </div>
+                        <h4><i class="fas fa-calendar-alt"></i> Select Date Range</h4>
+                        <p class="date-help-text">Choose a start and end date for the export.</p>
 
-                        <!-- Date Range Selection (default visible) -->
+                        <!-- Date Range Selection -->
                         <div id="dateRangeSelector" class="date-range-options">
                             <div class="export-date-range">
                                 <div class="date-input-group">
@@ -159,14 +150,6 @@ const AdminSystemMenu = (() => {
                                 <button type="button" class="date-preset-btn" data-preset="week">This Week</button>
                                 <button type="button" class="date-preset-btn" data-preset="month">This Month</button>
                                 <button type="button" class="date-preset-btn" data-preset="year">This Year</button>
-                            </div>
-                        </div>
-
-                        <!-- Specific Date Selection (initially hidden) -->
-                        <div id="specificDateSelector" class="specific-date-option" style="display: none;">
-                            <div class="date-input-group">
-                                <label for="exactDate">Specific Date</label>
-                                <input type="date" id="exactDate" class="export-date-input" value="${formatDate(today)}">
                             </div>
                         </div>
 
@@ -209,20 +192,6 @@ const AdminSystemMenu = (() => {
                         });
                     });
 
-                    // Handle date type selection (range vs. specific)
-                    document.querySelectorAll('input[name="dateType"]').forEach(radio => {
-                        radio.addEventListener('change', () => {
-                            const dateType = document.querySelector('input[name="dateType"]:checked').value;
-                            if (dateType === 'range') {
-                                document.getElementById('dateRangeSelector').style.display = 'block';
-                                document.getElementById('specificDateSelector').style.display = 'none';
-                            } else {
-                                document.getElementById('dateRangeSelector').style.display = 'none';
-                                document.getElementById('specificDateSelector').style.display = 'block';
-                            }
-                        });
-                    });
-
                     // Highlight the active date preset
                     const updateActiveDatePreset = () => {
                         const startDateValue = document.getElementById('startDate').value;
@@ -257,45 +226,27 @@ const AdminSystemMenu = (() => {
                 preConfirm: () => {
                     const type = document.querySelector('input[name="exportType"]:checked').value;
                     const format = document.querySelector('input[name="exportFormat"]:checked').value;
-                    const dateType = document.querySelector('input[name="dateType"]:checked').value;
-                    
-                    let dateOptions = {};
-                    
-                    if (dateType === 'range') {
-                        const startDate = document.getElementById('startDate').value;
-                        const endDate = document.getElementById('endDate').value;
-                        
-                        if (!startDate || !endDate) {
-                            Swal.showValidationMessage('Please select a valid date range');
-                            return false;
-                        }
-                        
-                        const start = new Date(startDate);
-                        const end = new Date(endDate);
-                        
-                        if (start > end) {
-                            Swal.showValidationMessage('Start date must be before end date');
-                            return false;
-                        }
-                        
-                        dateOptions = { 
-                            type: 'range',
-                            startDate: startDate,
-                            endDate: endDate
-                        };
-                    } else {
-                        const exactDate = document.getElementById('exactDate').value;
-                        
-                        if (!exactDate) {
-                            Swal.showValidationMessage('Please select a specific date');
-                            return false;
-                        }
-                        
-                        dateOptions = {
-                            type: 'specific',
-                            exactDate: exactDate
-                        };
+                    const startDate = document.getElementById('startDate').value;
+                    const endDate = document.getElementById('endDate').value;
+
+                    if (!startDate || !endDate) {
+                        Swal.showValidationMessage('Please select a valid date range');
+                        return false;
                     }
+
+                    const start = new Date(startDate);
+                    const end = new Date(endDate);
+
+                    if (start > end) {
+                        Swal.showValidationMessage('Start date must be before end date');
+                        return false;
+                    }
+
+                    const dateOptions = {
+                        type: 'range',
+                        startDate,
+                        endDate
+                    };
                     
                     return { 
                         type, 
@@ -531,7 +482,7 @@ const AdminSystemMenu = (() => {
         // Generate mock data
         console.log('Generating mock sales data');
         const data = [];
-        const categories = ['Engine Parts', 'Brake Systems', 'Suspension', 'Oils & Lubricants', 'Body Parts'];
+        const categories = ['Beverages', 'Snacks', 'Household', 'Personal Care', 'Office Supplies'];
         
         // Loop through each day in the date range
         for (let date = new Date(startDate); date <= endDate; date.setDate(date.getDate() + 1)) {
@@ -558,13 +509,13 @@ const AdminSystemMenu = (() => {
 
     const generateMockInventoryData = () => {
         const data = [];
-        const categories = ['Engine Parts', 'Brake Systems', 'Suspension', 'Oils & Lubricants', 'Body Parts'];
+        const categories = ['Beverages', 'Snacks', 'Household', 'Personal Care', 'Office Supplies'];
         const itemsByCategory = {
-            'Engine Parts': ['Oil Filter', 'Air Filter', 'Spark Plug', 'Timing Belt', 'Piston Ring'],
-            'Brake Systems': ['Brake Pad', 'Brake Disc', 'Brake Caliper', 'Brake Fluid', 'Brake Hose'],
-            'Suspension': ['Shock Absorber', 'Coil Spring', 'Suspension Bush', 'Suspension Arm', 'Ball Joint'],
-            'Oils & Lubricants': ['Engine Oil', 'Transmission Fluid', 'Brake Fluid', 'Coolant', 'Grease'],
-            'Body Parts': ['Headlight', 'Taillight', 'Mirror', 'Body Panel', 'Bumper']
+            'Beverages': ['Bottled Water', 'Iced Tea', 'Soda Can', 'Fruit Juice', 'Coffee Drink'],
+            'Snacks': ['Potato Chips', 'Chocolate Bar', 'Trail Mix', 'Cookies', 'Energy Bar'],
+            'Household': ['Dish Soap', 'Laundry Detergent', 'Paper Towels', 'Trash Bags', 'Cleaner Spray'],
+            'Personal Care': ['Shampoo', 'Toothpaste', 'Body Wash', 'Hand Soap', 'Face Tissue'],
+            'Office Supplies': ['Notebook', 'Ballpen Pack', 'Marker Set', 'Printer Paper', 'Stapler']
         };
         
         // Generate a few items for each category
@@ -1175,7 +1126,7 @@ const AdminSystemMenu = (() => {
                 </table>
                 
                 <div class="footer">
-                    <p>Generated by MotorTech POS on ${new Date().toLocaleString()}</p>
+                    <p>Generated by NovaPOS on ${new Date().toLocaleString()}</p>
                 </div>
                 
                 <script>
@@ -1365,7 +1316,7 @@ const AdminSystemMenu = (() => {
                             [
                                 'inventory', 'categories', 'suppliers', 'inventory_changes', 'inventory_stats', 'stock_alerts'
                             ].forEach(key => localStorage.removeItem(key));
-                            const defaultCategories = ['Engine Parts', 'Brake Systems', 'Suspension', 'Oils & Lubricants', 'Body Parts'];
+                            const defaultCategories = ['Beverages', 'Snacks', 'Household', 'Personal Care', 'Office Supplies'];
                             localStorage.setItem('inventory', JSON.stringify([]));
                             localStorage.setItem('categories', JSON.stringify(defaultCategories));
                             localStorage.setItem('suppliers', JSON.stringify([]));
@@ -1393,7 +1344,7 @@ const AdminSystemMenu = (() => {
                                 }
                             } catch (e) { console.error('[RESET] Error parsing current user for client-side preservation:', e); }
                             localStorage.removeItem('users');
-                            const defaultAdmin = { id: 1, username: 'admin', password: 'admin123', name: 'Administrator', role: 'admin', email: 'admin@motortech.com', active: true };
+                            const defaultAdmin = { id: 1, username: 'admin', password: 'admin123', name: 'Administrator', role: 'admin', email: 'admin@novapos.com', active: true };
                             const adminToKeep = currentAdmin || defaultAdmin;
                             localStorage.setItem('users', JSON.stringify([adminToKeep]));
                             localStorage.setItem('currentUser', JSON.stringify(adminToKeep));

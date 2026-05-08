@@ -6,7 +6,7 @@ const db = require('../database'); // Database connection
 exports.getAdminInfo = async (req, res) => {
     try {
         // Use correct column names based on your database schema
-        const [rows] = await db.query('SELECT user_id, username, full_name, email, role, created_at FROM users WHERE role = "admin" LIMIT 1');
+        const [rows] = await db.query("SELECT user_id, username, full_name, email, role, created_at FROM users WHERE role = 'admin' LIMIT 1");
         
         if (!rows || rows.length === 0) {
             return res.json({
@@ -138,11 +138,11 @@ exports.generateReport = async (req, res) => {
         
         let timeFilter;
         if (type === 'day') {
-            timeFilter = 'DATE(transaction_date) = CURDATE()';
+            timeFilter = 'DATE(transaction_date) = CURRENT_DATE';
         } else if (type === 'week') {
-            timeFilter = 'YEARWEEK(transaction_date) = YEARWEEK(CURDATE())';
+            timeFilter = "DATE_TRUNC('week', transaction_date) = DATE_TRUNC('week', CURRENT_DATE)";
         } else if (type === 'month') {
-            timeFilter = 'MONTH(transaction_date) = MONTH(CURDATE()) AND YEAR(transaction_date) = YEAR(CURDATE())';
+            timeFilter = "DATE_TRUNC('month', transaction_date) = DATE_TRUNC('month', CURRENT_DATE)";
         } else {
             return res.status(400).json({ error: 'Invalid report type. Use day, week, or month.' });
         }

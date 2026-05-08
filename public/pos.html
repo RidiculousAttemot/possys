@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>POS System - MotorTech</title>
+    <title>NovaPOS - Point of Sale</title>
   
   <!-- Preload critical assets -->
   <link rel="preload" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" as="style">
@@ -12,27 +12,17 @@
   <!-- Styles --> 
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
   <link rel="stylesheet" href="css/pos.css">
-
-  <!-- Add this authentication check script in the head section (similar to admin.html) -->
-  <script>
-    // Authentication check - must run before any other scripts
-    (function() {
-      // Check if user is logged in
-      const authToken = localStorage.getItem('authToken');
-      if (!authToken) {
-        // Redirect to login if no auth token is found
-        window.location.href = 'login.html';
-        return;
-      }
-    })();
-  </script>
+    <link rel="stylesheet" href="css/site-modern.css">
+        <link rel="stylesheet" href="css/modern-refresh.css">
 
   <!-- Defer scripts to improve initial load performance -->
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11" defer></script>
+    <script src="js/authGuard.js" defer></script>
+    <script src="js/auditTracker.js" defer></script>
   <script src="js/transactionHistory.js" defer></script>
   <script src="js/pos.js" defer></script>
 </head>
-<body>
+<body data-page="pos">
   <!-- Animated background - fewer cubes for better performance -->
   <div class="background">
     <div class="cube"></div>
@@ -45,8 +35,8 @@
   <!-- Header - aligned with admin.html header style -->
   <header>
     <div class="logo">
-      <i class="fas fa-motorcycle rotating-icon"></i>
-      Motor<span class="tech">Tech</span>
+            <i class="fas fa-store rotating-icon"></i>
+            Nova<span class="tech">POS</span>
     </div>
     <div class="user-info">
       <span id="currentDateTime"></span>
@@ -298,7 +288,7 @@
                 </div>
                 
                 <!-- Out of stock overlay for unavailable items -->
-                <div class="not-available-overlay" id="notAvailableOverlay" style="display: none;">
+                <div class="not-available-overlay" id="notAvailableOverlay" hidden>
                     <span>OUT OF STOCK</span>
                 </div>
             </div>

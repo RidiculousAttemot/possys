@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>MotorTech - Modern POS for Motorcycles</title>
+  <title>NovaPOS - Modern Retail POS</title>
   
   <!-- Preload critical assets -->
   <link rel="preload" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" as="style">
@@ -12,14 +12,18 @@
   <!-- Styles -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
   <link rel="stylesheet" href="css/landing.css">
+  <link rel="stylesheet" href="css/site-modern.css">
+  <link rel="stylesheet" href="css/modern-refresh.css">
 
   <!-- Defer scripts to improve initial load performance -->
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11" defer></script>
+  <script src="js/authGuard.js" defer></script>
+  <script src="js/auditTracker.js" defer></script>
   <script src="js/landingdesign.js" defer></script>
   <script src="js/landing.js" defer></script>
 </head>
 
-<body>
+<body data-page="landing">
   <!-- Animated background -->
   <div class="background">
     <div class="cube"></div>
@@ -32,8 +36,8 @@
   <!-- Header -->
   <header id="header">
     <a href="#" class="logo">
-      <i class="fas fa-motorcycle rotating-icon"></i>
-      <span>Motor<span class="tech">Tech</span></span>
+      <i class="fas fa-store rotating-icon"></i>
+      <span>Nova<span class="tech">POS</span></span>
     </a>
     <nav>
       <ul class="nav-links" id="nav-links">
@@ -52,8 +56,8 @@
   <!-- Hero Section -->
   <section id="home" class="hero">
     <div class="hero-content">
-      <h1>MotorTech</h1>
-      <p>MotorTech POS system streamlines inventory management and sales processing for your motorcycle parts shop.</p>
+      <h1>NovaPOS</h1>
+      <p>Run your store with a clean, fast point of sale system built for modern retail operations.</p>
       <a href="login.html" class="btn-primary">Get Started</a>
     </div>
   </section>
@@ -65,7 +69,7 @@
       <div class="feature-item">
         <i class="fas fa-boxes"></i>
         <h3>Inventory Management</h3>
-        <p>Track motorcycle parts inventory, manage stock levels, and get alerts when items are running low.</p>
+        <p>Track products, manage stock levels, and get alerts when inventory is running low.</p>
       </div>
       <div class="feature-item">
         <i class="fas fa-cash-register"></i>
@@ -108,8 +112,8 @@
 
   <!-- About Section -->
   <section id="about-section" class="about">
-    <h2>About MotorTech POS</h2>
-    <p>MotorTech POS is designed specifically for motorcycle parts shops, focusing on simplicity and efficiency. Our system helps you manage inventory, process sales, and track business performance with a clean, intuitive interface.</p>
+    <h2>About NovaPOS</h2>
+    <p>NovaPOS is a modern, flexible POS platform for retail businesses. Manage inventory, process transactions, and monitor performance through one intuitive interface.</p>
     <div class="about-features">
       <div class="about-feature">
         <i class="fas fa-bolt"></i>
@@ -130,10 +134,10 @@
   <!-- Footer -->
   <footer>
     <div class="logo">
-      <i class="fas fa-motorcycle rotating-icon"></i>
-      <span>Motor<span class="tech">Tech</span></span>
+      <i class="fas fa-store rotating-icon"></i>
+      <span>Nova<span class="tech">POS</span></span>
     </div>
-    <p>&copy; 2025 MOTORPOS, Group 6</p>
+    <p>&copy; 2026 NovaPOS</p>
   </footer>
 </body>
 </html>

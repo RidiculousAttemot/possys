@@ -9,12 +9,12 @@ async function setupDatabase() {
     // Create users table
     await db.query(`
       CREATE TABLE IF NOT EXISTS users (
-        user_id INT AUTO_INCREMENT PRIMARY KEY,
+        user_id SERIAL PRIMARY KEY,
         username VARCHAR(50) NOT NULL UNIQUE,
         password VARCHAR(255) NOT NULL,
         full_name VARCHAR(100) NOT NULL,
         email VARCHAR(100) NOT NULL UNIQUE,
-        role ENUM('admin', 'cashier', 'manager') NOT NULL,
+        role VARCHAR(20) NOT NULL CHECK (role IN ('admin', 'cashier', 'manager')),
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       )
     `);
@@ -23,10 +23,10 @@ async function setupDatabase() {
     // Create items table
     await db.query(`
       CREATE TABLE IF NOT EXISTS items (
-        item_id INT AUTO_INCREMENT PRIMARY KEY,
+        item_id SERIAL PRIMARY KEY,
         item_name VARCHAR(100) NOT NULL,
         description TEXT,
-        price DECIMAL(10, 2) NOT NULL,
+        price NUMERIC(10, 2) NOT NULL,
         category VARCHAR(50) NOT NULL,
         stock_quantity INT NOT NULL,
         image VARCHAR(255),
@@ -38,10 +38,10 @@ async function setupDatabase() {
     // Create transactions table
     await db.query(`
       CREATE TABLE IF NOT EXISTS transactions (
-        transaction_id INT AUTO_INCREMENT PRIMARY KEY,
+        transaction_id SERIAL PRIMARY KEY,
         user_id INT NOT NULL,
-        total_amount DECIMAL(10, 2) NOT NULL,
-        payment_method ENUM('card', 'cash', 'online') NOT NULL,
+        total_amount NUMERIC(10, 2) NOT NULL,
+        payment_method VARCHAR(20) NOT NULL CHECK (payment_method IN ('card', 'cash', 'online')),
         transaction_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE
       )
@@ -51,25 +51,52 @@ async function setupDatabase() {
     // Create transaction_items table
     await db.query(`
       CREATE TABLE IF NOT EXISTS transaction_items (
-        transaction_item_id INT AUTO_INCREMENT PRIMARY KEY,
+        transaction_item_id SERIAL PRIMARY KEY,
         transaction_id INT NOT NULL,
         item_id INT NOT NULL,
         quantity INT NOT NULL,
-        price DECIMAL(10, 2) NOT NULL,
+        price NUMERIC(10, 2) NOT NULL,
         FOREIGN KEY (transaction_id) REFERENCES transactions(transaction_id) ON DELETE CASCADE,
         FOREIGN KEY (item_id) REFERENCES items(item_id) ON DELETE CASCADE
       )
     `);
     console.log('Transaction_items table created or already exists');
 
+    // Create audit logs table
+    await db.query(`
+      CREATE TABLE IF NOT EXISTS audit_logs (
+        audit_id SERIAL PRIMARY KEY,
+        user_id INT NULL,
+        user_name VARCHAR(100) NOT NULL DEFAULT 'Guest',
+        user_role VARCHAR(50) NOT NULL DEFAULT 'guest',
+        event_type VARCHAR(50) NOT NULL,
+        event_label VARCHAR(150) NOT NULL,
+        source VARCHAR(50) NOT NULL DEFAULT 'system',
+        path VARCHAR(255),
+        method VARCHAR(20),
+        status_code INT,
+        metadata TEXT,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        CONSTRAINT fk_audit_user
+          FOREIGN KEY (user_id) REFERENCES users(user_id)
+          ON DELETE SET NULL
+      )
+    `);
+
+    await db.query('CREATE INDEX IF NOT EXISTS idx_audit_created_at ON audit_logs (created_at)');
+    await db.query('CREATE INDEX IF NOT EXISTS idx_audit_user ON audit_logs (user_id)');
+    await db.query('CREATE INDEX IF NOT EXISTS idx_audit_event_type ON audit_logs (event_type)');
+    await db.query('CREATE INDEX IF NOT EXISTS idx_audit_source ON audit_logs (source)');
+    console.log('Audit logs table created or already exists');
+
     // Check if admin user exists
-    const [adminRows] = await db.query('SELECT * FROM users WHERE role = "admin" LIMIT 1');
+    const [adminRows] = await db.query("SELECT * FROM users WHERE role = 'admin' LIMIT 1");
     
     // Create default admin user if none exists
     if (!adminRows || adminRows.length === 0) {
       await db.query(`
         INSERT INTO users (username, password, full_name, email, role)
-        VALUES ('admin', 'admin123', 'Admin User', 'admin@motortech.com', 'admin')
+        VALUES ('admin', 'admin123', 'Admin User', 'admin@novapos.com', 'admin')
       `);
       console.log('Default admin user created');
     }

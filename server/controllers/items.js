@@ -1,6 +1,7 @@
 // controllers/items.js
 
 const db = require('../database'); // Database connection
+const { storeAuditEvent, buildAuditActor } = require('./audit');
 
 // GET all inventory items
 exports.getInventory = async (req, res) => {
@@ -33,6 +34,7 @@ exports.getItemById = async (req, res) => {
 exports.addItem = async (req, res) => {
     try {
         console.log('Adding new item with data:', req.body);
+        const actor = buildAuditActor(req, req.body || {});
         
         const { item_name, description, category, price, stock_quantity, image } = req.body;
         
@@ -52,6 +54,28 @@ exports.addItem = async (req, res) => {
             'INSERT INTO items (item_name, description, category, price, stock_quantity, image) VALUES (?, ?, ?, ?, ?, ?)',
             [item_name, safeDescription, safeCategory, safePrice, safeStock, image]
         );
+
+        storeAuditEvent({
+            userId: actor.userId,
+            userName: actor.userName,
+            userRole: actor.userRole,
+            eventType: 'action',
+            eventLabel: `${actor.userRole === 'admin' ? 'Admin' : 'User'} added item ${item_name}`,
+            source: 'controller',
+            path: req.originalUrl,
+            method: req.method,
+            statusCode: 201,
+            metadata: {
+                itemId: result.insertId,
+                item_name,
+                category: safeCategory,
+                price: safePrice,
+                stock_quantity: safeStock,
+                image
+            }
+        }).catch((auditError) => {
+            console.error('Failed to write add-item audit event:', auditError);
+        });
         
         // Log successful creation
         console.log(`Item created with ID: ${result.insertId}`);
@@ -81,6 +105,17 @@ exports.updateItem = async (req, res) => {
     try {
         const { id } = req.params;
         const { item_name, description, price, category, stock_quantity, image } = req.body;
+        const actor = buildAuditActor(req, req.body || {});
+        const [currentRows] = await db.query(
+            'SELECT item_id, item_name, description, category, price, stock_quantity, image FROM items WHERE item_id = ?',
+            [id]
+        );
+
+        if (currentRows.length === 0) {
+            return res.status(404).json({ error: 'Item not found' });
+        }
+
+        const currentItem = currentRows[0];
         
         // Start building the SQL query and parameters
         let sql = 'UPDATE items SET ';
@@ -128,6 +163,35 @@ exports.updateItem = async (req, res) => {
         if (result.affectedRows === 0) {
             return res.status(404).json({ error: 'Item not found' });
         }
+
+        storeAuditEvent({
+            userId: actor.userId,
+            userName: actor.userName,
+            userRole: actor.userRole,
+            eventType: 'action',
+            eventLabel: `${actor.userRole === 'admin' ? 'Admin' : 'User'} updated item ${currentItem.item_name}`,
+            source: 'controller',
+            path: req.originalUrl,
+            method: req.method,
+            statusCode: 200,
+            metadata: {
+                itemId: currentItem.item_id,
+                itemName: currentItem.item_name,
+                changedFields: updates
+                    .map((update) => update.split(' = ')[0])
+                    .filter(Boolean),
+                updatedValues: {
+                    item_name: item_name || currentItem.item_name,
+                    description: description !== undefined ? description : currentItem.description,
+                    price: price !== undefined ? price : currentItem.price,
+                    category: category || currentItem.category,
+                    stock_quantity: stock_quantity !== undefined ? stock_quantity : currentItem.stock_quantity,
+                    image: image !== undefined ? image : currentItem.image
+                }
+            }
+        }).catch((auditError) => {
+            console.error('Failed to write update-item audit event:', auditError);
+        });
         
         res.json({ message: 'Item updated successfully' });
     } catch (error) {
@@ -140,12 +204,44 @@ exports.updateItem = async (req, res) => {
 exports.deleteItem = async (req, res) => {
     try {
         const { id } = req.params;
+        const actor = buildAuditActor(req, req.body || {});
+        const [currentRows] = await db.query(
+            'SELECT item_id, item_name, category, price, stock_quantity FROM items WHERE item_id = ?',
+            [id]
+        );
+
+        if (currentRows.length === 0) {
+            return res.status(404).json({ error: 'Item not found' });
+        }
+
+        const currentItem = currentRows[0];
         
         const [result] = await db.query('DELETE FROM items WHERE item_id = ?', [id]);
         
         if (result.affectedRows === 0) {
             return res.status(404).json({ error: 'Item not found' });
         }
+
+        storeAuditEvent({
+            userId: actor.userId,
+            userName: actor.userName,
+            userRole: actor.userRole,
+            eventType: 'action',
+            eventLabel: `${actor.userRole === 'admin' ? 'Admin' : 'User'} deleted item ${currentItem.item_name}`,
+            source: 'controller',
+            path: req.originalUrl,
+            method: req.method,
+            statusCode: 200,
+            metadata: {
+                itemId: currentItem.item_id,
+                itemName: currentItem.item_name,
+                category: currentItem.category,
+                price: currentItem.price,
+                stock_quantity: currentItem.stock_quantity
+            }
+        }).catch((auditError) => {
+            console.error('Failed to write delete-item audit event:', auditError);
+        });
         
         res.json({ message: 'Item deleted successfully' });
     } catch (error) {

@@ -1,7 +1,8 @@
 // controllers/users.js
 
 const db = require('../database'); // Database connection
-// Removed bcrypt import entirely
+const { signAuthToken } = require('../utils/auth');
+const { storeAuditEvent, buildAuditActor } = require('./audit');
 
 // GET all users
 exports.getAllUsers = async (req, res) => {
@@ -41,6 +42,7 @@ exports.getUserById = async (req, res) => {
 exports.createUser = async (req, res) => {
     try {
         const { username, password, full_name, email, role } = req.body;
+        const actor = buildAuditActor(req, req.body || {});
         
         // Validate required fields
         if (!username || !password || !full_name || !email || !role) {
@@ -62,6 +64,27 @@ exports.createUser = async (req, res) => {
             'INSERT INTO users (username, password, full_name, email, role) VALUES (?, ?, ?, ?, ?)',
             [username, password, full_name, email, role]
         );
+
+        storeAuditEvent({
+            userId: actor.userId,
+            userName: actor.userName,
+            userRole: actor.userRole,
+            eventType: 'action',
+            eventLabel: `${actor.userRole === 'admin' ? 'Admin' : 'User'} created user ${full_name || username}`,
+            source: 'controller',
+            path: req.originalUrl,
+            method: req.method,
+            statusCode: 201,
+            metadata: {
+                createdUserId: result.insertId,
+                username,
+                full_name,
+                email,
+                role
+            }
+        }).catch((auditError) => {
+            console.error('Failed to write create-user audit event:', auditError);
+        });
         
         res.status(201).json({ 
             id: result.insertId,
@@ -78,6 +101,17 @@ exports.updateUser = async (req, res) => {
     try {
         const { id } = req.params;
         const { username, password, full_name, email, role } = req.body;
+        const actor = buildAuditActor(req, req.body || {});
+        const [currentRows] = await db.query(
+            'SELECT user_id, username, full_name, email, role FROM users WHERE user_id = ?',
+            [id]
+        );
+
+        if (currentRows.length === 0) {
+            return res.status(404).json({ error: 'User not found' });
+        }
+
+        const currentUser = currentRows[0];
         
         // Start building the SQL query and parameters
         let sql = 'UPDATE users SET ';
@@ -142,6 +176,36 @@ exports.updateUser = async (req, res) => {
         if (result.affectedRows === 0) {
             return res.status(404).json({ error: 'User not found' });
         }
+
+        storeAuditEvent({
+            userId: actor.userId,
+            userName: actor.userName,
+            userRole: actor.userRole,
+            eventType: 'action',
+            eventLabel: `${actor.userRole === 'admin' ? 'Admin' : 'User'} updated user ${currentUser.full_name || currentUser.username}`,
+            source: 'controller',
+            path: req.originalUrl,
+            method: req.method,
+            statusCode: 200,
+            metadata: {
+                targetUserId: currentUser.user_id,
+                targetUsername: currentUser.username,
+                targetFullName: currentUser.full_name,
+                targetRole: currentUser.role,
+                changedFields: updates
+                    .map((update) => update.split(' = ')[0])
+                    .filter(Boolean),
+                updatedValues: {
+                    username: username || currentUser.username,
+                    full_name: full_name || currentUser.full_name,
+                    email: email || currentUser.email,
+                    role: role || currentUser.role,
+                    passwordChanged: Boolean(password)
+                }
+            }
+        }).catch((auditError) => {
+            console.error('Failed to write update-user audit event:', auditError);
+        });
         
         res.json({ message: 'User updated successfully' });
     } catch (error) {
@@ -154,12 +218,44 @@ exports.updateUser = async (req, res) => {
 exports.deleteUser = async (req, res) => {
     try {
         const { id } = req.params;
+        const actor = buildAuditActor(req, req.body || {});
+        const [currentRows] = await db.query(
+            'SELECT user_id, username, full_name, email, role FROM users WHERE user_id = ?',
+            [id]
+        );
+
+        if (currentRows.length === 0) {
+            return res.status(404).json({ error: 'User not found' });
+        }
+
+        const currentUser = currentRows[0];
         
         const [result] = await db.query('DELETE FROM users WHERE user_id = ?', [id]);
         
         if (result.affectedRows === 0) {
             return res.status(404).json({ error: 'User not found' });
         }
+
+        storeAuditEvent({
+            userId: actor.userId,
+            userName: actor.userName,
+            userRole: actor.userRole,
+            eventType: 'action',
+            eventLabel: `${actor.userRole === 'admin' ? 'Admin' : 'User'} deleted user ${currentUser.full_name || currentUser.username}`,
+            source: 'controller',
+            path: req.originalUrl,
+            method: req.method,
+            statusCode: 200,
+            metadata: {
+                targetUserId: currentUser.user_id,
+                targetUsername: currentUser.username,
+                targetFullName: currentUser.full_name,
+                targetRole: currentUser.role,
+                targetEmail: currentUser.email
+            }
+        }).catch((auditError) => {
+            console.error('Failed to write delete-user audit event:', auditError);
+        });
         
         res.json({ message: 'User deleted successfully' });
     } catch (error) {
@@ -178,27 +274,66 @@ exports.login = async (req, res) => {
             return res.status(400).json({ error: 'Username and password are required' });
         }
         
-        // Find user by username and password directly
+        // Security requirement: credentials are matched exactly (case-sensitive).
         const [users] = await db.query(
             'SELECT * FROM users WHERE username = ? AND password = ?', 
             [username, password]
         );
         
         if (users.length === 0) {
+            storeAuditEvent({
+                userName: username || 'Unknown',
+                userRole: 'guest',
+                eventType: 'login_failure',
+                eventLabel: 'Invalid login attempt',
+                source: 'auth',
+                path: '/login',
+                method: 'POST',
+                statusCode: 401,
+                metadata: {
+                    username,
+                    userAgent: req.headers['user-agent'] || null,
+                    ip: req.headers['x-forwarded-for'] || req.socket.remoteAddress || null
+                }
+            }).catch((auditError) => {
+                console.error('Failed to write login failure audit event:', auditError);
+            });
+
             return res.status(401).json({ error: 'Invalid username or password' });
         }
         
         const user = users[0];
+        const token = signAuthToken(user);
         
         // Remove password from response
         const { password: _, ...userWithoutPassword } = user;
+
+        storeAuditEvent({
+            userId: user.user_id,
+            userName: user.full_name || user.username,
+            userRole: user.role,
+            eventType: 'login_success',
+            eventLabel: 'User logged in',
+            source: 'auth',
+            path: '/login',
+            method: 'POST',
+            statusCode: 200,
+            metadata: {
+                    username: user.username,
+                userAgent: req.headers['user-agent'] || null,
+                ip: req.headers['x-forwarded-for'] || req.socket.remoteAddress || null
+            }
+        }).catch((auditError) => {
+            console.error('Failed to write login success audit event:', auditError);
+        });
         
         // Include role explicitly in the response
         res.json({
             message: 'Login successful',
+            token,
             user: {
                 ...userWithoutPassword,
-                role: user.role // Ensure role is included
+                role: user.role
             }
         });
     } catch (error) {

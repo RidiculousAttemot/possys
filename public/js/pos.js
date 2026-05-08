@@ -1,32 +1,53 @@
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', async function() {
     // Authentication check
-    const checkAuth = () => {
+    const checkAuth = async () => {
         const token = localStorage.getItem('authToken');
-        const userRole = localStorage.getItem('userRole');
-        
+
         if (!token) {
-            // Redirect to login page if no token
             window.location.href = 'login.html';
-            return false;
+            return null;
         }
-        
-        // Check if user is admin - they should be on admin page
+
+        if (window.AuthGuard && typeof window.AuthGuard.validateSession === 'function') {
+            const session = await window.AuthGuard.validateSession();
+
+            if (!session.valid || !session.user) {
+                window.location.href = 'login.html';
+                return null;
+            }
+
+            if (session.user.role === 'admin') {
+                window.location.href = 'admin.html';
+                return null;
+            }
+
+            const userNameElement = document.getElementById('userName');
+            if (userNameElement) {
+                userNameElement.textContent = session.user.full_name || session.user.username || 'Cashier';
+            }
+
+            return session;
+        }
+
+        const userRole = localStorage.getItem('userRole');
+
         if (userRole === 'admin') {
             window.location.href = 'admin.html';
-            return false;
+            return null;
         }
-        
-        // Set user display name from localStorage
+
         const userNameElement = document.getElementById('userName');
         if (userNameElement) {
             userNameElement.textContent = localStorage.getItem('userName') || 'Cashier';
         }
-        
-        return true;
+
+        return { valid: true, user: { role: userRole } };
     };
-    
-    // Check authentication on page load
-    if (!checkAuth()) return;
+
+    const session = await checkAuth();
+    if (!session) {
+        return;
+    }
     
     // Global variables
     let allProducts = []; // Will store all products fetched from the database
@@ -37,6 +58,24 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // API base URL - define once at the top
     const API_URL = 'http://localhost:5000/api';
+    const ASSET_BASE_URL = API_URL.replace(/\/api$/, '');
+
+    const resolveAssetUrl = (assetPath) => {
+        if (!assetPath) {
+            return '';
+        }
+
+        const value = String(assetPath);
+        if (/^https?:\/\//i.test(value)) {
+            return value;
+        }
+
+        if (value.startsWith('/')) {
+            return `${ASSET_BASE_URL}${value}`;
+        }
+
+        return `${ASSET_BASE_URL}/${value.replace(/^\/+/, '')}`;
+    };
     
     // Function to fetch products from API
     const fetchProducts = async () => {
@@ -216,18 +255,12 @@ document.addEventListener('DOMContentLoaded', function() {
                 // Build correct image URL based on environment
                 let imagePath = '';
                 
-                // For working with Live Server which serves from /public
-                if (window.location.href.includes(':5500') || window.location.href.includes('localhost')) {
-                    imagePath = window.location.origin + '/public' + product.image;
-                } else {
-                    // For production deployment
-                    imagePath = product.image;
-                }
+                imagePath = resolveAssetUrl(product.image);
                 
                 imageHtml = `
                     <div class="item-image">
                         <img src="${imagePath}" alt="${product.name}" class="item-image-content" 
-                             onerror="this.onerror=null; this.src='${window.location.origin}/public/assets/images/no-image.png'; console.log('Using fallback image for ${product.name}');" />
+                             onerror="this.onerror=null; this.src='${resolveAssetUrl('/assets/images/no-image.png')}'; console.log('Using fallback image for ${product.name}');" />
                     </div>
                 `;
             } else {
@@ -235,7 +268,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 imageHtml = `
                     <div class="item-image">
                         <div class="item-image-placeholder">
-                            <i class="fas fa-motorcycle"></i>
+                            <i class="fas fa-box-open"></i>
                             <span>No image</span>
                         </div>
                     </div>
@@ -559,11 +592,11 @@ document.addEventListener('DOMContentLoaded', function() {
         const disabledStatus = product.stock <= 0 ? 'disabled' : '';
         
         modalContent.innerHTML = `
-            <div class="item-details-image">
+                <div class="item-details-image">
                 ${product.image ? 
-                    `<img src="${product.image}" alt="${product.name}" class="detail-image">` : 
+                    `<img src="${resolveAssetUrl(product.image)}" alt="${product.name}" class="detail-image">` : 
                     `<div class="item-placeholder-large">
-                        <i class="fas fa-motorcycle" style="font-size: 48px;"></i>
+                        <i class="fas fa-box-open" style="font-size: 48px;"></i>
                         <p>No image available</p>
                     </div>`
                 }
@@ -1120,8 +1153,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 </head>
                 <body>
                     <div class="receipt-header">
-                        <h1>MotorTech</h1>
-                        <p>Parts & Accessories Shop</p>
+                        <h1>NovaPOS</h1>
+                        <p>Retail Point of Sale</p>
                         <p>123 Main Street, Taguig City</p>
                         <p>Tel: (02) 8123-4567</p>
                         <p>VAT Reg #: 123-456-789-000</p>
@@ -1178,7 +1211,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     </div>
                     
                     <div class="receipt-footer">
-                        <p>Thank you for shopping at MotorTech Motorsport!</p>
+                        <p>Thank you for shopping with NovaPOS!</p>
                         <p>This serves as your official receipt.</p>
                         <p>Come back again!</p>
                     </div>
@@ -1799,34 +1832,44 @@ document.addEventListener('DOMContentLoaded', function() {
     // Payment method switching
     document.querySelectorAll('input[name="paymentMethod"]').forEach(radio => {
         radio.addEventListener('change', function() {
-            // Hide all payment details
-            document.getElementById('cashDetails').classList.remove('active');
-            document.getElementById('cardDetails').classList.remove('active');
-            document.getElementById('ewalletDetails').classList.remove('active');
+            const cashDetails = document.getElementById('cashDetails');
+            const cardDetails = document.getElementById('cardDetails');
+            const ewalletDetails = document.getElementById('ewalletDetails');
+            const activeDetails = document.getElementById(`${this.value}Details`);
+
+            if (cashDetails) cashDetails.classList.remove('active');
+            if (cardDetails) cardDetails.classList.remove('active');
+            if (ewalletDetails) ewalletDetails.classList.remove('active');
             
-            // Show the selected payment details
-            document.getElementById(`${this.value}Details`).classList.add('active');
+            if (activeDetails) {
+                activeDetails.classList.add('active');
+            }
         });
     });
     
     // Handle cash amount input for change calculation
-    document.getElementById('cashAmount').addEventListener('input', function() {
-        const cashAmount = parseFloat(this.value) || 0;
-        const totalAmount = parseFloat(document.getElementById('modalTotal').textContent.replace('₱', '')) || 0;
-        
-        let change = cashAmount - totalAmount;
-        change = change > 0 ? change : 0;
-        
-        document.getElementById('changeAmount').value = `₱${change.toFixed(2)}`;
-        
-        // Enable/disable complete payment button based on sufficient cash
-        const completePaymentBtn = document.getElementById('completePaymentBtn');
-        if (cashAmount >= totalAmount) {
-            completePaymentBtn.disabled = false;
-        } else {
-            completePaymentBtn.disabled = true;
-        }
-    });
+    const cashAmountInput = document.getElementById('cashAmount');
+    if (cashAmountInput) {
+        cashAmountInput.addEventListener('input', function() {
+            const totalAmountEl = document.getElementById('modalTotal');
+            const changeAmountEl = document.getElementById('changeAmount');
+            const completePaymentBtn = document.getElementById('completePaymentBtn');
+
+            const cashAmount = parseFloat(this.value) || 0;
+            const totalAmount = parseFloat(totalAmountEl?.textContent?.replace('₱', '') || '0') || 0;
+
+            let change = cashAmount - totalAmount;
+            change = change > 0 ? change : 0;
+
+            if (changeAmountEl) {
+                changeAmountEl.value = `₱${change.toFixed(2)}`;
+            }
+
+            if (completePaymentBtn) {
+                completePaymentBtn.disabled = cashAmount < totalAmount;
+            }
+        });
+    }
     
     // Format the cart item template for the new design
     function formatCartItem(item) {
@@ -2075,8 +2118,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 </head>
                 <body>
                     <div class="receipt-header">
-                        <h1>MotorTech Motorsport</h1>
-                        <p>Parts & Accessories Shop</p>
+                        <h1>NovaPOS</h1>
+                        <p>Retail Point of Sale</p>
                         <p>123 Main Street, Taguig City</p>
                         <p>Tel: (02) 8123-4567</p>
                         <p>VAT Reg #: 123-456-789-000</p>
@@ -2132,7 +2175,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     </div>
                     
                     <div class="receipt-footer">
-                        <p>Thank you for shopping at MotorTech Motorsport!</p>
+                        <p>Thank you for shopping with NovaPOS!</p>
                         <p>Items purchased cannot be returned.</p>
                         <p>This serves as your official receipt.</p>
                         <p>Come back again!</p>
@@ -2490,7 +2533,7 @@ function openItemDetailsModal(itemId) {
     modalItemStock.textContent = 'Checking...';
     modalImage.style.display = 'none';
     modalPlaceholder.style.display = 'flex';
-    notAvailableOverlay.style.display = 'none';
+    notAvailableOverlay.hidden = true;
     
     // Open the modal immediately to show loading state
     modal.classList.add('show');
@@ -2514,7 +2557,7 @@ function openItemDetailsModal(itemId) {
                 modalItemStock.textContent = 'Out of Stock';
                 modalItemStock.className = 'meta-value out-of-stock';
                 modalAddToCartBtn.disabled = true;
-                notAvailableOverlay.style.display = 'flex';
+                notAvailableOverlay.hidden = false;
             } else if (stockQty < 10) {
                 modalItemStock.textContent = `Low Stock (${stockQty.toLocaleString()})`;
                 modalItemStock.className = 'meta-value low-stock';
@@ -2529,11 +2572,7 @@ function openItemDetailsModal(itemId) {
             if (item.image && item.image !== 'null' && item.image !== 'undefined') {
                 // Construct proper image path based on environment
                 let imagePath = '';
-                if (window.location.href.includes(':5500') || window.location.href.includes('localhost')) {
-                    imagePath = window.location.origin + '/public' + item.image;
-                } else {
-                    imagePath = item.image;
-                }
+                imagePath = resolveAssetUrl(item.image);
                 
                 console.log('Setting modal image path:', imagePath);
                 

@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin Dashboard | MotorTech POS</title>
+    <title>Admin Dashboard | NovaPOS</title>
     
     <!-- Preload critical assets -->
     <link rel="preload" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" as="style">
@@ -12,15 +12,20 @@
     <!-- Styles -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <link rel="stylesheet" href="css/admin.css">
+    <link rel="stylesheet" href="css/admin-modern.css">
     <link rel="stylesheet" href="css/systemMenu.css">
+    <link rel="stylesheet" href="css/modern-refresh.css">
 
     <!-- Defer scripts to improve initial load performance -->
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11" defer></script>
+    <script src="js/authGuard.js" defer></script>
+    <script src="js/auditTracker.js" defer></script>
     <script src="js/admindesign.js" defer></script>
     <script src="js/admin.js" defer></script>
+    <script src="js/adminAuditView.js" defer></script>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 </head>
-<body>
+<body class="admin-shell" data-page="admin">
     <!-- Animated background - fewer cubes for better performance -->
     <div class="background">
         <div class="cube"></div>
@@ -32,8 +37,8 @@
 
     <header>
         <div class="logo">
-            <i class="fas fa-motorcycle rotating-icon"></i>
-            Motor<span class="tech">Tech</span>
+            <i class="fas fa-store rotating-icon"></i>
+            Nova<span class="tech">POS</span>
         </div>
         <div class="user-info">
             <span id="currentDateTime"></span>
@@ -49,17 +54,19 @@
                 <i class="fas fa-th-large"></i>
                 <h3>Admin Panel</h3>
             </div>
+            <p class="menu-label">Operations</p>
             <nav class="menu">
                 <ul>
                     <li class="active"><a href="#dashboard"><i class="fas fa-tachometer-alt"></i> <span>Dashboard</span></a></li>
                     <li><a href="#inventory"><i class="fas fa-boxes"></i> <span>Inventory</span></a></li>
                     <li><a href="#users"><i class="fas fa-users"></i> <span>Users</span></a></li>
                     <li><a href="#transactions"><i class="fas fa-receipt"></i> <span>Transactions</span></a></li>
+                    <li><a href="#auditLogs"><i class="fas fa-shield-alt"></i> <span>Audit Logs</span></a></li>
                    <li><a href="#settings"><i class="fas fa-cog"></i> <span>Settings</span></a></li> 
                 </ul>
             </nav>
             <div class="sidebar-footer">
-                <p>MotorTech POS v1.0</p>
+                <p>NovaPOS v2.0 • Live navigation audit enabled</p>
                 <button id="refreshDashboard" class="btn-refresh">
                     <i class="fas fa-sync"></i> <span>Refresh Data</span>
                 </button>
@@ -72,7 +79,18 @@
             <section id="dashboard" class="section active">
                 <div class="section-header">
                     <h2><i class="fas fa-tachometer-alt"></i> Dashboard Overview</h2>
-                    <div class="date-time" id="currentDateTime">Today's Date</div>
+                </div>
+
+                <div class="hero-banner">
+                    <div class="hero-copy">
+                        <p class="eyebrow">Operations snapshot</p>
+                        <h2>One control center for sales, stock, users, and traceability.</h2>
+                        <p>Move through the system with full visibility. Every section change and API request is now logged in the audit trail.</p>
+                    </div>
+                    <div class="hero-metrics">
+                        <div class="hero-chip">Audit enabled</div>
+                        <div class="hero-chip">Live sync</div>
+                    </div>
                 </div>
                 
                 <div class="stats-container">
@@ -115,15 +133,42 @@
                             <div class="stat-value" id="transactionCount">0</div>
                         </div>
                     </div>
+
+                    <div class="stat-card">
+                        <div class="stat-icon">
+                            <i class="fas fa-shield-alt"></i>
+                        </div>
+                        <div class="stat-info">
+                            <h3>Audit Events</h3>
+                            <div class="stat-value" id="auditEventCount">0</div>
+                        </div>
+                    </div>
                 </div>
-                
-                <!-- Recent Activity Section -->
-                <div class="recent-activity">
-                    <h3>Recent Activity</h3>
-                    <div class="activity-list" id="activityList">
-                        <div class="activity-loading">
-                            <i class="fas fa-spinner fa-spin"></i>
-                            <p>Loading recent activity...</p>
+
+                <div class="dashboard-grid">
+                    <!-- Recent Activity Section -->
+                    <div class="recent-activity">
+                        <h3>Recent Activity</h3>
+                        <div class="activity-list" id="activityList">
+                            <div class="activity-loading">
+                                <i class="fas fa-spinner fa-spin"></i>
+                                <p>Loading recent activity...</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="panel-card">
+                        <h3>
+                            <span>Audit Trail Preview</span>
+                            <a href="#auditLogs" class="panel-link">Open full logs</a>
+                        </h3>
+                        <p class="panel-subtitle">The last few navigation and API events recorded across the system.</p>
+                        <div class="audit-preview-list" id="auditPreviewList">
+                            <div class="audit-empty-state">
+                                <i class="fas fa-clipboard-list"></i>
+                                <h4>Loading audit trail...</h4>
+                                <p>The latest events will appear here once the tracker is ready.</p>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -223,6 +268,119 @@
                     </table>
                 </div>
             </section>
+
+            <!-- Audit Logs Section -->
+            <section id="auditLogs" class="section">
+                <div class="section-header">
+                    <div>
+                        <p class="section-kicker">Traceability</p>
+                        <h2><i class="fas fa-shield-alt"></i> Audit & Navigation Logs</h2>
+                    </div>
+                    <button id="refreshAuditLogs" class="btn-refresh">
+                        <i class="fas fa-sync"></i> Refresh Logs
+                    </button>
+                </div>
+
+                <div class="audit-summary-grid">
+                    <div class="audit-summary-card stat-card">
+                        <div class="stat-icon">
+                            <i class="fas fa-list"></i>
+                        </div>
+                        <div class="stat-info">
+                            <h3>Total Events</h3>
+                            <div class="stat-value" id="auditTotalEvents">0</div>
+                        </div>
+                    </div>
+                    <div class="audit-summary-card stat-card">
+                        <div class="stat-icon">
+                            <i class="fas fa-calendar-day"></i>
+                        </div>
+                        <div class="stat-info">
+                            <h3>Today</h3>
+                            <div class="stat-value" id="auditTodayEvents">0</div>
+                        </div>
+                    </div>
+                    <div class="audit-summary-card stat-card">
+                        <div class="stat-icon">
+                            <i class="fas fa-route"></i>
+                        </div>
+                        <div class="stat-info">
+                            <h3>Navigation</h3>
+                            <div class="stat-value" id="auditNavigationEvents">0</div>
+                        </div>
+                    </div>
+                    <div class="audit-summary-card stat-card">
+                        <div class="stat-icon">
+                            <i class="fas fa-server"></i>
+                        </div>
+                        <div class="stat-info">
+                            <h3>API Requests</h3>
+                            <div class="stat-value" id="auditApiRequests">0</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="audit-toolbar">
+                    <div class="filters">
+                        <div class="audit-search">
+                            <input type="search" id="auditSearchInput" placeholder="Search users, events, or paths">
+                        </div>
+                        <div class="audit-date-range">
+                            <input type="date" id="auditStartDate" aria-label="Start date">
+                            <input type="date" id="auditEndDate" aria-label="End date">
+                        </div>
+                        <select id="auditTypeFilter" aria-label="Audit event type filter" title="Audit event type filter">
+                            <option value="all">All Event Types</option>
+                            <option value="navigation">Navigation</option>
+                            <option value="page_view">Page Views</option>
+                            <option value="api_request">API Requests</option>
+                            <option value="api_error">API Errors</option>
+                            <option value="action">Actions</option>
+                        </select>
+                        <select id="auditSourceFilter" aria-label="Audit source filter" title="Audit source filter">
+                            <option value="all">All Sources</option>
+                            <option value="client">Client</option>
+                            <option value="middleware">Middleware</option>
+                            <option value="system">System</option>
+                        </select>
+                    </div>
+                    <div class="audit-actions">
+                        <button id="clearAuditFilters" class="btn-secondary" type="button">
+                            <i class="fas fa-eraser"></i> Clear
+                        </button>
+                        <button id="exportAuditCsv" class="btn-secondary" type="button">
+                            <i class="fas fa-file-csv"></i> CSV
+                        </button>
+                        <button id="exportAuditJson" class="btn-secondary" type="button">
+                            <i class="fas fa-file-code"></i> JSON
+                        </button>
+                    </div>
+                </div>
+
+                <div class="table-container">
+                    <table class="audit-table">
+                        <thead>
+                            <tr>
+                                <th>Time</th>
+                                <th>User</th>
+                                <th>Event</th>
+                                <th>Source</th>
+                                <th>Target</th>
+                                <th>Status</th>
+                                <th>Details</th>
+                            </tr>
+                        </thead>
+                        <tbody id="auditLogsTable">
+                            <tr>
+                                <td colspan="7" class="text-center">
+                                    <i class="fas fa-spinner fa-spin"></i>
+                                    <p>Loading audit logs...</p>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
             
             <!-- Settings Section -->
             <section id="settings" class="section">
@@ -273,14 +431,14 @@
                     <label for="itemCategory">Category</label>
                     <select id="itemCategory" name="category" required>
                         <option value="">Select a category</option>
-                        <option value="Engine Parts">Engine Parts</option>
-                        <option value="Brake Systems">Brake Systems</option>
-                        <option value="Suspension">Suspension</option>
-                        <option value="Oils & Lubricants">Oils & Lubricants</option>
-                        <option value="Electrical">Electrical</option>
-                        <option value="Exhaust Systems">Exhaust Systems</option>
+                        <option value="Beverages">Beverages</option>
+                        <option value="Snacks">Snacks</option>
+                        <option value="Household">Household</option>
+                        <option value="Personal Care">Personal Care</option>
+                        <option value="Office Supplies">Office Supplies</option>
+                        <option value="Electronics">Electronics</option>
                         <option value="Accessories">Accessories</option>
-                        <option value="Maintenance">Maintenance</option>
+                        <option value="Other">Other</option>
                     </select>
                 </div>
                 <div class="form-group">
@@ -322,14 +480,14 @@
                 <div class="form-group">
                     <label for="editItemCategory">Category</label>
                     <select id="editItemCategory" name="category">
-                        <option value="Engine Parts">Engine Parts</option>
-                        <option value="Brake Systems">Brake Systems</option>
-                        <option value="Suspension">Suspension</option>
-                        <option value="Oils & Lubricants">Oils & Lubricants</option>
-                        <option value="Electrical">Electrical</option>
-                        <option value="Exhaust Systems">Exhaust Systems</option>
+                        <option value="Beverages">Beverages</option>
+                        <option value="Snacks">Snacks</option>
+                        <option value="Household">Household</option>
+                        <option value="Personal Care">Personal Care</option>
+                        <option value="Office Supplies">Office Supplies</option>
+                        <option value="Electronics">Electronics</option>
                         <option value="Accessories">Accessories</option>
-                        <option value="Maintenance">Maintenance</option>
+                        <option value="Other">Other</option>
                     </select>
                 </div>
                 <div class="form-group">
@@ -470,46 +628,6 @@
         </div>
     </div>
 
-    <!-- Add this script right before the </body> tag -->
-    <script>
-        // This will run immediately when the page loads
-        document.addEventListener('DOMContentLoaded', function() {
-            // Check if we need to go to a specific section (e.g., after submitting a form with an image)
-            const lastSection = localStorage.getItem('lastActiveSection');
-            if (lastSection) {
-                // Function to switch to the correct section
-                const showSection = (sectionId) => {
-                    // Hide all sections
-                    document.querySelectorAll('.section').forEach(section => {
-                        section.classList.remove('active');
-                    });
-                    
-                    // Show the requested section
-                    const section = document.getElementById(sectionId);
-                    if (section) {
-                        section.classList.add('active');
-                    }
-                    
-                    // Update sidebar menu active state
-                    document.querySelectorAll('.menu li').forEach(item => {
-                        item.classList.remove('active');
-                    });
-                    
-                    const menuItem = document.querySelector(`.menu li a[href="#${sectionId}"]`);
-                    if (menuItem) {
-                        menuItem.parentElement.classList.add('active');
-                    }
-                };
-
-                // Show the stored section
-                showSection(lastSection);
-                console.log('Navigated to section:', lastSection);
-                
-                // Clear the stored section to avoid future unexpected redirects
-                localStorage.removeItem('lastActiveSection');
-            }
-        });
-    </script>
     <script src="js/transactionHistoryAdmin.js"></script>
     <script src="js/adminSystemMenu.js"></script>
 </body>

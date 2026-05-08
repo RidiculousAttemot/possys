@@ -23,8 +23,19 @@ async function startServer() {
         if (!dbConnected) {
             process.exit(1);
         }
-        app.listen(PORT, () => {
+        const server = app.listen(PORT, () => {
             console.log(`Server running on port ${PORT}`);
+        });
+
+        server.on('error', (error) => {
+            if (error && error.code === 'EADDRINUSE') {
+                console.log(`Port ${PORT} is already in use. Reusing existing running server.`);
+                process.exit(0);
+                return;
+            }
+
+            console.error('Server failed to start:', error);
+            process.exit(1);
         });
     } catch (error) {
         process.exit(1);
